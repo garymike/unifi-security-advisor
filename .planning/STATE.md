@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Phase 1 context gathered
+last_updated: "2026-04-25T19:34:26.733Z"
+last_activity: 2026-04-25 — Ingest synthesis completed; PROJECT/REQUIREMENTS/ROADMAP/STATE generated from `.planning/intel/`.
+progress:
+  total_phases: 7
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 20
+---
+
 # Project State
 
 ## Project Reference
@@ -19,6 +35,7 @@ Progress: [██░░░░░░░░] ~20% (Phase 1 skeleton + 6 of 12 find
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0 (planning not yet started under GSD)
 - Average duration: n/a
 - Total execution time: 0 hours
@@ -30,6 +47,7 @@ Progress: [██░░░░░░░░] ~20% (Phase 1 skeleton + 6 of 12 find
 | 1. Live API Audit | 0 | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: n/a
 - Trend: n/a (pre-execution)
 
@@ -58,12 +76,14 @@ None yet (project just initialized from ingest).
 [Issues that affect current/future work — sourced from `.planning/codebase/CONCERNS.md` and intel]
 
 **Phase 1 needs-work (open implementation gaps):**
+
 1. **REQ-wire-enhanced-modules-into-audit-script** — Six finding modules in `src/findings_enhanced.py` (wireless tuning, firewall threats, enhanced remote access, enhanced firmware, logging, backup config) are NOT wired into `src/unifi_audit.py`'s `analyze()` modules list. Live audit currently misses ~50% of implemented coverage. Per CONCERNS.md, this is the most critical Phase 1 gap.
 2. **REQ-cross-answer-tension-detection** — Compound-finding correlation pass not yet implemented. Required by `D-003`.
 3. **REQ-profile-aware-scoring-weights** — Profile labels exist (home / home_office / small_business / regulated_hipaa / regulated_pci) and are passed to modules, but per-`(profile × section)` weight table not implemented.
 4. **REQ-always-float-to-top-overrides** — Of the six always-float-to-top findings (`C-finding-002`), only PPTP is fully wired. MFA, default credentials, and management-plane WAN-reachability are not detectable from Network Integration API alone — these become Phase 2 questionnaire items but must be flagged in Phase 1 output.
 
 **Phase 1 validation (blocking go-live):**
+
 5. **REQ-validation-real-network** — `unifi_audit.py` not yet run against a real UniFi network.
 6. **REQ-validation-api-response-shapes** — `_extract_list` / `_extract_sites` defensive fallbacks untested against real API.
 7. **REQ-validation-network-version-compat** — Need to test ≥9.3.43 plus an older version (graceful 404 handling).
@@ -73,6 +93,7 @@ None yet (project just initialized from ingest).
 11. **REQ-test-fixtures** — Need anonymized fixtures across all five profile labels plus at least one real `.unf` and one real API JSON dump.
 
 **Codebase concerns (from `.planning/codebase/CONCERNS.md`):**
+
 - **Zero automated tests.** Critical for a security tool — sanitization, finding modules, and API parsing are untested. Recommend `pytest` + `tests/` directory before Phase 2 ships.
 - **DRY violation in sanitization.** Two separate `SECRET_FIELD_NAMES` sets in `src/unifi_audit.py:183-188` and `src/parser.py:103-116`. New secret fields must be added to both. Recommend extracting to shared `src/sanitizer.py` before Phase 4.
 - **Parser stub functions return empty.** `src/parser.py:431-433` — `find_logging`, `find_backup_config`, `find_firmware` all return `[]`. Phase 4 backup-mode users get zero findings for these sections. Resolve via shared module with `findings_enhanced.py`.
@@ -100,6 +121,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-25 — Ingest synthesis (`/gsd-new-project` from `.planning/intel/SYNTHESIS.md`).
-Stopped at: PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md created from intel. Codebase analysis already exists at `.planning/codebase/`.
-Resume file: None — next step is `/gsd-plan-phase 1` to decompose Phase 1 needs-work + validation items into executable plans.
+Last session: --stopped-at
+Stopped at: Phase 1 context gathered
+Resume file: --resume-file
