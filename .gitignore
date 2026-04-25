@@ -1,0 +1,41 @@
+# Runtime outputs (CLAUDE.md absolute constraints — never commit these)
+audit_output/
+*.log
+*.unf
+*.unifi
+
+# Environment / credentials
+.env
+.env.*
+*.key
+config.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Claude Code per-user settings (settings.json is committable; settings.local.json is not)
+.claude/settings.local.json
+
+# Build artifacts
+dist/
+build/
+
+# Node (only present from the GSD SDK install)
+node_modules/
+package-lock.json
