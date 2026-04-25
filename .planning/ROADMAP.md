@@ -34,7 +34,15 @@ The journey is **API-first** (`D-007` LOCKED, official X-API-KEY paths only â€” 
   4. Cross-answer tension correlation pass runs after individual modules and emits compound findings distinct from per-module findings.
   5. Profile-aware scoring weights produce different severity rankings for the same evidence depending on the `UNIFI_PROFILE` env var (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`).
   6. Sanitization regression-tested against real API responses confirms no PSK, RADIUS shared secret, admin password hash, API token, or session cookie appears in any output file.
-**Plans**: TBD
+**Plans**: 8 plans
+- [ ] 01-01-PLAN.md — Extract sanitizer.py + pytest scaffold + fixture safety gate
+- [ ] 01-02-PLAN.md — API-to-collections adapter + wire 6 enhanced modules into analyze()
+- [ ] 01-03-PLAN.md — Cross-answer correlation pass + 3 compound rules (D-04)
+- [ ] 01-04-PLAN.md — Always-float-to-top override + 3 unknown findings (D-02, D-03, D-10)
+- [ ] 01-05-PLAN.md — Profile-aware scoring weights table (D-05, D-06)
+- [ ] 01-06-PLAN.md — Pipeline smoke suite + credential-leak static guard (T-1-02)
+- [ ] 01-07-PLAN.md — Real-network manual validation (REQ-validation-real-network) [checkpoint]
+- [ ] 01-08-PLAN.md — Anonymize + commit canonical fixture (T-1-03)
 
 ### Phase 2: Intent-Interview Wizard
 **Goal**: Operator who has run a Phase 1 audit can answer a focused set of gap questions (intent, non-UniFi devices, process, compliance) in their preferred technical voice, and receive a unified report that merges API-detected facts with user-stated intent.
@@ -122,7 +130,7 @@ Phases execute in numeric order: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7. Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live API Audit | 0/TBD | In progress | - |
+| 1. Live API Audit | 0/8 | In progress | - |
 | 2. Intent-Interview Wizard | 0/TBD | Not started | - |
 | 3. Site Manager API Fallback | 0/TBD | Not started (scaffolded) | - |
 | 4. Backup-File Specialist Mode | 0/TBD | Not started (skeleton) | - |
