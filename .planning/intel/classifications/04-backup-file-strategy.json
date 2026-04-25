@@ -1,0 +1,24 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\04-backup-file-strategy.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Backup-File Mode: Specification",
+  "summary": "Specification for offline analysis of UniFi Network controller .unf backup files, covering decryption, parsing, sanitization, findings generation, and CLI/API surface for Phase 1.",
+  "scope": [
+    ".unf backup file format",
+    "AES-128-CBC decryption",
+    "MongoDB/BSON collection extraction",
+    "secret sanitization rules",
+    "Finding dataclass model",
+    "parser architecture",
+    "CLI interface",
+    "report and gap-question output",
+    "Phase 1 milestones",
+    ".unifi console backups (out of scope)"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

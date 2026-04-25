@@ -1,0 +1,28 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\07-coverage-analysis.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Coverage Check: 10 Video Points vs Current Design",
+  "summary": "Gap analysis comparing the design's questionnaire and parser modules against a 10-point video reference, identifying missing per-AP radio tuning coverage and proposing additional questions, findings, and module changes.",
+  "scope": [
+    "questionnaire coverage",
+    "parser findings modules",
+    "per-AP radio tuning (Section 6.5)",
+    "firmware updates",
+    "VLAN segmentation",
+    "SSID/WPA configuration",
+    "IDS/IPS",
+    "geo-IP and content filtering",
+    "firewall zones and rules",
+    "automatic backups and tested restore",
+    "traffic logging and retention",
+    "VPN remote access (WireGuard/OpenVPN/L2TP/PPTP)",
+    "UniFi OS / Network / Protect / Access update domains",
+    "backup file fields (device.radio_table, wlanconf, setting.rogueap)"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

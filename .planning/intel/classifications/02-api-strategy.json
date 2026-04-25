@@ -1,0 +1,30 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\02-api-strategy.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "UniFi API Best Practices and Decryption Ethics",
+  "summary": "Locks the API-first authentication strategy: Network Application API Key as primary, Site Manager API Key as fallback, backup-file as specialist mode, cookie-auth avoided.",
+  "scope": [
+    "UniFi Network Application API",
+    "Site Manager API",
+    "X-API-KEY authentication",
+    "Backup file decryption",
+    "Cookie-session legacy auth",
+    "Mode selection UX",
+    "Phase roadmap",
+    "MCP integration positioning"
+  ],
+  "cross_refs": [
+    "DECISIONS.md",
+    "docs/06-mcp-strategy.md",
+    "docs/04-backup-file-strategy.md",
+    "developer.ui.com",
+    "help.ui.com",
+    "https://developer.ui.com/unifi-api/access",
+    "sirkirby/unifi-mcp"
+  ],
+  "locked": true,
+  "precedence": 1,
+  "notes": ""
+}

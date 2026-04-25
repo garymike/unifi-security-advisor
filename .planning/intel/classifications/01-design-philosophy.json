@@ -1,0 +1,23 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\01-design-philosophy.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Design Philosophy",
+  "summary": "Foundational design principles for the UniFi security advisor including discovery-first interaction, tier-aware voicing, intent-confirming findings, and biomimetic architecture framing.",
+  "scope": [
+    "design principles",
+    "discovery-first pattern",
+    "tier system (Guided/Standard/Pro)",
+    "intent-confirming findings",
+    "credential handling philosophy",
+    "API hierarchy preference",
+    "biomimetic framing (segmentation, scoring, detection)",
+    "project non-goals",
+    "design conflict precedence"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

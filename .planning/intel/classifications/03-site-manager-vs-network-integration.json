@@ -1,0 +1,23 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\03-site-manager-vs-network-integration.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Site Manager API vs Network Integration API",
+  "summary": "Comparative analysis of Ubiquiti's Site Manager (cloud) and Network Integration (local) APIs covering features, security posture, and recommended choice for the audit tool.",
+  "scope": [
+    "Site Manager API",
+    "Network Integration API",
+    "Cloud Connector",
+    "X-API-KEY authentication",
+    "API security posture",
+    "trust boundary analysis",
+    "MSP multi-site scenarios",
+    "CGNAT fallback",
+    "audit tool API selection"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

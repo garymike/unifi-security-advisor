@@ -1,0 +1,22 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\06-mcp-strategy.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Backup-File vs MCP: Long-Term Path Analysis",
+  "summary": "Decides not to build a competing MCP server; integrate sirkirby/unifi-mcp as opt-in runtime companion while backup-file remains the primary posture engine.",
+  "scope": [
+    "MCP integration strategy",
+    "sirkirby/unifi-mcp",
+    "backup-file mode",
+    "live-state querying",
+    "remediation workflow",
+    "auth tradeoffs (X-API-KEY vs local admin cookie)",
+    "hybrid wizard architecture",
+    "phased roadmap (Phase 1-4)"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": 1,
+  "notes": "Manifest declared ADR with precedence 1; treated as authoritative. Document is structured as analysis-leading-to-decision with explicit Recommendation, What NOT to build, and Concrete next steps sections. Locks D-006 per orchestrator context (integrate sirkirby/unifi-mcp instead of building our own)."
+}

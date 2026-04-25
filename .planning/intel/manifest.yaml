@@ -1,0 +1,32 @@
+docs:
+  - path: DECISIONS.md
+    type: ADR
+    precedence: 0
+  - path: CLAUDE.md
+    type: SPEC
+    precedence: 1
+  - path: docs/05-credential-handling.md
+    type: SPEC
+    precedence: 1
+  - path: QUESTIONNAIRE.md
+    type: SPEC
+    precedence: 2
+  - path: ROADMAP.md
+    type: PRD
+    precedence: 3
+  - path: docs/01-design-philosophy.md
+    type: DOC
+  - path: docs/02-api-strategy.md
+    type: ADR
+    precedence: 1
+  - path: docs/03-site-manager-vs-network-integration.md
+    type: DOC
+  - path: docs/04-backup-file-strategy.md
+    type: DOC
+  - path: docs/06-mcp-strategy.md
+    type: ADR
+    precedence: 1
+  - path: docs/07-coverage-analysis.md
+    type: DOC
+  - path: docs/08-questionnaire-addendum.md
+    type: DOC

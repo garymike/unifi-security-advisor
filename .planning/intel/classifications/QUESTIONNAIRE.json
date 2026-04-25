@@ -1,0 +1,22 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\QUESTIONNAIRE.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Consolidated Questionnaire",
+  "summary": "Consolidated questionnaire spec defining 14 sections of audit questions with sources, tier voices, control-framework mappings, and per-question metadata schema.",
+  "scope": [
+    "questionnaire structure",
+    "audit sections",
+    "tiered question voices (Guided/Standard/Pro)",
+    "question metadata schema",
+    "control framework mappings (NIST CSF, CIS v8, Zero Trust)",
+    "always-float-to-top findings",
+    "compliance branches (HIPAA, PCI, GLBA, FERPA, NERC CIP, CMMC)",
+    "data source routing (API, API+confirm, API+enrich, User-only)"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": 2,
+  "notes": ""
+}

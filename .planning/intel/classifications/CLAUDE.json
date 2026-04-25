@@ -1,0 +1,38 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\CLAUDE.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Context for Claude Code",
+  "summary": "Load-bearing behavioral contract defining absolute constraints, tier system, data source preference order, finding data model, and code conventions for the UniFi security posture advisor.",
+  "scope": [
+    "UniFi security posture advisor",
+    "credential handling constraints",
+    "tier system (Guided/Standard/Pro)",
+    "data source preference order",
+    "Network Integration API",
+    "Site Manager API",
+    "backup file mode",
+    "Finding dataclass schema",
+    "always-float-to-top findings",
+    "phase 1 scope boundaries",
+    "code conventions (Python 3.9+)",
+    "testing fixtures",
+    "profile labels",
+    "questionnaire integration"
+  ],
+  "cross_refs": [
+    "docs/05-credential-handling.md",
+    "docs/01-design-philosophy.md",
+    "docs/02-api-strategy.md",
+    "docs/04-backup-file-strategy.md",
+    "docs/06-mcp-strategy.md",
+    "docs/07-coverage-analysis.md",
+    "DECISIONS.md",
+    "src/findings_enhanced.py",
+    "src/unifi_audit.py",
+    "QUESTIONNAIRE.md"
+  ],
+  "locked": false,
+  "precedence": 1
+}

@@ -1,0 +1,33 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\DECISIONS.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Design Decisions Log",
+  "summary": "Chronological log of nine material design decisions (D-001 through D-009) covering tiering, questionnaire patterns, API strategy, MCP integration, project structure, and credential handling.",
+  "scope": [
+    "tier system (Guided/Standard/Pro)",
+    "discovery-first questionnaire pattern",
+    "cross-answer tension detection",
+    "free-text answer handling",
+    "'not sure' answer resolution",
+    "MCP integration strategy",
+    "Network Integration API as primary path",
+    "local-run audit script",
+    "project directory structure",
+    "credential handling boundary"
+  ],
+  "cross_refs": [
+    "docs/05-credential-handling.md",
+    "src/unifi_audit.py",
+    "src/parser.py",
+    "QUESTIONNAIRE.md",
+    "README.md",
+    "CLAUDE.md",
+    "ROADMAP.md",
+    "AUDIT_QUICKSTART.md"
+  ],
+  "locked": true,
+  "precedence": 0,
+  "notes": "Manifest-declared ADR; content confirms — document is a multi-decision log with Context/Decision/Consequences/Status structure per entry. All nine decisions carry Status: Active, treated as Accepted/locked. Aggregate ADR (multiple decisions in one file) rather than per-decision files."
+}

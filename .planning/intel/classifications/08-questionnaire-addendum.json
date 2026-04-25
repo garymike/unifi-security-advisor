@@ -1,0 +1,29 @@
+{
+  "source_path": "C:\\_dev\\unifi-security-advisor\\docs\\08-questionnaire-addendum.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Questionnaire Addendum: Coverage Fixes",
+  "summary": "Supplemental updates to the baseline questionnaire adding wireless tuning, firewall splits, VPN tiering, privacy-aware logging, backup, and firmware coverage fixes derived from a 10-point gap analysis.",
+  "scope": [
+    "questionnaire",
+    "wireless tuning",
+    "firewall and threat",
+    "geo-IP blocking",
+    "content filtering",
+    "safe-search enforcement",
+    "remote access VPN protocols",
+    "logging retention",
+    "backup destination and tested restore",
+    "firmware update domains",
+    "EOL hardware",
+    "CVE cross-reference",
+    "finding logic"
+  ],
+  "cross_refs": [
+    "QUESTIONNAIRE.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}
