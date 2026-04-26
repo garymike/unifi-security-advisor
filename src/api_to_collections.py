@@ -309,6 +309,15 @@ def _route_vpn_configs(vpn_configs: list[dict]) -> dict[str, dict]:
 
     Multiple configs of the same protocol: OR-aggregate the enabled flag so that
     if any instance is enabled, the protocol shows as enabled.
+
+    Known limitation (WR-04): when multiple configs share the same protocol key
+    (e.g. two WireGuard tunnels), the last config's non-enabled fields overwrite
+    the first config's fields. Only the enabled flag is correctly merged via OR.
+    In Phase 1 this is acceptable because all finding modules only inspect the
+    enabled flag. If a future finding module reads port, peers, or endpoint
+    fields, it will silently see only the last config's values. At that point,
+    replace the routed[key] = dict(config) overwrite with a proper merge strategy
+    (e.g. keep first config's fields, OR the enabled flag from all configs).
     """
     routed: dict[str, dict] = {
         "vpn_pptp": {},
