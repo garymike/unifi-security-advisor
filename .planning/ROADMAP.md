@@ -13,7 +13,7 @@ The journey is **API-first** (`D-007` LOCKED, official X-API-KEY paths only — 
 - Decimal phases (e.g., 2.1): Reserved for urgent insertions (none currently)
 
 - [x] **Phase 1: Live API Audit** - Local-run audit script using Network Integration API; sanitized markdown + JSON output (COMPLETE — 8/8 plans; all acceptance bar conditions met; 202 tests pass)
-- [ ] **Phase 2: Intent-Interview Wizard** - Tier-aware wizard that consumes Phase 1 JSON and asks only gap questions (intent, non-UniFi devices, process)
+- [x] **Phase 2: Intent-Interview Wizard** - Tier-aware wizard that consumes Phase 1 JSON and asks only gap questions (intent, non-UniFi devices, process) (completed 2026-04-26)
 - [ ] **Phase 3: Site Manager API Fallback** - Cloud-routed audit path for CGNAT and multi-site MSP scenarios
 - [ ] **Phase 4: Backup-File Specialist Mode** - Offline `.unf`/`.unifi` parsing for airgap, forensic, and MSP-handoff use cases
 - [ ] **Phase 5: MCP Integration (Optional Add-On)** - Skills/prompts that teach Claude to remediate our findings using sirkirby/unifi-mcp tools
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7. Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live API Audit | 8/8 | Complete | 2026-04-26 |
+| 1. Live API Audit | 8/8 | Complete    | 2026-04-26 |
 | 2. Intent-Interview Wizard | 0/TBD | Not started | - |
 | 3. Site Manager API Fallback | 0/TBD | Not started (scaffolded) | - |
 | 4. Backup-File Specialist Mode | 0/TBD | Not started (skeleton) | - |

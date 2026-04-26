@@ -49,7 +49,7 @@ Sub-requirements of REQ-phase1-live-api-audit. All implemented at module level; 
 These are the four gating items between current Phase 1 state and Phase 1 completion.
 
 - [x] **REQ-wire-enhanced-modules-into-audit-script** — Wire the six enhanced finding modules (`findings_enhanced.py`) into `unifi_audit.py`'s `analyze()` modules list. RESOLVED in Plan 01-02 via api_to_collections.py adapter.
-- [ ] **REQ-cross-answer-tension-detection** — Implement the compound-finding correlation pass after individual modules run (`D-003` LOCKED). Examples: priority mismatch (downtime-sensitivity + single WAN), keys-to-kingdom (mobile remote management + MFA unknown), pivot path (NAS reachable + IoT internet unknown).
+- [x] **REQ-cross-answer-tension-detection** — Implement the compound-finding correlation pass after individual modules run (`D-003` LOCKED). Examples: priority mismatch (downtime-sensitivity + single WAN), keys-to-kingdom (mobile remote management + MFA unknown), pivot path (NAS reachable + IoT internet unknown).
 - [x] **REQ-profile-aware-scoring-weights
 ** — Profile-aware scoring weights so home profiles don't get enterprise retention recommendations and regulated profiles don't get under-tuned. Weight table per `(profile × finding-section)`.
 - [x] **REQ-always-float-to-top-overrides
@@ -116,16 +116,16 @@ Every v1 requirement maps to exactly one phase. Updated during roadmap creation;
 | REQ-finding-module-logging | Phase 1 | In Progress (implemented, not wired) |
 | REQ-finding-module-backup | Phase 1 | In Progress (implemented, not wired) |
 | REQ-finding-module-api-coverage-meta | Phase 1 | Complete (wired) |
-| REQ-wire-enhanced-modules-into-audit-script | Phase 1 | Pending |
-| REQ-cross-answer-tension-detection | Phase 1 | Pending |
-| REQ-profile-aware-scoring-weights | Phase 1 | Pending |
-| REQ-always-float-to-top-overrides | Phase 1 | Pending |
-| REQ-validation-real-network | Phase 1 | Pending |
-| REQ-validation-api-response-shapes | Phase 1 | Pending |
-| REQ-validation-network-version-compat | Phase 1 | Pending |
+| REQ-wire-enhanced-modules-into-audit-script | Phase 1 | Complete |
+| REQ-cross-answer-tension-detection | Phase 1 | Complete |
+| REQ-profile-aware-scoring-weights | Phase 1 | Complete |
+| REQ-always-float-to-top-overrides | Phase 1 | Complete |
+| REQ-validation-real-network | Phase 1 | Complete |
+| REQ-validation-api-response-shapes | Phase 1 | Complete |
+| REQ-validation-network-version-compat | Phase 1 | Complete |
 | REQ-validation-cloud-mode | Phase 1 | Pending (depends on Phase 3 cloud validation) |
-| REQ-validation-ssl-self-signed | Phase 1 | Pending |
-| REQ-validation-sanitization-coverage | Phase 1 | Pending |
+| REQ-validation-ssl-self-signed | Phase 1 | Complete |
+| REQ-validation-sanitization-coverage | Phase 1 | Complete |
 | REQ-test-fixtures | Phase 1 | Complete (Plan 01-08) |
 | REQ-phase2-intent-interview-wizard | Phase 2 | Pending |
 | REQ-phase3-site-manager-fallback | Phase 3 | Pending |
