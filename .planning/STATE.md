@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-adapter-and-wire-enhanced-modules-PLAN.md
-last_updated: "2026-04-26T12:55:19Z"
-last_activity: 2026-04-26 -- Plan 01-02 completed (adapter + 12-module analyze)
+stopped_at: Completed 01-03-correlations-PLAN.md
+last_updated: "2026-04-26T13:03:11Z"
+last_activity: 2026-04-26 -- Plan 01-03 completed (correlation pass + 3 compound rules; REQ-cross-answer-tension-detection closed; 82 tests passing)
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 2
-  percent: 25
+  completed_plans: 3
+  percent: 37
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 ## Current Position
 
 Phase: 1 (Live API Audit) — EXECUTING
-Plan: 2 of 8 complete
+Plan: 3 of 8 complete
 Status: Executing Phase 1
-Last activity: 2026-04-26 -- Plan 01-02 completed (adapter + 12-module analyze)
+Last activity: 2026-04-26 -- Plan 01-03 completed (correlation pass + 3 compound rules; REQ-cross-answer-tension-detection closed; 82 tests passing)
 
-Progress: [███░░░░░░░] ~25% (Phase 1 scaffold + 12 of 12 finding modules wired; adapter built; T-1-04 mitigated; 67 tests passing)
+Progress: [████░░░░░░] ~37% (Phase 1 scaffold + 12 finding modules + correlation pass; adapter built; T-1-04 mitigated; 82 tests passing)
 
 ## Performance Metrics
 
@@ -44,12 +44,12 @@ Progress: [███░░░░░░░] ~25% (Phase 1 scaffold + 12 of 12 fin
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Live API Audit | 2 | ~624s | ~312s |
+| 1. Live API Audit | 3 | ~804s | ~268s |
 
 **Recent Trend:**
 
-- Last 5 plans: P01 (325s), P02 (299s)
-- Trend: stable
+- Last 5 plans: P01 (325s), P02 (299s), P03 (~180s)
+- Trend: accelerating
 
 *Updated after each plan completion.*
 
@@ -57,6 +57,7 @@ Progress: [███░░░░░░░] ~25% (Phase 1 scaffold + 12 of 12 fin
 |-------|------|-------|-------|-------|
 | 1. Live API Audit | P01 extract-sanitizer | 325s | 5 tasks | 11 files |
 | 1. Live API Audit | P02 adapter+wire-enhanced | 299s | 3 tasks | 6 files |
+| 1. Live API Audit | P03 correlations | ~180s | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current Phase 1 work:
 - Plan 02: firewallgroup mapped to firewall_zones (Integration v1 does not expose a separate group collection; zones serve the same structural role)
 - Plan 02: find_remote_access aliased as find_remote_access_enhanced at import to avoid collision with baseline _find_remote_access
 - Plan 02: Module-level _logger added to unifi_audit.py so _extract_list can warn before setup_logger() is called
+- Plan 03: Lazy `from unifi_audit import Finding` inside each correlation rule body avoids circular import (findings_correlations imported by unifi_audit at module level)
+- Plan 03: correlate_priority_mismatch Phase 1 trigger is FW-* + VPN-MISSING (conservative proxy; downtime-sensitivity data not available from API alone)
+- Plan 03: CORRELATION_RULES list registry pattern — new rules added by appending; _correlate_findings() iterates with try/except per rule
 
 ### Pending Todos
 
@@ -88,7 +92,7 @@ None yet (project just initialized from ingest).
 **Phase 1 needs-work (open implementation gaps):**
 
 1. ~~**REQ-wire-enhanced-modules-into-audit-script**~~ RESOLVED in Plan 01-02: all 6 enhanced modules wired; analyze() now runs 12 modules; adapter (api_to_collections.py) translates API shape; 67 tests passing.
-2. **REQ-cross-answer-tension-detection** — Compound-finding correlation pass not yet implemented. Required by `D-003`. Addressed in Plan 01-03.
+2. ~~**REQ-cross-answer-tension-detection**~~ RESOLVED in Plan 01-03: findings_correlations.py with 3 compound rules (CORR-PRIORITY-001, CORR-KEYS-001, CORR-PIVOT-001); _correlate_findings() pass wired into analyze(); 82 tests passing.
 3. **REQ-profile-aware-scoring-weights** — Profile labels exist (home / home_office / small_business / regulated_hipaa / regulated_pci) and are passed to modules, but per-`(profile × section)` weight table not implemented. Addressed in Plan 01-05.
 4. **REQ-always-float-to-top-overrides** — Of the six always-float-to-top findings (`C-finding-002`), only PPTP is fully wired. MFA, default credentials, and management-plane WAN-reachability are not detectable from Network Integration API alone — these become Phase 2 questionnaire items but must be flagged in Phase 1 output. Addressed in Plan 01-04.
 
@@ -131,8 +135,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T12:55:19Z
-Stopped at: Completed 01-02-adapter-and-wire-enhanced-modules-PLAN.md
+Last session: 2026-04-26T13:03:11Z
+Stopped at: Completed 01-03-correlations-PLAN.md
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z
