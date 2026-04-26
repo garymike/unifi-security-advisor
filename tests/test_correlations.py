@@ -66,6 +66,35 @@ def test_priority_mismatch_no_fire_on_vpn_missing_alone():
     assert result is None
 
 
+def test_priority_mismatch_no_fire_on_fw_eol_without_port_forwards():
+    """Regression WR-01: FW-EOL-001 (firmware EOL) + VPN-MISSING must NOT fire.
+
+    The rule targets port-forward findings (IDs ending in -PF or equal to FW-002),
+    not firmware/auto-update/geo-filter findings that also start with FW-.
+    A site with only an EOL device finding and no VPN should not receive
+    CORR-PRIORITY-001 claiming port-forwards expose a remote-access path.
+    """
+    findings = [
+        _F("FW-EOL-001", "Firmware", "high"),
+        _F("FW-AUTO-001", "Firmware", "medium"),
+        _F("FW-GEO-IN", "Firewall", "info"),
+        _F("VPN-MISSING-default", "VPN", "high"),
+    ]
+    result = correlate_priority_mismatch(findings, "home_office")
+    assert result is None, (
+        "CORR-PRIORITY-001 must not fire on FW-EOL/FW-AUTO/FW-GEO findings "
+        "— only on port-forward findings (IDs ending in -PF or FW-002)"
+    )
+
+
+def test_priority_mismatch_fires_with_fw_002():
+    """FW-002 (parser.py port-forward finding ID) + VPN-MISSING must fire."""
+    findings = [_F("FW-002", "Firewall", "medium"), _F("VPN-MISSING-default")]
+    result = correlate_priority_mismatch(findings, "home_office")
+    assert result is not None
+    assert result.id == "CORR-PRIORITY-001"
+
+
 # --- correlate_keys_to_kingdom ----------------------------------------------
 
 def test_keys_to_kingdom_fires():

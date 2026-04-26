@@ -58,7 +58,14 @@ def correlate_priority_mismatch(findings: list, profile: str) -> Any | None:
     Returns:
         A CORR-PRIORITY-001 Finding if the trigger condition is met, else None.
     """
-    has_pf = _has_finding_id(findings, "FW-") and _has_finding_id(findings, "VPN-MISSING")
+    # Port-forward findings are emitted as FW-{site_id}-PF by _find_firewall()
+    # and as FW-002 by parser.py find_firewall(). Use suffix/ID-specific match
+    # so firmware (FW-EOL-*), auto-update (FW-AUTO-*), and geo-filter (FW-GEO-*)
+    # findings do not trigger this rule — only actual port-forward findings do.
+    has_pf = (
+        any(f.id.endswith("-PF") or f.id == "FW-002" for f in findings)
+        and _has_finding_id(findings, "VPN-MISSING")
+    )
     if not has_pf:
         return None
     from unifi_audit import Finding
