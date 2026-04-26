@@ -703,6 +703,12 @@ def _find_devices(clean: dict, profile: str) -> list[Finding]:
         devices = _extract_list(site.get("devices"))
         if not devices:
             continue
+        # Belt-and-suspenders: check both camelCase (raw Integration v1 API response)
+        # and snake_case (adapter output via api_to_collections._device_to_classic()).
+        # This module reads the raw API dict directly; the adapter maps sshEnabled →
+        # ssh_enabled for the enhanced-module path. Checking both ensures SSH detection
+        # survives if a future firmware version renames the field and only the adapter
+        # is updated, not this baseline module.
         ssh_on = [d for d in devices if d.get("sshEnabled") or d.get("ssh_enabled")]
         if ssh_on:
             findings.append(Finding(
