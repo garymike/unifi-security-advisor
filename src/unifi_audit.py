@@ -74,6 +74,7 @@ try:
         find_logging,
         find_backup_config,
     )
+    from findings_correlations import CORRELATION_RULES  # script mode
 except ImportError:
     from src.api_to_collections import build_parser_collections  # package mode
     from src.findings_enhanced import (  # package mode
@@ -84,6 +85,7 @@ except ImportError:
         find_logging,
         find_backup_config,
     )
+    from src.findings_correlations import CORRELATION_RULES  # package mode
 
 
 # =============================================================================
@@ -344,13 +346,44 @@ def _extract_sites(sites_response: Any) -> list[dict]:
 # FINDINGS PHASE: run analysis on sanitized data
 # =============================================================================
 
+def _correlate_findings(findings: list[Finding], profile: str, logger: logging.Logger) -> list[Finding]:
+    """Run all compound-finding correlation rules over the current findings list.
+
+    Returns NEW findings produced by the rules (does not mutate the input list).
+    Each rule is wrapped in try/except so a single rule failure cannot abort
+    the audit. Rules return Finding | None; None is filtered out.
+
+    Args:
+        findings: Current list of findings emitted by individual modules.
+        profile: Audit profile string (e.g. ``"home_office"``).
+        logger: Logger for warning on rule failure.
+
+    Returns:
+        List of new compound Finding objects (may be empty).
+    """
+    new: list[Finding] = []
+    for rule in CORRELATION_RULES:
+        try:
+            result = rule(findings, profile)
+        except Exception as e:
+            logger.warning(f"Correlation rule {getattr(rule, '__name__', rule)} failed: {e}")
+            continue
+        if result is not None:
+            new.append(result)
+    return new
+
+
 def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
-    """Run all 12 findings modules (6 baseline + 6 enhanced).
+    """Run all 12 findings modules (6 baseline + 6 enhanced), then correlate.
 
     Each module is wrapped in try/except so one failure does not abort the audit.
     Enhanced modules receive the adapter output (parser-shape colls dict) rather
     than the raw clean dict. If the adapter itself fails, enhanced modules are
     skipped with a WARNING — the baseline modules still run.
+
+    After individual modules complete, _correlate_findings() runs the compound
+    rule pass (D-004) to detect cross-answer tensions. Correlation findings are
+    appended before the final severity sort.
     """
     findings: list[Finding] = []
 
@@ -393,6 +426,10 @@ def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
             findings.extend(fn())
         except Exception as e:
             logger.warning(f"Enhanced module {name} failed: {e}")
+
+    # --- Correlation pass: compound rules run after individual modules, before sort ---
+    correlation_findings = _correlate_findings(findings, profile, logger)
+    findings.extend(correlation_findings)
 
     # Sort by severity then section
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
