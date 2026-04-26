@@ -35,8 +35,8 @@ The journey is **API-first** (`D-007` LOCKED, official X-API-KEY paths only â€” 
   5. Profile-aware scoring weights produce different severity rankings for the same evidence depending on the `UNIFI_PROFILE` env var (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`).
   6. Sanitization regression-tested against real API responses confirms no PSK, RADIUS shared secret, admin password hash, API token, or session cookie appears in any output file.
 **Plans**: 8 plans
-- [ ] 01-01-PLAN.md — Extract sanitizer.py + pytest scaffold + fixture safety gate
-- [ ] 01-02-PLAN.md — API-to-collections adapter + wire 6 enhanced modules into analyze()
+- [x] 01-01-PLAN.md — Extract sanitizer.py + pytest scaffold + fixture safety gate
+- [x] 01-02-PLAN.md — API-to-collections adapter + wire 6 enhanced modules into analyze()
 - [ ] 01-03-PLAN.md — Cross-answer correlation pass + 3 compound rules (D-04)
 - [ ] 01-04-PLAN.md — Always-float-to-top override + 3 unknown findings (D-02, D-03, D-10)
 - [ ] 01-05-PLAN.md — Profile-aware scoring weights table (D-05, D-06)

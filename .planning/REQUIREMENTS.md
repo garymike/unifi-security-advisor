@@ -37,18 +37,18 @@ Sub-requirements of REQ-phase1-live-api-audit. All implemented at module level; 
 - [x] **REQ-finding-module-firewall** — Port forwards basic finding logic. (Wired, basic)
 - [x] **REQ-finding-module-remote-access** — VPN protocol tiering (PPTP critical, L2TP discouraged, WireGuard preferred), port-forwards-without-VPN finding. (Wired)
 - [x] **REQ-finding-module-devices** — SSH enablement per device. (Wired)
-- [~] **REQ-finding-module-wireless-tuning** — TX power, 2.4 GHz audit, rogue AP detection, fast roaming on multi-AP, PMF on WPA3. (Implemented in `findings_enhanced.py`; **NOT yet wired** into live audit)
-- [~] **REQ-finding-module-firewall-threats** — Geo-IP both directions (WAN_IN / WAN_OUT), content filtering (DNS-based, Security minimum), safe-search (conditional on children-in-household). (Implemented in `findings_enhanced.py`; **NOT yet wired**)
-- [~] **REQ-finding-module-firmware** — Auto-update toggle, EOL hardware cross-reference, stale versions across 4 update domains (per-device firmware, UniFi OS, Network app, other apps). (Implemented in `findings_enhanced.py`; **NOT yet wired**; CVE database deferred)
-- [~] **REQ-finding-module-logging** — Privacy-aware retention recommendations by profile (home: 7-14d traffic / 30d admin; regulated_hipaa: 6 years both; etc.). (Implemented in `findings_enhanced.py`; **NOT yet wired**)
-- [~] **REQ-finding-module-backup** — Destination diversity finding (off-device backup required); tested-restore Schrödinger finding (always fires unless user confirms tested restore in last 12 months). (Implemented in `findings_enhanced.py`; **NOT yet wired**)
+- [x] **REQ-finding-module-wireless-tuning** — TX power, 2.4 GHz audit, rogue AP detection, fast roaming on multi-AP, PMF on WPA3. (Wired via adapter in Plan 01-02)
+- [x] **REQ-finding-module-firewall-threats** — Geo-IP both directions (WAN_IN / WAN_OUT), content filtering (DNS-based, Security minimum), safe-search (conditional on children-in-household). (Wired via adapter in Plan 01-02)
+- [x] **REQ-finding-module-firmware** — Auto-update toggle, EOL hardware cross-reference, stale versions across 4 update domains (per-device firmware, UniFi OS, Network app, other apps). (Wired via adapter in Plan 01-02; CVE database deferred)
+- [x] **REQ-finding-module-logging** — Privacy-aware retention recommendations by profile (home: 7-14d traffic / 30d admin; regulated_hipaa: 6 years both; etc.). (Wired via adapter in Plan 01-02)
+- [x] **REQ-finding-module-backup** — Destination diversity finding (off-device backup required); tested-restore Schrödinger finding (always fires unless user confirms tested restore in last 12 months). (Wired via adapter in Plan 01-02)
 - [x] **REQ-finding-module-api-coverage-meta** — Meta-finding tracking which questionnaire items are answered by API vs require user input. (Wired)
 
 ### Phase 1 needs-work items (4 — open Phase 1 work)
 
 These are the four gating items between current Phase 1 state and Phase 1 completion.
 
-- [ ] **REQ-wire-enhanced-modules-into-audit-script** — Wire the six enhanced finding modules (`findings_enhanced.py`) into `unifi_audit.py`'s `analyze()` modules list. Handle data-model differences (parser collection names vs API response keys).
+- [x] **REQ-wire-enhanced-modules-into-audit-script** — Wire the six enhanced finding modules (`findings_enhanced.py`) into `unifi_audit.py`'s `analyze()` modules list. RESOLVED in Plan 01-02 via api_to_collections.py adapter.
 - [ ] **REQ-cross-answer-tension-detection** — Implement the compound-finding correlation pass after individual modules run (`D-003` LOCKED). Examples: priority mismatch (downtime-sensitivity + single WAN), keys-to-kingdom (mobile remote management + MFA unknown), pivot path (NAS reachable + IoT internet unknown).
 - [ ] **REQ-profile-aware-scoring-weights** — Profile-aware scoring weights so home profiles don't get enterprise retention recommendations and regulated profiles don't get under-tuned. Weight table per `(profile × finding-section)`.
 - [ ] **REQ-always-float-to-top-overrides** — Override logic that surfaces the six always-float-to-top findings to the top regardless of overall scoring (no MFA, mgmt plane WAN-reachable, flat network with mixed device classes, default credentials, firmware >2 majors behind with advisories, PPTP/deprecated VPN). Note: three of the six (MFA, default creds, WAN reachability) are not detectable from Network Integration API alone — these become Phase 2 questionnaire gap-questions and must be flagged accordingly.
@@ -58,7 +58,7 @@ These are the four gating items between current Phase 1 state and Phase 1 comple
 Required to declare Phase 1 complete.
 
 - [ ] **REQ-validation-real-network** — Run `unifi_audit.py` against a real UniFi network and confirm endpoints respond as expected.
-- [ ] **REQ-validation-api-response-shapes** — Diff actual API response shapes against assumed shapes in `_extract_list` / `_extract_sites` helpers. Add error logging for unmatched shapes (currently silently returns empty).
+- [x] **REQ-validation-api-response-shapes** — Diff actual API response shapes against assumed shapes in `_extract_list` / `_extract_sites` helpers. RESOLVED in Plan 01-02: _extract_list + _unwrap() both log WARNING with observed keys on unknown shapes (T-1-04); asserted by tests.
 - [ ] **REQ-validation-network-version-compat** — Test with Network ≥ 9.3.43 (required for Integration API) and an older version to confirm graceful 404 handling.
 - [ ] **REQ-validation-cloud-mode** — Test cloud mode (`UNIFI_USE_CLOUD=true`) once a unified API key with Cloud Connector is available (April 2026 unified key).
 - [ ] **REQ-validation-ssl-self-signed** — Test SSL self-signed default for local mode.

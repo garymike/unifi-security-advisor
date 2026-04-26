@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-extract-sanitizer-PLAN.md
-last_updated: "2026-04-26T12:48:09.060Z"
-last_activity: 2026-04-26 -- Phase --phase execution started
+stopped_at: Completed 01-02-adapter-and-wire-enhanced-modules-PLAN.md
+last_updated: "2026-04-26T12:55:19Z"
+last_activity: 2026-04-26 -- Plan 01-02 completed (adapter + 12-module analyze)
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 1
-  percent: 13
+  completed_plans: 2
+  percent: 25
 ---
 
 # Project State
@@ -21,41 +21,42 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-25)
 
 **Core value:** Tell a UniFi operator whether their configuration is good — not just whether it works — without ever taking custody of their credentials.
-**Current focus:** Phase --phase — 1
+**Current focus:** Phase 1 — Live API Audit
 
 ## Current Position
 
-Phase: --phase (1) — EXECUTING
-Plan: 1 of --name
-Status: Executing Phase --phase
-Last activity: 2026-04-26 -- Phase --phase execution started
+Phase: 1 (Live API Audit) — EXECUTING
+Plan: 2 of 8 complete
+Status: Executing Phase 1
+Last activity: 2026-04-26 -- Plan 01-02 completed (adapter + 12-module analyze)
 
-Progress: [██░░░░░░░░] ~20% (Phase 1 skeleton + 6 of 12 finding modules wired; codebase analysis complete in `.planning/codebase/`)
+Progress: [███░░░░░░░] ~25% (Phase 1 scaffold + 12 of 12 finding modules wired; adapter built; T-1-04 mitigated; 67 tests passing)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (planning not yet started under GSD)
-- Average duration: n/a
-- Total execution time: 0 hours
+- Total plans completed: 2
+- Average duration: ~312s (~5 min)
+- Total execution time: ~624s (~10 min)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Live API Audit | 0 | - | - |
+| 1. Live API Audit | 2 | ~624s | ~312s |
 
 **Recent Trend:**
 
-- Last 5 plans: n/a
-- Trend: n/a (pre-execution)
+- Last 5 plans: P01 (325s), P02 (299s)
+- Trend: stable
 
 *Updated after each plan completion.*
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Live API Audit P01 (extract-sanitizer) | 325s | 5 tasks | 11 files |
+| Phase | Plan | Total | Tasks | Files |
+|-------|------|-------|-------|-------|
+| 1. Live API Audit | P01 extract-sanitizer | 325s | 5 tasks | 11 files |
+| 1. Live API Audit | P02 adapter+wire-enhanced | 299s | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,10 @@ Recent decisions affecting current Phase 1 work:
 - **D-008 (LOCKED)**: Local-run audit script as Phase 1 deliverable → credentials never transit chat; user runs script locally.
 - **D-003 (LOCKED)**: Cross-answer tension detection is a real engine requirement → adds correlation pass after individual modules; tracked as REQ-cross-answer-tension-detection in Phase 1 needs-work.
 - D-09: Extracted src/sanitizer.py with 26-entry frozenset (snake_case + camelCase); DRY violation closed; both unifi_audit.py and parser.py import from it
+- D-01 (Plan 02): Adapter pattern isolates all camelCase→snake_case translation in api_to_collections.py; findings_enhanced.py stays untouched
+- Plan 02: firewallgroup mapped to firewall_zones (Integration v1 does not expose a separate group collection; zones serve the same structural role)
+- Plan 02: find_remote_access aliased as find_remote_access_enhanced at import to avoid collision with baseline _find_remote_access
+- Plan 02: Module-level _logger added to unifi_audit.py so _extract_list can warn before setup_logger() is called
 
 ### Pending Todos
 
@@ -82,10 +87,10 @@ None yet (project just initialized from ingest).
 
 **Phase 1 needs-work (open implementation gaps):**
 
-1. **REQ-wire-enhanced-modules-into-audit-script** — Six finding modules in `src/findings_enhanced.py` (wireless tuning, firewall threats, enhanced remote access, enhanced firmware, logging, backup config) are NOT wired into `src/unifi_audit.py`'s `analyze()` modules list. Live audit currently misses ~50% of implemented coverage. Per CONCERNS.md, this is the most critical Phase 1 gap.
-2. **REQ-cross-answer-tension-detection** — Compound-finding correlation pass not yet implemented. Required by `D-003`.
-3. **REQ-profile-aware-scoring-weights** — Profile labels exist (home / home_office / small_business / regulated_hipaa / regulated_pci) and are passed to modules, but per-`(profile × section)` weight table not implemented.
-4. **REQ-always-float-to-top-overrides** — Of the six always-float-to-top findings (`C-finding-002`), only PPTP is fully wired. MFA, default credentials, and management-plane WAN-reachability are not detectable from Network Integration API alone — these become Phase 2 questionnaire items but must be flagged in Phase 1 output.
+1. ~~**REQ-wire-enhanced-modules-into-audit-script**~~ RESOLVED in Plan 01-02: all 6 enhanced modules wired; analyze() now runs 12 modules; adapter (api_to_collections.py) translates API shape; 67 tests passing.
+2. **REQ-cross-answer-tension-detection** — Compound-finding correlation pass not yet implemented. Required by `D-003`. Addressed in Plan 01-03.
+3. **REQ-profile-aware-scoring-weights** — Profile labels exist (home / home_office / small_business / regulated_hipaa / regulated_pci) and are passed to modules, but per-`(profile × section)` weight table not implemented. Addressed in Plan 01-05.
+4. **REQ-always-float-to-top-overrides** — Of the six always-float-to-top findings (`C-finding-002`), only PPTP is fully wired. MFA, default credentials, and management-plane WAN-reachability are not detectable from Network Integration API alone — these become Phase 2 questionnaire items but must be flagged in Phase 1 output. Addressed in Plan 01-04.
 
 **Phase 1 validation (blocking go-live):**
 
@@ -102,7 +107,7 @@ None yet (project just initialized from ingest).
 - ~~**Zero automated tests.**~~ RESOLVED in Plan 01-01: pytest infrastructure + 50 tests (45 pass, 5 skip) covering sanitizer at 96%.
 - ~~**DRY violation in sanitization.**~~ RESOLVED in Plan 01-01: `src/sanitizer.py` extracted; both `unifi_audit.py` and `parser.py` import from it; 26-entry frozenset covers snake_case + camelCase variants.
 - **Parser stub functions return empty.** `src/parser.py:431-433` — `find_logging`, `find_backup_config`, `find_firmware` all return `[]`. Phase 4 backup-mode users get zero findings for these sections. Resolve via shared module with `findings_enhanced.py`.
-- **API response schema fragility.** `_extract_list` / `_extract_sites` silently return empty list on unknown response shapes; recommend fail-fast logging when no fallback matches.
+- ~~**API response schema fragility.**~~ RESOLVED in Plan 01-02: `_extract_list` now logs WARNING with observed keys on unknown shape (T-1-04); `_unwrap()` in adapter does the same; both asserted by tests.
 - **Profile detection not implemented.** User must manually set `UNIFI_PROFILE`; default is `home_office`. ROADMAP open question — infer from API or always require user input?
 - **CVE database not integrated.** Firmware always-float-to-top finding cannot fully resolve without it; deferred to Phase 1.5 / Phase 2 per intel.
 
@@ -126,8 +131,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T12:48:09.055Z
-Stopped at: Completed 01-01-extract-sanitizer-PLAN.md
+Last session: 2026-04-26T12:55:19Z
+Stopped at: Completed 01-02-adapter-and-wire-enhanced-modules-PLAN.md
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z
