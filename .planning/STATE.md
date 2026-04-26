@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-05-profile-weights-PLAN.md
-last_updated: "2026-04-26T13:16:23.127Z"
+stopped_at: Completed 01-06-pipeline-smoke-suite-PLAN.md
+last_updated: "2026-04-26T13:24:15.978Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 5
-  percent: 63
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 ## Current Position
 
 Phase: 1 (Live API Audit) — EXECUTING
-Plan: 5 of 8 complete
+Plan: 6 of 8 complete
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [██████░░░░] 63%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████░░░░] 63%
 | 1. Live API Audit | P03 correlations | ~180s | 3 tasks | 4 files |
 | Phase 01-live-api-audit P04 | 182 | 2 tasks | 3 files |
 | Phase 01-live-api-audit PP05 | 194 | 3 tasks | 4 files |
+| Phase 01-live-api-audit PP06 | 285 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current Phase 1 work:
 - Profile-aware scoring (D-05): WEIGHTS dict in profile_weights.py keyed (profile,section)->multiplier; score_finding=(impact*weight)/effort_hours used as secondary sort key in analyze()
 - D-06 LOCKED: UNIFI_PROFILE env var only (default home_office); render_report shows '(manual)' suffix; auto-detection deferred to Phase 2 wizard
 - T-1-05 structural guarantee: _apply_float_top() runs LAST in analyze() — weight-based sort cannot demote always-top findings; asserted by 2 tests
+- adapter _get_setting fix: build_parser_collections now emits 'setting' list so _get_setting() can locate VPN protocol dicts; previously VPN-PPTP-001 silently missed detection
+- coverage invocation: --cov=sanitizer (module import name) not --cov=src/sanitizer; 96% achieved on sanitizer.py
 
 ### Pending Todos
 
@@ -141,8 +144,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T13:16:23.121Z
-Stopped at: Completed 01-05-profile-weights-PLAN.md
+Last session: 2026-04-26T13:24:15.974Z
+Stopped at: Completed 01-06-pipeline-smoke-suite-PLAN.md
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z

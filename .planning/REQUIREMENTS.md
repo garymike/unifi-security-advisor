@@ -61,9 +61,11 @@ Required to declare Phase 1 complete.
 
 - [ ] **REQ-validation-real-network** — Run `unifi_audit.py` against a real UniFi network and confirm endpoints respond as expected.
 - [x] **REQ-validation-api-response-shapes** — Diff actual API response shapes against assumed shapes in `_extract_list` / `_extract_sites` helpers. RESOLVED in Plan 01-02: _extract_list + _unwrap() both log WARNING with observed keys on unknown shapes (T-1-04); asserted by tests.
-- [ ] **REQ-validation-network-version-compat** — Test with Network ≥ 9.3.43 (required for Integration API) and an older version to confirm graceful 404 handling.
+- [x] **REQ-validation-network-version-compat
+** — Test with Network ≥ 9.3.43 (required for Integration API) and an older version to confirm graceful 404 handling.
 - [ ] **REQ-validation-cloud-mode** — Test cloud mode (`UNIFI_USE_CLOUD=true`) once a unified API key with Cloud Connector is available (April 2026 unified key).
-- [ ] **REQ-validation-ssl-self-signed** — Test SSL self-signed default for local mode.
+- [x] **REQ-validation-ssl-self-signed
+** — Test SSL self-signed default for local mode.
 - [x] **REQ-validation-sanitization-coverage
 ** — Confirm sanitization catches all secret field names in actual API responses (regression-tested against fixtures).
 - [x] **REQ-test-fixtures
