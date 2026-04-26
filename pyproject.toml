@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+pythonpath = ["src"]
+markers = [
+    "manual: marks tests that require human action (real network, real backup file)",
+]

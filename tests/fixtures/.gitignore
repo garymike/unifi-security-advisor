@@ -1,0 +1,4 @@
+# Real captured fixtures stay local (per D-08).
+# Only samples/fixtures/api_dump_home_office.json is committed (in Plan 08).
+*
+!.gitignore
