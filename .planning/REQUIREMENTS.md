@@ -69,8 +69,7 @@ Required to declare Phase 1 complete.
 ** — Test SSL self-signed default for local mode.
 - [x] **REQ-validation-sanitization-coverage
 ** — Confirm sanitization catches all secret field names in actual API responses (regression-tested against fixtures).
-- [x] **REQ-test-fixtures
-** — Gather Phase 1 validation fixtures: at least one real `.unf` backup file (single-site), at least one JSON dump from a live API run, and anonymized profiles across scales (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`).
+- [x] **REQ-test-fixtures** — Gather Phase 1 validation fixtures: at least one real `.unf` backup file (single-site), at least one JSON dump from a live API run, and anonymized profiles across scales (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`). RESOLVED in Plan 01-08: `samples/fixtures/api_dump_home_office.json` committed (15,012 bytes, anonymized + sanitized real-network capture).
 
 ## v2 Requirements
 
@@ -105,7 +104,7 @@ Every v1 requirement maps to exactly one phase. Updated during roadmap creation;
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REQ-phase1-live-api-audit | Phase 1 | In Progress |
+| REQ-phase1-live-api-audit | Phase 1 | Complete (Plan 01-08) |
 | REQ-finding-module-segmentation | Phase 1 | Complete (wired) |
 | REQ-finding-module-wifi | Phase 1 | Complete (wired) |
 | REQ-finding-module-firewall | Phase 1 | Complete (wired, basic) |
@@ -127,7 +126,7 @@ Every v1 requirement maps to exactly one phase. Updated during roadmap creation;
 | REQ-validation-cloud-mode | Phase 1 | Pending (depends on Phase 3 cloud validation) |
 | REQ-validation-ssl-self-signed | Phase 1 | Pending |
 | REQ-validation-sanitization-coverage | Phase 1 | Pending |
-| REQ-test-fixtures | Phase 1 | Pending |
+| REQ-test-fixtures | Phase 1 | Complete (Plan 01-08) |
 | REQ-phase2-intent-interview-wizard | Phase 2 | Pending |
 | REQ-phase3-site-manager-fallback | Phase 3 | Pending |
 | REQ-phase4-backup-file-mode | Phase 4 | Pending |

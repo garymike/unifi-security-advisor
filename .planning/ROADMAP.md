@@ -12,7 +12,7 @@ The journey is **API-first** (`D-007` LOCKED, official X-API-KEY paths only â€” 
 - Integer phases (1-7): Planned milestone work as committed in source intel
 - Decimal phases (e.g., 2.1): Reserved for urgent insertions (none currently)
 
-- [~] **Phase 1: Live API Audit** - Local-run audit script using Network Integration API; sanitized markdown + JSON output (in progress â€” skeleton complete, validation pending)
+- [x] **Phase 1: Live API Audit** - Local-run audit script using Network Integration API; sanitized markdown + JSON output (COMPLETE â€” 8/8 plans; all acceptance bar conditions met; 202 tests pass)
 - [ ] **Phase 2: Intent-Interview Wizard** - Tier-aware wizard that consumes Phase 1 JSON and asks only gap questions (intent, non-UniFi devices, process)
 - [ ] **Phase 3: Site Manager API Fallback** - Cloud-routed audit path for CGNAT and multi-site MSP scenarios
 - [ ] **Phase 4: Backup-File Specialist Mode** - Offline `.unf`/`.unifi` parsing for airgap, forensic, and MSP-handoff use cases
@@ -35,14 +35,14 @@ The journey is **API-first** (`D-007` LOCKED, official X-API-KEY paths only â€” 
   5. Profile-aware scoring weights produce different severity rankings for the same evidence depending on the `UNIFI_PROFILE` env var (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`).
   6. Sanitization regression-tested against real API responses confirms no PSK, RADIUS shared secret, admin password hash, API token, or session cookie appears in any output file.
 **Plans**: 8 plans
-- [x] 01-01-PLAN.md — Extract sanitizer.py + pytest scaffold + fixture safety gate
-- [x] 01-02-PLAN.md — API-to-collections adapter + wire 6 enhanced modules into analyze()
-- [x] 01-03-PLAN.md — Cross-answer correlation pass + 3 compound rules (D-04)
-- [x] 01-04-PLAN.md — Always-float-to-top override + 3 unknown findings (D-02, D-03, D-10)
-- [x] 01-05-PLAN.md — Profile-aware scoring weights table (D-05, D-06)
-- [x] 01-06-PLAN.md — Pipeline smoke suite + credential-leak static guard (T-1-02)
-- [x] 01-07-PLAN.md — Real-network manual validation (REQ-validation-real-network) [checkpoint]
-- [ ] 01-08-PLAN.md — Anonymize + commit canonical fixture (T-1-03)
+- [x] 01-01-PLAN.md ï¿½ Extract sanitizer.py + pytest scaffold + fixture safety gate
+- [x] 01-02-PLAN.md ï¿½ API-to-collections adapter + wire 6 enhanced modules into analyze()
+- [x] 01-03-PLAN.md ï¿½ Cross-answer correlation pass + 3 compound rules (D-04)
+- [x] 01-04-PLAN.md ï¿½ Always-float-to-top override + 3 unknown findings (D-02, D-03, D-10)
+- [x] 01-05-PLAN.md ï¿½ Profile-aware scoring weights table (D-05, D-06)
+- [x] 01-06-PLAN.md ï¿½ Pipeline smoke suite + credential-leak static guard (T-1-02)
+- [x] 01-07-PLAN.md ï¿½ Real-network manual validation (REQ-validation-real-network) [checkpoint]
+- [x] 01-08-PLAN.md ï¿½ Anonymize + commit canonical fixture (T-1-03)
 
 ### Phase 2: Intent-Interview Wizard
 **Goal**: Operator who has run a Phase 1 audit can answer a focused set of gap questions (intent, non-UniFi devices, process, compliance) in their preferred technical voice, and receive a unified report that merges API-detected facts with user-stated intent.
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7. Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live API Audit | 7/8 | In progress | - |
+| 1. Live API Audit | 8/8 | Complete | 2026-04-26 |
 | 2. Intent-Interview Wizard | 0/TBD | Not started | - |
 | 3. Site Manager API Fallback | 0/TBD | Not started (scaffolded) | - |
 | 4. Backup-File Specialist Mode | 0/TBD | Not started (skeleton) | - |

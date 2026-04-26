@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-07-real-network-validation-PLAN.md
-last_updated: "2026-04-26T14:19:07.670Z"
+status: phase_complete
+stopped_at: Completed 01-08-anonymize-and-commit-fixture-PLAN.md
+last_updated: "2026-04-26T15:50:00Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 
 ## Current Position
 
-Phase: 1 (Live API Audit) — EXECUTING
-Plan: 7 of 8 complete
-Status: Ready to execute
+Phase: 1 (Live API Audit) — COMPLETE
+Plan: 8 of 8 complete
+Status: Phase complete — all 8 plans executed, all acceptance bar conditions met
 Last activity: 2026-04-26
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [█████████░] 88%
 | Phase 01-live-api-audit PP05 | 194 | 3 tasks | 4 files |
 | Phase 01-live-api-audit PP06 | 285 | 3 tasks | 3 files |
 | Phase 01-live-api-audit P07 | 900 | 3 tasks | 2 files |
+| Phase 01-live-api-audit P08 | 1800 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,10 @@ Recent decisions affecting current Phase 1 work:
 - All [ASSUMED] adapter tags converted to [UNKNOWN 2026-04-26]: Plan 07 real-network run returned HTTP 401 on all Integration v1 endpoints — no real API shapes observable; Plan 08 is the resolution target
 - Graceful-401 degradation confirmed: unifi_audit.py exits 0, writes all output files, and produces 11 findings from fallback paths when auth fails completely
 - [UNKNOWN] vs [DIVERGENT] distinction: UNKNOWN means cannot observe (auth/scope failure); DIVERGENT means observed shape contradicts assumption; auth-401 → UNKNOWN not DIVERGENT
+- D-08 LOCKED: canonical fixture committed at samples/fixtures/api_dump_home_office.json (15,012 bytes); tests/fixtures/raw_sanitized.json gitignored permanently; layered defense: sanitizer (secrets) + anonymizer (PII) + fixture-safety gate (tests)
+- Sanitizer coverage gap closed: lines 64 and 98 of src/sanitizer.py now covered; _fingerprint(non-string) and idempotency dict passthrough both explicitly tested; coverage 92% → 100%
+- REQ-test-fixtures CLOSED: canonical fixture activates all previously-skipped real-data smoke tests; 202 tests pass with 0 skips
+- Phase 1 acceptance bar: all 8 conditions satisfied; phase complete
 
 ### Pending Todos
 
@@ -148,8 +153,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T14:19:07.665Z
-Stopped at: Completed 01-07-real-network-validation-PLAN.md
+Last session: 2026-04-26T15:50:00Z
+Stopped at: Completed 01-08-anonymize-and-commit-fixture-PLAN.md — Phase 1 complete (8/8 plans)
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z
