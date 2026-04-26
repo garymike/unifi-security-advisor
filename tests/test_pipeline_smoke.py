@@ -244,3 +244,46 @@ def test_render_report_does_not_include_apikey():
     clean = {"_endpoints_probed": [], "_errors": [], "_site_count": 0}
     report = render_report([], clean, "home_office")
     assert KEY not in report
+
+
+# --- Canonical-fixture smoke (REQ-test-fixtures, Plan 08) -----------------
+
+def test_canonical_fixture_pipeline_smoke(canonical_api_dump):
+    """REQ-test-fixtures + REQ-validation-real-network: real-data pipeline smoke.
+
+    Runs analyze() on the canonical fixture (sanitized + anonymized real capture
+    from Plan 07/08). Asserts findings shape and non-empty result.
+
+    The canonical fixture (api_dump_home_office.json) was captured from a real
+    UniFi controller running Network Application >=9.3.43. Devices, clients, and
+    networks endpoints returned HTTP 200; wlans, firewall, and VPN endpoints
+    returned HTTP 404, so only segmentation / device / admin findings fire.
+    """
+    logger = logging.getLogger("test")
+    logger.addHandler(logging.NullHandler())
+    findings = analyze(canonical_api_dump, "home_office", logger)
+
+    # Minimum finding count — real data should fire multiple findings
+    assert len(findings) >= 4, (
+        f"Expected >=4 findings on real fixture, got {len(findings)}: "
+        f"{[f.id for f in findings]}"
+    )
+
+    # Validate finding shape
+    for f in findings:
+        assert f.severity in VALID_SEVERITIES, f"Invalid severity {f.severity!r} in {f.id}"
+        assert f.status in VALID_STATUSES, f"Invalid status {f.status!r} in {f.id}"
+        assert isinstance(f.id, str) and f.id
+        assert isinstance(f.title, str) and f.title
+
+    # Always-top unknowns must be present regardless of fixture data
+    ids = {f.id for f in findings}
+    assert "MFA-UNKNOWN-001" in ids, "MFA-UNKNOWN-001 missing from canonical fixture findings"
+    assert "CRED-DEFAULT-001" in ids, "CRED-DEFAULT-001 missing from canonical fixture findings"
+    assert "WAN-MGMT-001" in ids, "WAN-MGMT-001 missing from canonical fixture findings"
+
+    # Always-top ordering: first finding must be an always-top finding
+    assert any(findings[0].id.startswith(p) for p in ALWAYS_TOP_FINDING_IDS), (
+        f"findings[0].id={findings[0].id!r} is not an always-top finding; "
+        f"ordering invariant violated"
+    )

@@ -191,3 +191,39 @@ def test_secret_field_names_includes_camelcase():
     must_have = {"preSharedKey", "sharedSecret", "radiusSecret", "sshPassword"}
     missing = must_have - SECRET_FIELD_NAMES
     assert not missing, f"SECRET_FIELD_NAMES missing camelCase variants: {missing}"
+
+
+# --- Coverage gap completions (Acceptance Bar condition 8: >= 95%) -----------
+
+def test_fingerprint_non_string_returns_redacted_type_marker():
+    """Line 64: _fingerprint() with a non-string input returns type+redacted marker."""
+    result = _fingerprint(99)
+    assert result == {"type": "int", "redacted": True}
+
+    result_none = _fingerprint(None)
+    assert result_none == {"type": "NoneType", "redacted": True}
+
+    result_list = _fingerprint([1, 2])
+    assert result_list == {"type": "list", "redacted": True}
+
+
+def test_sanitize_idempotency_dict_passthrough():
+    """Line 98: a value under a secret key that is already a dict passes through unchanged.
+
+    This is the idempotency guarantee: sanitize(sanitize(x)) == sanitize(x).
+    When a secret field's value is already a fingerprint dict, it is not re-fingerprinted.
+    """
+    already_sanitized = {
+        "x_passphrase": {
+            "length": 16,
+            "fingerprint": "abc123def456",
+            "has_symbols": True,
+            "has_digits": True,
+            "has_mixed_case": True,
+        }
+    }
+    result = sanitize(already_sanitized)
+    # Must pass through unchanged (idempotent)
+    assert result["x_passphrase"] == already_sanitized["x_passphrase"]
+    # And sanitize(sanitize(x)) == sanitize(x)
+    assert sanitize(result) == result
