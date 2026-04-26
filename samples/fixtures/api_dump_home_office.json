@@ -1,0 +1,465 @@
+{
+  "_endpoints_probed": [
+    {
+      "name": "info",
+      "path": "/proxy/network/integration/v1/info",
+      "status": 200
+    },
+    {
+      "name": "sites",
+      "path": "/proxy/network/integration/v1/sites",
+      "status": 200
+    },
+    {
+      "name": "devices@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/devices",
+      "status": 200
+    },
+    {
+      "name": "clients@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/clients",
+      "status": 200
+    },
+    {
+      "name": "wlans@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/wlans",
+      "status": 404
+    },
+    {
+      "name": "firewall_policies@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/firewall-policies",
+      "status": 404
+    },
+    {
+      "name": "firewall_zones@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/firewall-zones",
+      "status": 404
+    },
+    {
+      "name": "port_forwards@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/port-forwards",
+      "status": 404
+    },
+    {
+      "name": "vpn_configs@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/vpn-configs",
+      "status": 404
+    },
+    {
+      "name": "networks@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/networks",
+      "status": 200
+    },
+    {
+      "name": "traffic_routes@00000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/00000000-0000-0000-0000-000000000001/traffic-routes",
+      "status": 404
+    }
+  ],
+  "_errors": [],
+  "_site_count": 1,
+  "info": {
+    "applicationVersion": "10.3.55"
+  },
+  "site_00000000-0000-0000-0000-000000000001": {
+    "_meta": {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "internalReference": "default",
+      "name": "Default"
+    },
+    "clients": {
+      "count": 25,
+      "data": [
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-05T00:05:31Z",
+          "id": "00000000-0000-0000-0000-000000000004",
+          "ipAddress": "192.0.2.81",
+          "macAddress": "d6:2f:92:50:3c:02",
+          "name": "device-3",
+          "type": "WIRED",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000002"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:13Z",
+          "id": "00000000-0000-0000-0000-000000000005",
+          "ipAddress": "192.0.2.247",
+          "macAddress": "5a:72:6e:2c:73:53",
+          "name": "device-4",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:13Z",
+          "id": "00000000-0000-0000-0000-000000000006",
+          "ipAddress": "192.0.2.152",
+          "macAddress": "3e:b7:be:56:9a:0f",
+          "name": "device-5",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:14Z",
+          "id": "00000000-0000-0000-0000-000000000007",
+          "ipAddress": "192.0.2.20",
+          "macAddress": "da:05:8a:2b:df:ab",
+          "name": "device-6",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:15Z",
+          "id": "00000000-0000-0000-0000-000000000008",
+          "ipAddress": "192.0.2.31",
+          "macAddress": "76:67:50:94:56:23",
+          "name": "device-7",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:16Z",
+          "id": "00000000-0000-0000-0000-000000000009",
+          "ipAddress": "192.0.2.170",
+          "macAddress": "d2:d3:f6:ba:4b:af",
+          "name": "device-8",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:17Z",
+          "id": "00000000-0000-0000-0000-000000000010",
+          "ipAddress": "192.0.2.48",
+          "macAddress": "22:b4:27:66:73:dd",
+          "name": "device-9",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:18Z",
+          "id": "00000000-0000-0000-0000-000000000011",
+          "ipAddress": "192.0.2.117",
+          "macAddress": "fa:b5:ed:ff:0e:1d",
+          "name": "device-10",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:18Z",
+          "id": "00000000-0000-0000-0000-000000000012",
+          "ipAddress": "192.0.2.1",
+          "macAddress": "aa:e7:c3:a0:a2:47",
+          "name": "device-11",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:18Z",
+          "id": "00000000-0000-0000-0000-000000000013",
+          "ipAddress": "192.0.2.116",
+          "macAddress": "26:3f:9b:fc:cf:cc",
+          "name": "device-12",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:18Z",
+          "id": "00000000-0000-0000-0000-000000000014",
+          "ipAddress": "192.0.2.197",
+          "macAddress": "1e:0c:e1:b0:a1:8c",
+          "name": "device-13",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000015",
+          "ipAddress": "192.0.2.209",
+          "macAddress": "8a:89:0a:71:64:42",
+          "name": "device-14",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000016",
+          "ipAddress": "192.0.2.192",
+          "macAddress": "e6:d1:ed:56:fa:c3",
+          "name": "device-15",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000017",
+          "ipAddress": "192.0.2.119",
+          "macAddress": "ca:0b:44:24:10:db",
+          "name": "device-16",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000018",
+          "ipAddress": "192.0.2.215",
+          "macAddress": "e6:83:f1:fb:7e:ae",
+          "name": "device-17",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000019",
+          "ipAddress": "192.0.2.127",
+          "macAddress": "66:15:1b:18:5c:db",
+          "name": "device-18",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000020",
+          "ipAddress": "192.0.2.96",
+          "macAddress": "7a:ea:5e:30:c1:40",
+          "name": "device-19",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:19Z",
+          "id": "00000000-0000-0000-0000-000000000021",
+          "ipAddress": "192.0.2.228",
+          "macAddress": "4e:4d:3a:34:df:a8",
+          "name": "device-20",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:29Z",
+          "id": "00000000-0000-0000-0000-000000000022",
+          "ipAddress": "192.0.2.246",
+          "macAddress": "3e:87:bc:ed:ec:db",
+          "name": "device-21",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-22T08:04:30Z",
+          "id": "00000000-0000-0000-0000-000000000023",
+          "ipAddress": "192.0.2.67",
+          "macAddress": "12:f0:f2:d2:8f:92",
+          "name": "device-22",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-23T00:25:42Z",
+          "id": "00000000-0000-0000-0000-000000000024",
+          "ipAddress": "192.0.2.118",
+          "macAddress": "fe:66:91:f9:72:45",
+          "name": "device-23",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-23T09:03:02Z",
+          "id": "00000000-0000-0000-0000-000000000025",
+          "ipAddress": "192.0.2.22",
+          "macAddress": "32:5e:5d:a6:8a:34",
+          "name": "device-24",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-24T22:12:23Z",
+          "id": "00000000-0000-0000-0000-000000000026",
+          "ipAddress": "192.0.2.16",
+          "macAddress": "56:4f:e4:83:8c:f1",
+          "name": "device-25",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-24T22:54:52Z",
+          "id": "00000000-0000-0000-0000-000000000027",
+          "ipAddress": "192.0.2.198",
+          "macAddress": "9e:70:01:67:24:a0",
+          "name": "device-26",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        },
+        {
+          "access": {
+            "type": "DEFAULT"
+          },
+          "connectedAt": "2026-04-26T04:29:41Z",
+          "id": "00000000-0000-0000-0000-000000000028",
+          "ipAddress": "192.0.2.75",
+          "macAddress": "42:3c:fe:cf:9d:32",
+          "name": "device-27",
+          "type": "WIRELESS",
+          "uplinkDeviceId": "00000000-0000-0000-0000-000000000003"
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "totalCount": 30
+    },
+    "devices": {
+      "count": 2,
+      "data": [
+        {
+          "features": [
+            "switching"
+          ],
+          "firmwareUpdatable": false,
+          "firmwareVersion": "5.0.16",
+          "id": "00000000-0000-0000-0000-000000000002",
+          "interfaces": [
+            "ports"
+          ],
+          "ipAddress": "192.0.2.156",
+          "macAddress": "ca:dc:6e:8b:f7:e0",
+          "model": "UCG Fiber",
+          "name": "gateway-1",
+          "state": "ONLINE",
+          "supported": true
+        },
+        {
+          "features": [
+            "accessPoint"
+          ],
+          "firmwareUpdatable": false,
+          "firmwareVersion": "8.5.21",
+          "id": "00000000-0000-0000-0000-000000000003",
+          "interfaces": [
+            "radios"
+          ],
+          "ipAddress": "192.0.2.206",
+          "macAddress": "82:f2:dd:9b:7c:22",
+          "model": "U7 Pro",
+          "name": "ap-2",
+          "state": "ONLINE",
+          "supported": true
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "totalCount": 2
+    },
+    "networks": {
+      "count": 2,
+      "data": [
+        {
+          "default": true,
+          "enabled": true,
+          "id": "00000000-0000-0000-0000-000000000029",
+          "management": "GATEWAY",
+          "metadata": {
+            "configurable": true,
+            "origin": "SYSTEM_DEFINED"
+          },
+          "name": "Primary",
+          "vlanId": 1
+        },
+        {
+          "default": false,
+          "enabled": true,
+          "id": "00000000-0000-0000-0000-000000000030",
+          "management": "GATEWAY",
+          "metadata": {
+            "origin": "USER_DEFINED"
+          },
+          "name": "IoT",
+          "vlanId": 2
+        }
+      ],
+      "limit": 25,
+      "offset": 0,
+      "totalCount": 2
+    }
+  },
+  "sites": {
+    "count": 1,
+    "data": [
+      {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "internalReference": "default",
+        "name": "Default"
+      }
+    ],
+    "limit": 25,
+    "offset": 0,
+    "totalCount": 1
+  }
+}
