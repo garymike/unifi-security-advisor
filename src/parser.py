@@ -30,6 +30,11 @@ from typing import Any
 # from Crypto.Cipher import AES
 # import bson
 
+try:
+    from sanitizer import SECRET_FIELD_NAMES, _fingerprint, sanitize  # script mode
+except ImportError:
+    from src.sanitizer import SECRET_FIELD_NAMES, _fingerprint, sanitize  # package mode
+
 
 # =============================================================================
 # 1. DECRYPTION
@@ -97,55 +102,7 @@ def extract_collections(zip_bytes: bytes) -> dict[str, list[dict[str, Any]]]:
 # =============================================================================
 # 2. SANITIZATION
 # =============================================================================
-# Backup files contain WPA keys, RADIUS secrets, admin password hashes, etc.
-# We redact/hash BEFORE any output leaves this module.
-
-SECRET_FIELD_NAMES = {
-    "x_passphrase",       # WPA PSK
-    "x_passphrase_rollover",
-    "x_radius_secret",
-    "x_shared_secret",
-    "x_ssh_password",
-    "x_iapp_key",
-    "password",           # admin accounts
-    "x_auth_key",         # RADIUS
-    "auth_key",
-    "private_key",
-    "api_key",
-    "token",
-}
-
-
-def _fingerprint(value: str) -> dict[str, Any]:
-    """Turn a secret string into a non-reversible fingerprint for analysis."""
-    if not isinstance(value, str):
-        return {"type": type(value).__name__, "redacted": True}
-    return {
-        "length": len(value),
-        "fingerprint": hashlib.sha256(value.encode()).hexdigest()[:12],
-        "has_symbols": any(not c.isalnum() for c in value),
-        "has_digits": any(c.isdigit() for c in value),
-        "has_mixed_case": (
-            any(c.isupper() for c in value) and any(c.islower() for c in value)
-        ),
-    }
-
-
-def sanitize(obj: Any, redact_pii: bool = False) -> Any:
-    """Recursively sanitize. Always redacts secrets. Optionally redacts PII."""
-    if isinstance(obj, dict):
-        out = {}
-        for k, v in obj.items():
-            if k in SECRET_FIELD_NAMES:
-                out[k] = _fingerprint(v) if isinstance(v, str) else {"redacted": True}
-            elif redact_pii and k in {"hostname", "note", "name"} and isinstance(v, str):
-                out[k] = f"<redacted:{len(v)} chars>"
-            else:
-                out[k] = sanitize(v, redact_pii)
-        return out
-    if isinstance(obj, list):
-        return [sanitize(i, redact_pii) for i in obj]
-    return obj
+# SECRET_FIELD_NAMES, _fingerprint, and sanitize are imported from src/sanitizer.py
 
 
 # =============================================================================

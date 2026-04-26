@@ -59,6 +59,11 @@ except ImportError:
     sys.stderr.write("Missing dependency. Run: pip install requests\n")
     sys.exit(1)
 
+try:
+    from sanitizer import SECRET_FIELD_NAMES, _fingerprint, sanitize  # script mode
+except ImportError:
+    from src.sanitizer import SECRET_FIELD_NAMES, _fingerprint, sanitize  # package mode
+
 
 # =============================================================================
 # CONFIGURATION
@@ -179,41 +184,7 @@ def setup_logger(log_path: Path) -> logging.Logger:
 # =============================================================================
 # SANITIZATION
 # =============================================================================
-
-SECRET_FIELD_NAMES = {
-    "x_passphrase", "x_passphrase_rollover", "x_radius_secret", "x_shared_secret",
-    "x_ssh_password", "x_iapp_key", "password", "x_auth_key", "auth_key",
-    "private_key", "api_key", "token", "passphrase", "preSharedKey", "presharedKey",
-    "psk", "pre_shared_key", "privateKey", "wpa_psk",
-}
-
-
-def _fingerprint(value: Any) -> dict[str, Any]:
-    if not isinstance(value, str):
-        return {"type": type(value).__name__, "redacted": True}
-    return {
-        "length": len(value),
-        "fingerprint": hashlib.sha256(value.encode()).hexdigest()[:12],
-        "has_symbols": any(not c.isalnum() for c in value),
-        "has_digits": any(c.isdigit() for c in value),
-        "has_mixed_case": (
-            any(c.isupper() for c in value) and any(c.islower() for c in value)
-        ),
-    }
-
-
-def sanitize(obj: Any) -> Any:
-    if isinstance(obj, dict):
-        out = {}
-        for k, v in obj.items():
-            if k in SECRET_FIELD_NAMES:
-                out[k] = _fingerprint(v) if isinstance(v, str) else {"redacted": True}
-            else:
-                out[k] = sanitize(v)
-        return out
-    if isinstance(obj, list):
-        return [sanitize(i) for i in obj]
-    return obj
+# SECRET_FIELD_NAMES, _fingerprint, and sanitize are imported from src/sanitizer.py
 
 
 # =============================================================================
