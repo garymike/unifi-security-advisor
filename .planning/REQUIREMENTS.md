@@ -62,8 +62,10 @@ Required to declare Phase 1 complete.
 - [ ] **REQ-validation-network-version-compat** — Test with Network ≥ 9.3.43 (required for Integration API) and an older version to confirm graceful 404 handling.
 - [ ] **REQ-validation-cloud-mode** — Test cloud mode (`UNIFI_USE_CLOUD=true`) once a unified API key with Cloud Connector is available (April 2026 unified key).
 - [ ] **REQ-validation-ssl-self-signed** — Test SSL self-signed default for local mode.
-- [ ] **REQ-validation-sanitization-coverage** — Confirm sanitization catches all secret field names in actual API responses (regression-tested against fixtures).
-- [ ] **REQ-test-fixtures** — Gather Phase 1 validation fixtures: at least one real `.unf` backup file (single-site), at least one JSON dump from a live API run, and anonymized profiles across scales (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`).
+- [x] **REQ-validation-sanitization-coverage
+** — Confirm sanitization catches all secret field names in actual API responses (regression-tested against fixtures).
+- [x] **REQ-test-fixtures
+** — Gather Phase 1 validation fixtures: at least one real `.unf` backup file (single-site), at least one JSON dump from a live API run, and anonymized profiles across scales (`home`, `home_office`, `small_business`, `regulated_hipaa`, `regulated_pci`).
 
 ## v2 Requirements
 
