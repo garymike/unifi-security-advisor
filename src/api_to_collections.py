@@ -340,6 +340,31 @@ def build_parser_collections(clean: dict) -> dict:
     # Route VPN configs to per-protocol dicts
     vpn_settings = _route_vpn_configs(vpn_configs)
 
+    # Build the "setting" list that parser.py's _get_setting() iterates.
+    # _get_setting(colls, key) searches for {"key": key, ...} entries in colls["setting"].
+    # Each VPN protocol dict and stub-setting dict is wrapped with its "key" so that
+    # findings_enhanced modules can retrieve them via _get_setting().
+    # Bug fix (Rule 1): original adapter exposed VPN settings only as direct dict keys;
+    # _get_setting() could not find them because it iterates colls["setting"], not colls itself.
+    _stub_settings = {
+        "auto_update": {},
+        "auto_backup": {},
+        "mgmt": {},
+        "dpi": {},
+        "rogueap": {},
+        "dns_filtering": {},
+        "content_filtering": {},
+    }
+    setting_list: list[dict] = []
+    # Add VPN protocol settings
+    for proto_key, proto_val in vpn_settings.items():
+        entry = dict(proto_val)
+        entry["key"] = proto_key
+        setting_list.append(entry)
+    # Add stub settings (empty dicts become {"key": "..."} entries)
+    for stub_key in _stub_settings:
+        setting_list.append({"key": stub_key})
+
     return {
         # Collections
         "device": devices,
@@ -351,14 +376,19 @@ def build_parser_collections(clean: dict) -> dict:
         "firewallgroup": firewall_zones,
         "user": clients,
 
-        # VPN settings (routed from vpn_configs list)
+        # "setting" list: required by parser.py's _get_setting() interface.
+        # Contains VPN protocol dicts and stub-settings, each tagged with "key".
+        "setting": setting_list,
+
+        # VPN settings also exposed as direct keys for backward-compat with any
+        # caller that reads colls["vpn_pptp"] directly (e.g. test assertions).
         "vpn_pptp": vpn_settings["vpn_pptp"],
         "vpn_l2tp": vpn_settings["vpn_l2tp"],
         "vpn_wireguard": vpn_settings["vpn_wireguard"],
         "vpn_openvpn": vpn_settings["vpn_openvpn"],
 
         # Settings NOT exposed by Integration v1 API (Plan 07 will verify)
-        # Empty dicts → modules emit "disabled/unknown" findings (correct per D-03)
+        # Empty dicts -> modules emit "disabled/unknown" findings (correct per D-03)
         "auto_update": {},     # [ASSUMED: not in Integration v1 API]
         "auto_backup": {},     # [ASSUMED: not in Integration v1 API]
         "mgmt": {},            # [ASSUMED: not in Integration v1 API]
