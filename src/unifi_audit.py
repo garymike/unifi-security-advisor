@@ -65,6 +65,11 @@ except ImportError:
     from src.sanitizer import SECRET_FIELD_NAMES, _fingerprint, sanitize  # package mode
 
 try:
+    from profile_weights import score_finding, KNOWN_PROFILES  # script mode
+except ImportError:
+    from src.profile_weights import score_finding, KNOWN_PROFILES  # package mode
+
+try:
     from api_to_collections import build_parser_collections  # script mode
     from findings_enhanced import (  # script mode
         find_wireless_tuning,
@@ -193,12 +198,20 @@ def load_config() -> dict:
         # Sensible default: verify cloud, skip for local self-signed
         verify_ssl = use_cloud
 
+    profile = os.environ.get("UNIFI_PROFILE", "home_office").strip()
+    if profile not in KNOWN_PROFILES:
+        sys.stderr.write(
+            f"Warning: UNIFI_PROFILE='{profile}' is not a recognized profile. "
+            f"Known: {sorted(KNOWN_PROFILES)}. Falling back to 'home_office'.\n"
+        )
+        profile = "home_office"
+
     return {
         "key": key,
         "host": host,
         "use_cloud": use_cloud,
         "verify_ssl": verify_ssl,
-        "profile": os.environ.get("UNIFI_PROFILE", "home_office"),
+        "profile": profile,
     }
 
 
@@ -518,9 +531,15 @@ def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
     correlation_findings = _correlate_findings(findings, profile, logger)
     findings.extend(correlation_findings)
 
-    # Sort by severity then section
+    # Sort by severity then profile-weighted score (descending) then section.
+    # score_finding returns higher values for higher priority — negate for descending sort.
+    # _apply_float_top runs LAST so always-top findings bypass weight calculation (T-1-05).
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-    findings.sort(key=lambda f: (order.get(f.severity, 5), f.section))
+    findings.sort(key=lambda f: (
+        order.get(f.severity, 5),
+        -score_finding(f, profile),   # higher score first (descending)
+        f.section,
+    ))
 
     # --- Apply always-top override LAST (D-02) — overrides severity sort ---
     findings = _apply_float_top(findings)
@@ -750,7 +769,11 @@ def _extract_list(data: Any) -> list | None:
 
 def render_report(findings: list[Finding], clean: dict, profile: str) -> str:
     lines = ["# UniFi Security Advisor - Live Audit Report", ""]
-    lines.append(f"**Profile:** {profile}  ")
+    lines.append(f"**Profile:** {profile} (manual)")
+    lines.append(
+        "<sub>Manual profile per UNIFI_PROFILE env var. "
+        "Auto-detection deferred to Phase 2 wizard (D-06).</sub>"
+    )
     lines.append(f"**Findings:** {len(findings)}  ")
     counts = {}
     for f in findings:
