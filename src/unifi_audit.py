@@ -556,13 +556,29 @@ def _all_sites(clean: dict) -> list[tuple[str, dict]]:
     return out
 
 
+def _is_user_defined_network(n: dict) -> bool:
+    """True if the network represents user intent (not a system default).
+
+    Handles both data shapes the audit pipeline can encounter:
+    - Backup-mode / parser shape: ``purpose`` in {corporate, guest, vlan-only}
+    - Integration v1 API shape: ``metadata.origin == "USER_DEFINED"``
+
+    Mirrors the adapter's USER_DEFINED -> purpose=corporate mapping in
+    ``src/api_to_collections.py:_network_to_classic`` -- keep them consistent.
+    """
+    if n.get("purpose") in ("corporate", "guest", "vlan-only"):
+        return True
+    metadata = n.get("metadata") or {}
+    return metadata.get("origin") == "USER_DEFINED"
+
+
 def _find_segmentation(clean: dict, profile: str) -> list[Finding]:
     findings = []
     for site_id, site in _all_sites(clean):
         networks = _extract_list(site.get("networks"))
         if networks is None:
             continue
-        user_nets = [n for n in networks if n.get("purpose") in ("corporate", "guest", "vlan-only")]
+        user_nets = [n for n in networks if _is_user_defined_network(n)]
         if len(user_nets) <= 1:
             findings.append(Finding(
                 id=f"SEG-001-{site_id}",

@@ -267,6 +267,7 @@ def _network_to_classic(n: dict) -> dict:
 
     # [DIVERGENT 2026-04-26] Derive purpose from metadata.origin (Integration v1)
     # since the classic 'purpose' field is absent.
+    # Mirrors src/unifi_audit.py:_is_user_defined_network -- keep in sync.
     if origin == "USER_DEFINED":
         derived_purpose = "corporate"  # treat user-defined as a LAN segment
     elif origin == "SYSTEM_DEFINED":
