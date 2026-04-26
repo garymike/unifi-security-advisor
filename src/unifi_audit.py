@@ -120,6 +120,25 @@ ENDPOINTS_CLOUD = [
     ("cloud_devices", "https://api.ui.com/v1/devices"),
 ]
 
+# Always-float-to-top finding IDs (D-02, C-finding-002, REQ-always-float-to-top-overrides).
+# Any finding whose id startswith one of these strings is reordered to the top of the
+# report regardless of its severity/effort/profile-weight score.
+#
+# - VPN-PPTP-001:      PPTP enabled (cryptographically broken); detected by enhanced module
+# - SEG-001:           Flat network with no segmentation; detected by baseline module
+# - FW-EOL-001:        Firmware on EOL hardware; detected by enhanced module
+# - MFA-UNKNOWN-001:   API cannot detect MFA state — emit unknown Finding (D-03)
+# - CRED-DEFAULT-001:  API cannot detect default credentials — emit unknown Finding (D-03)
+# - WAN-MGMT-001:      API cannot detect WAN-reachable management — emit unknown Finding (D-03)
+ALWAYS_TOP_FINDING_IDS: frozenset = frozenset({
+    "VPN-PPTP-001",
+    "SEG-001",
+    "FW-EOL-001",
+    "MFA-UNKNOWN-001",
+    "CRED-DEFAULT-001",
+    "WAN-MGMT-001",
+})
+
 
 # =============================================================================
 # DATA MODELS
@@ -346,6 +365,70 @@ def _extract_sites(sites_response: Any) -> list[dict]:
 # FINDINGS PHASE: run analysis on sanitized data
 # =============================================================================
 
+def _emit_unknown_always_top() -> list[Finding]:
+    """Emit 3 always-top Findings for risks the Network Integration API cannot detect.
+
+    Per D-03 / D-10: render inline through render_report() like any other Finding.
+    The intent_question field becomes the Phase 2 wizard input.
+    """
+    return [
+        Finding(
+            id="MFA-UNKNOWN-001",
+            section="Admin",
+            severity="high",
+            status="unknown",
+            title="Admin account MFA status cannot be determined from API",
+            current_state="Cannot be determined via Network Integration API alone.",
+            recommendation="Verify in Ubiquiti account settings that MFA is enabled on all admin accounts.",
+            intent_question="Is MFA enabled on all accounts with admin access to this controller?",
+            maps_to={"cis_v8": "6.3", "nist_csf": "PR.AC-7"},
+            effort="quick",
+            impact="high",
+        ),
+        Finding(
+            id="CRED-DEFAULT-001",
+            section="Admin",
+            severity="high",
+            status="unknown",
+            title="Default credential state cannot be verified from API",
+            current_state="Cannot be determined via Network Integration API alone.",
+            recommendation="Verify that no device uses factory-default credentials.",
+            intent_question="Have you changed factory-default credentials on all UniFi devices and the controller?",
+            maps_to={"cis_v8": "5.2"},
+            effort="quick",
+            impact="high",
+        ),
+        Finding(
+            id="WAN-MGMT-001",
+            section="Admin",
+            severity="high",
+            status="unknown",
+            title="Management plane WAN reachability cannot be determined from API",
+            current_state="Cannot be determined via Network Integration API alone.",
+            recommendation="Confirm the UniFi controller UI is not accessible from the internet.",
+            intent_question="Is the UniFi controller management interface reachable from the public internet?",
+            maps_to={"cis_v8": "4.8", "nist_csf": "PR.AC-5"},
+            effort="medium",
+            impact="high",
+        ),
+    ]
+
+
+def _apply_float_top(findings: list[Finding]) -> list[Finding]:
+    """Reorder findings so any always-top finding appears before any non-always-top.
+
+    Preserves relative order within each group. Idempotent.
+    Match is by ``f.id.startswith(prefix)`` against ALWAYS_TOP_FINDING_IDS — this
+    handles the per-site suffix pattern (e.g., 'SEG-001-default' starts with 'SEG-001').
+    """
+    def is_top(f: Finding) -> bool:
+        return any(f.id.startswith(prefix) for prefix in ALWAYS_TOP_FINDING_IDS)
+
+    top = [f for f in findings if is_top(f)]
+    rest = [f for f in findings if not is_top(f)]
+    return top + rest
+
+
 def _correlate_findings(findings: list[Finding], profile: str, logger: logging.Logger) -> list[Finding]:
     """Run all compound-finding correlation rules over the current findings list.
 
@@ -427,6 +510,10 @@ def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
         except Exception as e:
             logger.warning(f"Enhanced module {name} failed: {e}")
 
+    # --- Emit 3 unknown always-top Findings (D-03) BEFORE correlation so
+    # keys-to-kingdom rule can see MFA-UNKNOWN-001 in the findings list ---
+    findings.extend(_emit_unknown_always_top())
+
     # --- Correlation pass: compound rules run after individual modules, before sort ---
     correlation_findings = _correlate_findings(findings, profile, logger)
     findings.extend(correlation_findings)
@@ -434,6 +521,10 @@ def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
     # Sort by severity then section
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     findings.sort(key=lambda f: (order.get(f.severity, 5), f.section))
+
+    # --- Apply always-top override LAST (D-02) — overrides severity sort ---
+    findings = _apply_float_top(findings)
+
     return findings
 
 
