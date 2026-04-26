@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-04-float-top-and-unknowns-PLAN.md
-last_updated: "2026-04-26T13:10:35.476Z"
+stopped_at: Completed 01-05-profile-weights-PLAN.md
+last_updated: "2026-04-26T13:16:23.127Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 4
-  percent: 50
+  completed_plans: 5
+  percent: 63
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 ## Current Position
 
 Phase: 1 (Live API Audit) — EXECUTING
-Plan: 4 of 8 complete
+Plan: 5 of 8 complete
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 63%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████░░░░░] 50%
 | 1. Live API Audit | P02 adapter+wire-enhanced | 299s | 3 tasks | 6 files |
 | 1. Live API Audit | P03 correlations | ~180s | 3 tasks | 4 files |
 | Phase 01-live-api-audit P04 | 182 | 2 tasks | 3 files |
+| Phase 01-live-api-audit PP05 | 194 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current Phase 1 work:
 - Plan 03: correlate_priority_mismatch Phase 1 trigger is FW-* + VPN-MISSING (conservative proxy; downtime-sensitivity data not available from API alone)
 - Plan 03: CORRELATION_RULES list registry pattern — new rules added by appending; _correlate_findings() iterates with try/except per rule
 - ALWAYS_TOP_FINDING_IDS uses frozenset with startswith prefix matching; _emit_unknown_always_top() called before _correlate_findings() so keys-to-kingdom sees MFA-UNKNOWN-001; _apply_float_top() runs after severity sort to override it
+- Profile-aware scoring (D-05): WEIGHTS dict in profile_weights.py keyed (profile,section)->multiplier; score_finding=(impact*weight)/effort_hours used as secondary sort key in analyze()
+- D-06 LOCKED: UNIFI_PROFILE env var only (default home_office); render_report shows '(manual)' suffix; auto-detection deferred to Phase 2 wizard
+- T-1-05 structural guarantee: _apply_float_top() runs LAST in analyze() — weight-based sort cannot demote always-top findings; asserted by 2 tests
 
 ### Pending Todos
 
@@ -137,8 +141,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T13:10:35.471Z
-Stopped at: Completed 01-04-float-top-and-unknowns-PLAN.md
+Last session: 2026-04-26T13:16:23.121Z
+Stopped at: Completed 01-05-profile-weights-PLAN.md
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z

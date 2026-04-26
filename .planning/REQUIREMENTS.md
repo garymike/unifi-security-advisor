@@ -50,7 +50,8 @@ These are the four gating items between current Phase 1 state and Phase 1 comple
 
 - [x] **REQ-wire-enhanced-modules-into-audit-script** — Wire the six enhanced finding modules (`findings_enhanced.py`) into `unifi_audit.py`'s `analyze()` modules list. RESOLVED in Plan 01-02 via api_to_collections.py adapter.
 - [ ] **REQ-cross-answer-tension-detection** — Implement the compound-finding correlation pass after individual modules run (`D-003` LOCKED). Examples: priority mismatch (downtime-sensitivity + single WAN), keys-to-kingdom (mobile remote management + MFA unknown), pivot path (NAS reachable + IoT internet unknown).
-- [ ] **REQ-profile-aware-scoring-weights** — Profile-aware scoring weights so home profiles don't get enterprise retention recommendations and regulated profiles don't get under-tuned. Weight table per `(profile × finding-section)`.
+- [x] **REQ-profile-aware-scoring-weights
+** — Profile-aware scoring weights so home profiles don't get enterprise retention recommendations and regulated profiles don't get under-tuned. Weight table per `(profile × finding-section)`.
 - [x] **REQ-always-float-to-top-overrides
 ** — Override logic that surfaces the six always-float-to-top findings to the top regardless of overall scoring (no MFA, mgmt plane WAN-reachable, flat network with mixed device classes, default credentials, firmware >2 majors behind with advisories, PPTP/deprecated VPN). Note: three of the six (MFA, default creds, WAN reachability) are not detectable from Network Integration API alone — these become Phase 2 questionnaire gap-questions and must be flagged accordingly.
 
