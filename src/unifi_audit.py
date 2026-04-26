@@ -64,6 +64,27 @@ try:
 except ImportError:
     from src.sanitizer import SECRET_FIELD_NAMES, _fingerprint, sanitize  # package mode
 
+try:
+    from api_to_collections import build_parser_collections  # script mode
+    from findings_enhanced import (  # script mode
+        find_wireless_tuning,
+        find_firewall_threats,
+        find_remote_access as find_remote_access_enhanced,
+        find_firmware,
+        find_logging,
+        find_backup_config,
+    )
+except ImportError:
+    from src.api_to_collections import build_parser_collections  # package mode
+    from src.findings_enhanced import (  # package mode
+        find_wireless_tuning,
+        find_firewall_threats,
+        find_remote_access as find_remote_access_enhanced,
+        find_firmware,
+        find_logging,
+        find_backup_config,
+    )
+
 
 # =============================================================================
 # CONFIGURATION
@@ -324,10 +345,17 @@ def _extract_sites(sites_response: Any) -> list[dict]:
 # =============================================================================
 
 def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
-    """Run all findings modules. Each module is wrapped so one failure
-    doesn't abort the audit."""
+    """Run all 12 findings modules (6 baseline + 6 enhanced).
+
+    Each module is wrapped in try/except so one failure does not abort the audit.
+    Enhanced modules receive the adapter output (parser-shape colls dict) rather
+    than the raw clean dict. If the adapter itself fails, enhanced modules are
+    skipped with a WARNING — the baseline modules still run.
+    """
     findings: list[Finding] = []
-    modules = [
+
+    # --- Baseline modules: operate directly on the sanitized API response ---
+    baseline_modules = [
         ("segmentation", _find_segmentation),
         ("wifi", _find_wifi),
         ("firewall", _find_firewall),
@@ -335,12 +363,38 @@ def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
         ("devices", _find_devices),
         ("api_coverage", _find_api_coverage),  # meta-finding on what we could/couldn't see
     ]
-    for name, fn in modules:
+    for name, fn in baseline_modules:
         try:
             findings.extend(fn(clean, profile))
         except Exception as e:
             logger.warning(f"Module {name} failed: {e}")
-    # Sort by severity
+
+    # --- Adapter: translate API shape → parser collection shape ---
+    try:
+        colls = build_parser_collections(clean)
+    except Exception as e:
+        logger.warning(f"Adapter build_parser_collections failed: {e}. Enhanced modules skipped.")
+        colls = {}
+
+    # --- Enhanced modules: operate on parser-shape colls dict via findings_enhanced.py ---
+    # find_remote_access_enhanced is an alias for findings_enhanced.find_remote_access,
+    # aliased at import time to avoid collision with the baseline _find_remote_access.
+    # find_logging takes a second positional arg (profile) unlike the other enhanced modules.
+    enhanced_modules = [
+        ("wireless_tuning", lambda: find_wireless_tuning(colls)),
+        ("firewall_threats", lambda: find_firewall_threats(colls)),
+        ("remote_access_enhanced", lambda: find_remote_access_enhanced(colls)),
+        ("firmware", lambda: find_firmware(colls)),
+        ("logging", lambda: find_logging(colls, profile)),
+        ("backup_config", lambda: find_backup_config(colls)),
+    ]
+    for name, fn in enhanced_modules:
+        try:
+            findings.extend(fn())
+        except Exception as e:
+            logger.warning(f"Enhanced module {name} failed: {e}")
+
+    # Sort by severity then section
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     findings.sort(key=lambda f: (order.get(f.severity, 5), f.section))
     return findings
@@ -530,8 +584,20 @@ def _find_api_coverage(clean: dict, profile: str) -> list[Finding]:
     return []
 
 
+# Module-level logger for _extract_list and other module-level helpers.
+# setup_logger() configures the named logger "unifi_audit" at runtime;
+# this fallback logger is used when _extract_list is called before setup_logger().
+_logger = logging.getLogger("unifi_audit")
+
+
 def _extract_list(data: Any) -> list | None:
-    """Handle varying response shapes for list endpoints."""
+    """Handle varying response shapes for list endpoints.
+
+    Returns None for None input (existing call-sites treat None as "not present").
+    Returns the list for bare-list input.
+    Returns the list from known envelope keys: data, items, results.
+    Logs a WARNING when a non-empty dict has none of the recognized keys (T-1-04).
+    """
     if data is None:
         return None
     if isinstance(data, list):
@@ -540,6 +606,13 @@ def _extract_list(data: Any) -> list | None:
         for key in ("data", "items", "results"):
             if key in data and isinstance(data[key], list):
                 return data[key]
+        # Non-empty dict with no recognized list key: surface via WARN (T-1-04 mitigation)
+        if data:
+            _logger.warning(
+                "_extract_list: no recognized list key in response. "
+                "Keys present: %s. Returning None.",
+                sorted(data.keys()),
+            )
     return None
 
 
