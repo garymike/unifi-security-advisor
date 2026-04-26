@@ -38,10 +38,10 @@ The journey is **API-first** (`D-007` LOCKED, official X-API-KEY paths only â€” 
 - [x] 01-01-PLAN.md — Extract sanitizer.py + pytest scaffold + fixture safety gate
 - [x] 01-02-PLAN.md — API-to-collections adapter + wire 6 enhanced modules into analyze()
 - [x] 01-03-PLAN.md — Cross-answer correlation pass + 3 compound rules (D-04)
-- [ ] 01-04-PLAN.md — Always-float-to-top override + 3 unknown findings (D-02, D-03, D-10)
-- [ ] 01-05-PLAN.md — Profile-aware scoring weights table (D-05, D-06)
-- [ ] 01-06-PLAN.md — Pipeline smoke suite + credential-leak static guard (T-1-02)
-- [ ] 01-07-PLAN.md — Real-network manual validation (REQ-validation-real-network) [checkpoint]
+- [x] 01-04-PLAN.md — Always-float-to-top override + 3 unknown findings (D-02, D-03, D-10)
+- [x] 01-05-PLAN.md — Profile-aware scoring weights table (D-05, D-06)
+- [x] 01-06-PLAN.md — Pipeline smoke suite + credential-leak static guard (T-1-02)
+- [x] 01-07-PLAN.md — Real-network manual validation (REQ-validation-real-network) [checkpoint]
 - [ ] 01-08-PLAN.md — Anonymize + commit canonical fixture (T-1-03)
 
 ### Phase 2: Intent-Interview Wizard
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 â†’ 2 â†’ 3 â†’ 4 â†’ 5 â†’ 6 â†’ 7. Phases 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live API Audit | 3/8 | In progress | - |
+| 1. Live API Audit | 7/8 | In progress | - |
 | 2. Intent-Interview Wizard | 0/TBD | Not started | - |
 | 3. Site Manager API Fallback | 0/TBD | Not started (scaffolded) | - |
 | 4. Backup-File Specialist Mode | 0/TBD | Not started (skeleton) | - |

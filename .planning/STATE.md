@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-06-pipeline-smoke-suite-PLAN.md
-last_updated: "2026-04-26T13:24:15.978Z"
+stopped_at: Completed 01-07-real-network-validation-PLAN.md
+last_updated: "2026-04-26T14:19:07.670Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 ## Current Position
 
 Phase: 1 (Live API Audit) — EXECUTING
-Plan: 6 of 8 complete
+Plan: 7 of 8 complete
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [████████░░] 75%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 75%
 | Phase 01-live-api-audit P04 | 182 | 2 tasks | 3 files |
 | Phase 01-live-api-audit PP05 | 194 | 3 tasks | 4 files |
 | Phase 01-live-api-audit PP06 | 285 | 3 tasks | 3 files |
+| Phase 01-live-api-audit P07 | 900 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current Phase 1 work:
 - T-1-05 structural guarantee: _apply_float_top() runs LAST in analyze() — weight-based sort cannot demote always-top findings; asserted by 2 tests
 - adapter _get_setting fix: build_parser_collections now emits 'setting' list so _get_setting() can locate VPN protocol dicts; previously VPN-PPTP-001 silently missed detection
 - coverage invocation: --cov=sanitizer (module import name) not --cov=src/sanitizer; 96% achieved on sanitizer.py
+- All [ASSUMED] adapter tags converted to [UNKNOWN 2026-04-26]: Plan 07 real-network run returned HTTP 401 on all Integration v1 endpoints — no real API shapes observable; Plan 08 is the resolution target
+- Graceful-401 degradation confirmed: unifi_audit.py exits 0, writes all output files, and produces 11 findings from fallback paths when auth fails completely
+- [UNKNOWN] vs [DIVERGENT] distinction: UNKNOWN means cannot observe (auth/scope failure); DIVERGENT means observed shape contradicts assumption; auth-401 → UNKNOWN not DIVERGENT
 
 ### Pending Todos
 
@@ -144,8 +148,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T13:24:15.974Z
-Stopped at: Completed 01-06-pipeline-smoke-suite-PLAN.md
+Last session: 2026-04-26T14:19:07.665Z
+Stopped at: Completed 01-07-real-network-validation-PLAN.md
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z

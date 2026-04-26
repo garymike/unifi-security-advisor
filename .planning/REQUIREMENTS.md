@@ -59,7 +59,8 @@ These are the four gating items between current Phase 1 state and Phase 1 comple
 
 Required to declare Phase 1 complete.
 
-- [ ] **REQ-validation-real-network** — Run `unifi_audit.py` against a real UniFi network and confirm endpoints respond as expected.
+- [x] **REQ-validation-real-network
+** — Run `unifi_audit.py` against a real UniFi network and confirm endpoints respond as expected.
 - [x] **REQ-validation-api-response-shapes** — Diff actual API response shapes against assumed shapes in `_extract_list` / `_extract_sites` helpers. RESOLVED in Plan 01-02: _extract_list + _unwrap() both log WARNING with observed keys on unknown shapes (T-1-04); asserted by tests.
 - [x] **REQ-validation-network-version-compat
 ** — Test with Network ≥ 9.3.43 (required for Integration API) and an older version to confirm graceful 404 handling.
