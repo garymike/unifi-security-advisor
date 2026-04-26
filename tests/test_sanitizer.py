@@ -227,3 +227,48 @@ def test_sanitize_idempotency_dict_passthrough():
     assert result["x_passphrase"] == already_sanitized["x_passphrase"]
     # And sanitize(sanitize(x)) == sanitize(x)
     assert sanitize(result) == result
+
+
+# --- List-valued secret fields (WR-02 regression) ----------------------------
+
+def test_secret_list_elements_are_fingerprinted():
+    """Regression WR-02: a list under a secret key must fingerprint each string element.
+
+    Previously the entire list was replaced with {"type": "list", "redacted": True},
+    losing per-element length/fingerprint info (e.g. multi-PSK networks).
+    """
+    import json
+    out = sanitize({"psk": ["passphrase-one", "passphrase-two"]})
+    result = out["psk"]
+    assert isinstance(result, list), f"Expected list, got {type(result)}"
+    assert len(result) == 2
+    for item in result:
+        assert isinstance(item, dict), f"Each element must be a fingerprint dict, got {type(item)}"
+        assert "length" in item, "Fingerprint dict must have 'length' key"
+        assert "fingerprint" in item, "Fingerprint dict must have 'fingerprint' key"
+    # Original values must not appear in serialized output
+    assert "passphrase-one" not in json.dumps(out)
+    assert "passphrase-two" not in json.dumps(out)
+
+
+def test_secret_list_with_non_string_elements_redacted():
+    """Non-string elements inside a secret-key list get a type-tagged redaction marker."""
+    out = sanitize({"psk": [42, None, True]})
+    result = out["psk"]
+    assert isinstance(result, list)
+    for item in result:
+        assert isinstance(item, dict)
+        assert item.get("redacted") is True
+
+
+def test_secret_list_idempotent():
+    """Regression WR-02 idempotency: sanitize(sanitize({psk: [str, str]})) == sanitize({psk: [str, str]}).
+
+    After one sanitize pass the list contains fingerprint dicts.  On the second
+    pass each fingerprint dict hits the isinstance(v, dict) branch (pass-through),
+    so the output is unchanged.
+    """
+    original = {"psk": ["key-alpha", "key-beta"]}
+    once = sanitize(original)
+    twice = sanitize(once)
+    assert once == twice, "sanitize must be idempotent for list-valued secret fields"

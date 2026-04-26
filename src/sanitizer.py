@@ -96,6 +96,19 @@ def sanitize(obj: Any, redact_pii: bool = False) -> Any:
                     # Already sanitized (fingerprint or redacted dict) — pass through.
                     # This preserves idempotency: sanitize(sanitize(x)) == sanitize(x).
                     out[k] = v
+                elif isinstance(v, list):
+                    # Fingerprint each string element individually so callers receive
+                    # per-element length+sha256 fingerprints (e.g. multi-PSK networks).
+                    # Dict elements are already-sanitized fingerprint dicts — pass them
+                    # through unchanged to preserve idempotency (same logic as the
+                    # top-level dict branch above). Non-string, non-dict elements
+                    # (int, bool, None, etc.) receive a type-tagged redaction marker.
+                    out[k] = [
+                        _fingerprint(i) if isinstance(i, str)
+                        else i if isinstance(i, dict)
+                        else {"type": type(i).__name__, "redacted": True}
+                        for i in v
+                    ]
                 else:
                     out[k] = {"type": type(v).__name__, "redacted": True}
             elif redact_pii and k in {"hostname", "note", "name"} and isinstance(v, str):
