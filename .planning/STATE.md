@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-03-correlations-PLAN.md
-last_updated: "2026-04-26T13:03:11Z"
-last_activity: 2026-04-26 -- Plan 01-03 completed (correlation pass + 3 compound rules; REQ-cross-answer-tension-detection closed; 82 tests passing)
+stopped_at: Completed 01-04-float-top-and-unknowns-PLAN.md
+last_updated: "2026-04-26T13:10:35.476Z"
+last_activity: 2026-04-26
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 3
-  percent: 37
+  completed_plans: 4
+  percent: 50
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-25)
 ## Current Position
 
 Phase: 1 (Live API Audit) — EXECUTING
-Plan: 3 of 8 complete
-Status: Executing Phase 1
-Last activity: 2026-04-26 -- Plan 01-03 completed (correlation pass + 3 compound rules; REQ-cross-answer-tension-detection closed; 82 tests passing)
+Plan: 4 of 8 complete
+Status: Ready to execute
+Last activity: 2026-04-26
 
-Progress: [████░░░░░░] ~37% (Phase 1 scaffold + 12 finding modules + correlation pass; adapter built; T-1-04 mitigated; 82 tests passing)
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [████░░░░░░] ~37% (Phase 1 scaffold + 12 finding m
 | 1. Live API Audit | P01 extract-sanitizer | 325s | 5 tasks | 11 files |
 | 1. Live API Audit | P02 adapter+wire-enhanced | 299s | 3 tasks | 6 files |
 | 1. Live API Audit | P03 correlations | ~180s | 3 tasks | 4 files |
+| Phase 01-live-api-audit P04 | 182 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,7 @@ Recent decisions affecting current Phase 1 work:
 - Plan 03: Lazy `from unifi_audit import Finding` inside each correlation rule body avoids circular import (findings_correlations imported by unifi_audit at module level)
 - Plan 03: correlate_priority_mismatch Phase 1 trigger is FW-* + VPN-MISSING (conservative proxy; downtime-sensitivity data not available from API alone)
 - Plan 03: CORRELATION_RULES list registry pattern — new rules added by appending; _correlate_findings() iterates with try/except per rule
+- ALWAYS_TOP_FINDING_IDS uses frozenset with startswith prefix matching; _emit_unknown_always_top() called before _correlate_findings() so keys-to-kingdom sees MFA-UNKNOWN-001; _apply_float_top() runs after severity sort to override it
 
 ### Pending Todos
 
@@ -135,8 +137,8 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-04-26T13:03:11Z
-Stopped at: Completed 01-03-correlations-PLAN.md
+Last session: 2026-04-26T13:10:35.471Z
+Stopped at: Completed 01-04-float-top-and-unknowns-PLAN.md
 Resume file: None
 
 **Planned Phase:** 1 (Live API Audit) — 8 plans — 2026-04-25T21:20:47.444Z
