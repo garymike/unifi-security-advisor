@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 01-live-api-audit
 source:
   - 01-01-extract-sanitizer-SUMMARY.md
@@ -16,7 +16,7 @@ updated: 2026-04-26T00:00:00Z
 
 ## Current Test
 
-[testing paused — 1 issue (blocker), 1 blocked (depends on issue fix)]
+[testing complete]
 
 ## Tests
 
@@ -28,17 +28,13 @@ expected: |
   report.md}. Audit.log shows the endpoint URLs and HTTP status codes (200 for
   reachable endpoints, 404 for endpoints the controller doesn't expose). No
   exception traceback appears.
-result: issue
-reported: |
-  UnicodeEncodeError: 'charmap' codec can't encode character '→' in
-  position 8093 when render_report output is written via
-  Path.write_text() in main() at src/unifi_audit.py:886. Python 3.14 on
-  Windows uses cp1252 as default encoding for write_text(); the '→'
-  character used in render_report cannot encode. raw_sanitized.json and
-  findings.json wrote successfully (json.dump handles unicode); report.md
-  write fails before file creation. Script exits with traceback rather
-  than 0.
-severity: blocker
+result: pass
+note: |
+  Initially failed with UnicodeEncodeError on Path.write_text() at
+  src/unifi_audit.py:886 (Windows cp1252 default cannot encode '→'). Fixed
+  inline by passing encoding="utf-8" to all 5 write_text() calls in src/
+  + adding tests/test_write_text_encoding.py as a structural regression
+  guard. Commit: 9885ed2. Re-verified pass.
 
 ### 2. Sanitization Correctness on Real Output
 expected: |
@@ -74,9 +70,11 @@ expected: |
   "Profile: home_office (manual)" (or whichever profile UNIFI_PROFILE was set
   to, with "(manual)" appended). This signals to readers that auto-detection
   is deferred to Phase 2 — D-06.
-result: blocked
-blocked_by: prior-phase
-reason: "report.md not produced this run — depends on Test 1 UnicodeEncodeError fix; re-verify after fix lands"
+result: pass
+note: |
+  Originally blocked behind Test 1's UnicodeEncodeError. After the fix
+  (commit 9885ed2) report.md is produced and the "(manual)" label is
+  visible. Re-verified pass.
 
 ### 6. Adapter Pagination Warning Logged
 expected: |
@@ -108,11 +106,11 @@ result: pass
 ## Summary
 
 total: 8
-passed: 6
-issues: 1
+passed: 8
+issues: 0
 pending: 0
 skipped: 0
-blocked: 1
+blocked: 0
 
 ## Gaps
 
@@ -122,6 +120,12 @@ blocked: 1
   severity: blocker
   test: 1
   root_cause: "Path.write_text() called without encoding='utf-8'. On Windows with Python 3.14 the default is cp1252. render_report() emits '→' characters (likely in section dividers or finding rendering) that cp1252 cannot encode. SUMMARY of plan 01-05 explicitly noted 'write_text encoding=utf-8 required on Windows due to arrow characters in render_report output' — the fix was applied for the audit.log writer but missed the report.md writer at line 886."
+  resolution: |
+    Fixed inline during UAT (commit 9885ed2). All 5 Path.write_text() calls in
+    src/ (3 in unifi_audit.py, 2 in parser.py) now pass encoding="utf-8".
+    Regression guard: tests/test_write_text_encoding.py — structural test that
+    scans src/ for unguarded write_text() calls. Suite now 209 passed.
+    Test 1 re-verified pass; Test 5 unblocked and verified pass.
   artifacts:
     - path: "src/unifi_audit.py"
       issue: "Line 886: report_path.write_text(render_report(...)) — missing encoding='utf-8'"
