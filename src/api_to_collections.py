@@ -7,9 +7,15 @@ that findings_enhanced.py modules expect.
 
 Design properties:
   - Pure transformation: no I/O, no mutation of input, no network access.
-  - Fields marked [UNKNOWN] were not observable in Plan 07 (HTTP 401 auth failure;
-    all Integration v1 endpoints unreachable). Plan 08 will resolve them to
-    [VERIFIED] or [DIVERGENT] once a valid API key is used.
+  - Field annotations updated 2026-04-26 from a successful real-network run
+    (UniFi Network 10.3.55, Cloud Gateway Fiber + U7 Pro, single site).
+    Tags:
+      [VERIFIED 2026-04-26]  — field name + type confirmed from live API response
+      [DIVERGENT 2026-04-26] — real shape differs from assumption; code fixed accordingly
+      [UNKNOWN — 404 on this controller version] — endpoint returned 404 on 10.3.55;
+           field paths cannot be observed until a newer controller version is used
+      [UNKNOWN — not present in observed data] — endpoint returned 200 but this
+           particular field did not appear in any object from the real run
   - T-1-04 mitigation: unknown response shapes emit a logger.warning() with the
     observed keys so silently-dropped data is surfaced in the audit log.
 """
@@ -31,7 +37,7 @@ def _unwrap(response: Any, *, endpoint_name: str = "<unknown>") -> list[dict]:
     Handles the following shapes:
       - None                    → []
       - list                    → filter to dict items, return
-      - {"data": [...], ...}    → use the "data" list
+      - {"data": [...], ...}    → use the "data" list  [VERIFIED 2026-04-26]
       - {"items": [...], ...}   → use the "items" list
       - {"results": [...], ...} → use the "results" list
       - other dict              → log WARN with observed keys (T-1-04), return []
@@ -39,6 +45,10 @@ def _unwrap(response: Any, *, endpoint_name: str = "<unknown>") -> list[dict]:
 
     Pagination: if count < totalCount, logs a WARN about possible data truncation
     (Integration v1 returns paginated results; we don't yet implement continuation).
+
+    Observed 2026-04-26: all 200 endpoints (devices, clients, networks, sites) use
+    {"data": [...], "offset": int, "limit": int, "count": int, "totalCount": int}.
+    The "data" key path is [VERIFIED 2026-04-26].
 
     Args:
         response: Raw response value from a site-scoped endpoint.
@@ -92,13 +102,21 @@ def _unwrap(response: Any, *, endpoint_name: str = "<unknown>") -> list[dict]:
 def _extract_ssh_state(device: dict) -> bool:
     """Extract SSH enabled state from an Integration v1 device object.
 
-    [UNKNOWN 2026-04-26] field paths — Plan 07 run returned HTTP 401 on all endpoints;
-    no real device objects were observed. Field paths remain unconfirmed.
-    Plan 08 will resolve these to [VERIFIED] or [DIVERGENT]:
-      - Top-level 'sshEnabled' (likely Integration v1 field name)
-      - Top-level 'ssh_enabled' (classic API field name, may appear in older firmware)
-      - features array entry with name=='ssh' and enabled==True (capability flags pattern)
-    See: tests/fixtures/captured_real_network_run.md A1.
+    Observed 2026-04-26 (Network 10.3.55): neither 'sshEnabled' nor 'ssh_enabled'
+    appeared on the two observed devices (Cloud Gateway Fiber, U7 Pro).
+    The 'features' field IS present but contains a list of STRINGS (e.g. ["switching"],
+    ["accessPoint"]), NOT a list of dicts with name/enabled keys.
+    [DIVERGENT 2026-04-26] — features format: array of strings, not array of dicts.
+
+    The dict-guard in the features loop (`isinstance(feat, dict)`) prevents a
+    crash or false positive. The loop simply never matches on string values,
+    returning False safely. No code logic change needed; the guard is correct.
+
+    Field resolution:
+      - 'sshEnabled' top-level bool: [UNKNOWN — not present in observed data]
+      - 'ssh_enabled' snake_case: [UNKNOWN — not present in observed data]
+      - features[].name == 'ssh': [DIVERGENT — features are strings, not dicts;
+            dict guard makes this path safe but never fires on 10.3.55 data]
 
     Args:
         device: Raw device dict from Integration v1 API.
@@ -106,13 +124,16 @@ def _extract_ssh_state(device: dict) -> bool:
     Returns:
         True if SSH is enabled on the device, False otherwise.
     """
-    # [UNKNOWN 2026-04-26] Integration v1 may use sshEnabled (camelCase) — not confirmed
+    # [UNKNOWN — not present in observed data] sshEnabled not seen on 10.3.55
     if "sshEnabled" in device:
         return bool(device["sshEnabled"])
     # Classic API / older firmware fallback
     if "ssh_enabled" in device:
         return bool(device["ssh_enabled"])
-    # [UNKNOWN 2026-04-26] features array pattern: [{name: "ssh", enabled: true}, ...]
+    # [DIVERGENT 2026-04-26] features are strings on 10.3.55 (e.g. "switching",
+    # "accessPoint"). The isinstance(feat, dict) guard makes this safe — it never
+    # matches string items. Retained for forward-compat if future firmware adds
+    # a structured features format.
     for feat in device.get("features", []) or []:
         if isinstance(feat, dict) and feat.get("name") == "ssh":
             return bool(feat.get("enabled", False))
@@ -127,17 +148,18 @@ def _device_to_classic(d: dict) -> dict:
     """Map an Integration v1 device object to classic parser collection shape.
 
     Key field mappings (camelCase Integration v1 → snake_case classic):
-      macAddress    → mac
-      ipAddress     → ip
-      model         → model (uppercased: EOL_MODELS uses upper keys)
-      firmwareVersion → version
-      radioTable    → radio_table
-      sshEnabled    → ssh_enabled (via _extract_ssh_state)
-
-    [UNKNOWN 2026-04-26] radioTable field name — Plan 07 returned HTTP 401; not confirmed.
-    [UNKNOWN 2026-04-26] firmwareVersion field name — Plan 07 returned HTTP 401; not confirmed.
-    Plan 08 will resolve these to [VERIFIED] or [DIVERGENT].
-    See: tests/fixtures/captured_real_network_run.md A2, A6.
+      macAddress      → mac       [VERIFIED 2026-04-26]
+      ipAddress       → ip        [VERIFIED 2026-04-26]
+      model           → model     [VERIFIED 2026-04-26] (uppercased for EOL_MODELS)
+      firmwareVersion → version   [VERIFIED 2026-04-26] — field name confirmed
+      name            → name      [VERIFIED 2026-04-26]
+      state           → state     [VERIFIED 2026-04-26] (value: "ONLINE")
+      features        → (ssh detection only) [DIVERGENT 2026-04-26] — array of
+                        strings not dicts; see _extract_ssh_state
+      radioTable      → radio_table [UNKNOWN — not present in observed data]
+                        (U7 Pro uses 'interfaces: ["radios"]' but no radioTable key
+                        in the Integration v1 response at 10.3.55)
+      sshEnabled      → ssh_enabled [UNKNOWN — not present in observed data]
 
     All original keys are also preserved (pass-through) so callers inspecting
     the raw shape can still access them.
@@ -154,10 +176,13 @@ def _device_to_classic(d: dict) -> dict:
         "type": d.get("type", d.get("deviceType", "")),
         "state": d.get("state", ""),
         "ssh_enabled": _extract_ssh_state(d),
-        # [UNKNOWN 2026-04-26] radioTable field name; not confirmed (auth failure in Plan 07)
+        # [UNKNOWN — not present in observed data] radioTable not seen on 10.3.55;
+        # U7 Pro has 'interfaces: ["radios"]' but no radioTable in Integration v1.
+        # Dual-fallback retained for forward-compat.
         "radio_table": d.get("radioTable", d.get("radio_table", [])) or [],
-        # [UNKNOWN 2026-04-26] firmwareVersion field name; not confirmed (auth failure in Plan 07)
-        "version": d.get("version", d.get("firmwareVersion", "")),
+        # [VERIFIED 2026-04-26] firmwareVersion confirmed on both observed devices.
+        # 'version' fallback retained for classic-API compat.
+        "version": d.get("firmwareVersion", d.get("version", "")),
     }
     # Preserve all other keys (no information loss)
     for k, v in d.items():
@@ -169,10 +194,16 @@ def _device_to_classic(d: dict) -> dict:
 def _wlan_to_classic(w: dict) -> dict:
     """Map an Integration v1 WLAN object to classic wlanconf collection shape.
 
-    [UNKNOWN 2026-04-26] field names — Plan 07 returned HTTP 401; no WLAN objects
-    were observed. Plan 08 will resolve these to [VERIFIED] or [DIVERGENT]:
-      securityProtocol, wpaMode, pmfMode, preSharedKey, psk
-    See: tests/fixtures/captured_real_network_run.md A4.
+    [UNKNOWN — 404 on this controller version] — /wlans returned 404 on Network
+    10.3.55. No WLAN objects were observed. All field-path assumptions remain
+    unconfirmed. The dual-fallback (camelCase first, snake_case second) is retained
+    for when the endpoint becomes available on a newer controller version.
+
+    Field assumptions (unresolvable until /wlans returns 200):
+      securityProtocol / security — [UNKNOWN — 404 on this controller version]
+      wpaMode / wpa_mode          — [UNKNOWN — 404 on this controller version]
+      pmfMode / pmf_mode          — [UNKNOWN — 404 on this controller version]
+      preSharedKey / psk          — [UNKNOWN — 404 on this controller version]
 
     Passphrase handling: by the time the adapter sees the response, sanitize()
     has already replaced the raw PSK with a fingerprint dict. We preserve
@@ -181,14 +212,15 @@ def _wlan_to_classic(w: dict) -> dict:
     out: dict[str, Any] = {
         "name": w.get("name", ""),
         "enabled": w.get("enabled", True),
-        # [UNKNOWN 2026-04-26] Integration v1 may use securityProtocol vs. classic security
+        # [UNKNOWN — 404 on this controller version] Integration v1 may use
+        # securityProtocol vs. classic security — not resolvable at 10.3.55
         "security": w.get("security") or w.get("securityProtocol") or "",
-        # [UNKNOWN 2026-04-26] wpaMode (camelCase) vs. wpa_mode (snake_case)
+        # [UNKNOWN — 404 on this controller version] wpaMode (camelCase) vs wpa_mode
         "wpa_mode": w.get("wpaMode") or w.get("wpa_mode") or "",
         # Sanitizer has already fingerprinted the raw value; preserve as-is
-        # [UNKNOWN 2026-04-26] preSharedKey / psk as Integration v1 field names
+        # [UNKNOWN — 404 on this controller version] preSharedKey / psk field names
         "x_passphrase": w.get("x_passphrase", w.get("preSharedKey", w.get("psk", {}))),
-        # [UNKNOWN 2026-04-26] pmfMode (camelCase) vs. pmf_mode (snake_case)
+        # [UNKNOWN — 404 on this controller version] pmfMode (camelCase) vs pmf_mode
         "pmf_mode": w.get("pmfMode") or w.get("pmf_mode") or "disabled",
     }
     # Preserve all other keys
@@ -201,16 +233,53 @@ def _wlan_to_classic(w: dict) -> dict:
 def _network_to_classic(n: dict) -> dict:
     """Map an Integration v1 network object to classic networkconf collection shape.
 
-    [UNKNOWN 2026-04-26] field names — Plan 07 returned HTTP 401; no network objects
-    were observed. Plan 08 will resolve these to [VERIFIED] or [DIVERGENT]:
-      vlanId (Integration v1) vs. vlan (classic)
-    See: tests/fixtures/captured_real_network_run.md A5.
+    Observed 2026-04-26 (Network 10.3.55) — real network object shape:
+      {
+        "management": "GATEWAY",         [VERIFIED 2026-04-26]
+        "id": "<uuid>",                  [VERIFIED 2026-04-26]
+        "name": "Primary" | "IoT",       [VERIFIED 2026-04-26]
+        "enabled": true,                 [VERIFIED 2026-04-26]
+        "vlanId": 1 | 2,                 [VERIFIED 2026-04-26]
+        "metadata": {
+            "origin": "SYSTEM_DEFINED" | "USER_DEFINED",  [VERIFIED 2026-04-26]
+            "configurable": true         (only on SYSTEM_DEFINED)
+        },
+        "default": true | false          [VERIFIED 2026-04-26]
+      }
+
+    [DIVERGENT 2026-04-26] 'purpose' field: Classic API uses purpose = "corporate" |
+    "guest" | "vlan-only". Integration v1 does NOT have a 'purpose' field at all.
+    Instead it has 'metadata.origin' ("SYSTEM_DEFINED" | "USER_DEFINED") and 'default'
+    (bool). Fix: derive 'purpose' from metadata.origin so findings that filter on
+    purpose == "corporate" / "guest" correctly identify user-defined networks.
+
+    Mapping applied:
+      metadata.origin == USER_DEFINED  →  purpose = "corporate"  (user-created LAN)
+      metadata.origin == SYSTEM_DEFINED and default == True  →  purpose = "system_default"
+      metadata.origin == SYSTEM_DEFINED and default == False →  purpose = "system_defined"
+      fallback (no metadata)  →  purpose = "" (same as before)
+
+    Note: 'vlanId' confirmed as camelCase [VERIFIED 2026-04-26]; 'vlan' is the classic
+    snake_case name used by parser.py.
     """
+    metadata = n.get("metadata") or {}
+    origin = metadata.get("origin", "")
+
+    # [DIVERGENT 2026-04-26] Derive purpose from metadata.origin (Integration v1)
+    # since the classic 'purpose' field is absent.
+    if origin == "USER_DEFINED":
+        derived_purpose = "corporate"  # treat user-defined as a LAN segment
+    elif origin == "SYSTEM_DEFINED":
+        derived_purpose = "system_default" if n.get("default") else "system_defined"
+    else:
+        # Fallback: try classic API fields in case this is parsed from a backup file
+        derived_purpose = n.get("purpose") or n.get("type") or ""
+
     out: dict[str, Any] = {
         "name": n.get("name", ""),
-        # [UNKNOWN 2026-04-26] purpose vs. type field name; not confirmed (auth failure in Plan 07)
-        "purpose": n.get("purpose") or n.get("type") or "",
-        # [UNKNOWN 2026-04-26] vlanId (Integration v1) vs. vlan (classic); not confirmed
+        # [DIVERGENT 2026-04-26] purpose derived from metadata.origin (see docstring)
+        "purpose": derived_purpose,
+        # [VERIFIED 2026-04-26] vlanId is the correct camelCase field in Integration v1
         "vlan": n.get("vlanId", n.get("vlan", None)),
     }
     # Preserve all other keys
@@ -232,10 +301,10 @@ def _route_vpn_configs(vpn_configs: list[dict]) -> dict[str, dict]:
     (vpn_pptp, vpn_l2tp, vpn_wireguard, vpn_openvpn). This function bridges
     the two shapes.
 
-    [UNKNOWN 2026-04-26] 'type' / 'protocol' field names — Plan 07 returned HTTP 401;
-    no VPN config objects were observed. Plan 08 will resolve to [VERIFIED] or [DIVERGENT].
-    [UNKNOWN 2026-04-26] Protocol string values (pptp, l2tp, l2tp-ipsec, wireguard, openvpn).
-    See: tests/fixtures/captured_real_network_run.md A8.
+    [UNKNOWN — 404 on this controller version] — /vpn-configs returned 404 on
+    Network 10.3.55. No VPN config objects were observed. 'type' / 'protocol'
+    field names and protocol string values remain unconfirmed until the endpoint
+    is available on a newer controller version.
 
     Multiple configs of the same protocol: OR-aggregate the enabled flag so that
     if any instance is enabled, the protocol shows as enabled.
@@ -246,7 +315,8 @@ def _route_vpn_configs(vpn_configs: list[dict]) -> dict[str, dict]:
         "vpn_wireguard": {},
         "vpn_openvpn": {},
     }
-    # [UNKNOWN 2026-04-26] Protocol name → setting key mapping; values not confirmed from live API
+    # [UNKNOWN — 404 on this controller version] Protocol name → setting key mapping;
+    # values not confirmed from live API (endpoint returned 404 at Network 10.3.55)
     proto_map = {
         "pptp": "vpn_pptp",
         "l2tp": "vpn_l2tp",
@@ -256,7 +326,7 @@ def _route_vpn_configs(vpn_configs: list[dict]) -> dict[str, dict]:
         "openvpn": "vpn_openvpn",
     }
     for config in vpn_configs:
-        # [UNKNOWN 2026-04-26] 'type' or 'protocol' field name; not confirmed from live API
+        # [UNKNOWN — 404 on this controller version] 'type' or 'protocol' field name
         proto = (config.get("type") or config.get("protocol") or "").lower().strip()
         enabled = bool(config.get("enabled", False))
         key = proto_map.get(proto)
@@ -294,8 +364,8 @@ def build_parser_collections(clean: dict) -> dict:
       vpn_pptp, vpn_l2tp, vpn_wireguard, vpn_openvpn
         — routed from vpn_configs list via _route_vpn_configs()
       auto_update, auto_backup, mgmt, dpi, rogueap, dns_filtering, content_filtering
-        — [UNKNOWN 2026-04-26: not verifiable from Plan 07 (HTTP 401); Plan 08 will confirm]
-        — empty dicts cause affected modules to emit "disabled/unknown" findings,
+        — not exposed by Integration v1 API (confirmed absent at Network 10.3.55);
+          empty dicts cause affected modules to emit "disabled/unknown" findings,
           which is correct degraded behaviour per D-03.
 
     Debug keys:
@@ -384,8 +454,9 @@ def build_parser_collections(clean: dict) -> dict:
         "networkconf": networks,
         "portforward": port_forwards,
         "firewallrule": firewall_policies,
-        # [UNKNOWN 2026-04-26] firewallgroup not separately exposed in Integration v1 API;
-        # Plan 07 returned HTTP 401 — cannot confirm. Plan 08 will verify.
+        # [UNKNOWN — 404 on this controller version] firewall-zones returned 404 at
+        # Network 10.3.55. Mapped here as firewallgroup for backward compat with
+        # findings that read firewallgroup; will be empty until endpoint is available.
         "firewallgroup": firewall_zones,
         "user": clients,
 
@@ -400,17 +471,16 @@ def build_parser_collections(clean: dict) -> dict:
         "vpn_wireguard": vpn_settings["vpn_wireguard"],
         "vpn_openvpn": vpn_settings["vpn_openvpn"],
 
-        # Settings exposure by Integration v1 API — not verifiable (Plan 07 HTTP 401).
+        # Settings NOT exposed by Integration v1 API (confirmed absent at 10.3.55).
         # Empty dicts -> modules emit "disabled/unknown" findings (correct per D-03).
-        # Plan 08 will confirm whether any of these are actually exposed.
-        "auto_update": {},     # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
-        "auto_backup": {},     # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
-        "mgmt": {},            # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
-        "dpi": {},             # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
-        "rogueap": {},         # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
-        "dns_filtering": {},   # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
-        "content_filtering": {},  # [UNKNOWN 2026-04-26: not verifiable from Plan 07]
+        "auto_update": {},     # not in Integration v1 API (confirmed 2026-04-26)
+        "auto_backup": {},     # not in Integration v1 API (confirmed 2026-04-26)
+        "mgmt": {},            # not in Integration v1 API (confirmed 2026-04-26)
+        "dpi": {},             # not in Integration v1 API (confirmed 2026-04-26)
+        "rogueap": {},         # not in Integration v1 API (confirmed 2026-04-26)
+        "dns_filtering": {},   # not in Integration v1 API (confirmed 2026-04-26)
+        "content_filtering": {},  # not in Integration v1 API (confirmed 2026-04-26)
 
-        # Debug: preserved for adapter refinement in Plan 07
+        # Debug: preserved for adapter refinement
         "_vpn_configs_raw": vpn_configs,
     }
