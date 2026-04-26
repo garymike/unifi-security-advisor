@@ -90,7 +90,14 @@ def sanitize(obj: Any, redact_pii: bool = False) -> Any:
         out: dict[str, Any] = {}
         for k, v in obj.items():
             if k in SECRET_FIELD_NAMES:
-                out[k] = _fingerprint(v) if isinstance(v, str) else {"redacted": True}
+                if isinstance(v, str):
+                    out[k] = _fingerprint(v)
+                elif isinstance(v, dict):
+                    # Already sanitized (fingerprint or redacted dict) — pass through.
+                    # This preserves idempotency: sanitize(sanitize(x)) == sanitize(x).
+                    out[k] = v
+                else:
+                    out[k] = {"type": type(v).__name__, "redacted": True}
             elif redact_pii and k in {"hostname", "note", "name"} and isinstance(v, str):
                 out[k] = f"<redacted:{len(v)} chars>"
             else:
