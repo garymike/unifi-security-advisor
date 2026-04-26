@@ -508,10 +508,12 @@ def main():
     args = p.parse_args()
     if args.cmd == "analyze":
         result = analyze(args.path, redact_pii=args.redact_pii)
-        args.out.write_text(render_markdown(result))
+        # encoding="utf-8" is mandatory on Windows: write_text() default is cp1252,
+        # which cannot encode the non-ASCII characters in rendered output.
+        args.out.write_text(render_markdown(result), encoding="utf-8")
         print(f"Wrote {args.out} with {result['finding_count']} findings")
         if args.json:
-            args.json.write_text(json.dumps(result, indent=2, default=str))
+            args.json.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
             print(f"Wrote {args.json}")
 
 

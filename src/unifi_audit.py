@@ -868,9 +868,12 @@ def main():
     logger.info("Sanitizing collected data...")
     clean = sanitize(raw)
 
-    # Write sanitized raw dump for inspection
+    # Write sanitized raw dump for inspection.
+    # encoding="utf-8" is mandatory: Path.write_text falls back to locale default
+    # (cp1252 on Windows / Python 3.14) which cannot encode non-ASCII characters
+    # such as the '->' arrow used by render_report. See tests/test_write_text_encoding.py.
     raw_path = OUTPUT_DIR / "raw_sanitized.json"
-    raw_path.write_text(json.dumps(clean, indent=2, default=str))
+    raw_path.write_text(json.dumps(clean, indent=2, default=str), encoding="utf-8")
     logger.info(f"Wrote {raw_path}")
 
     # Run findings
@@ -878,12 +881,12 @@ def main():
     findings = analyze(clean, cfg["profile"], logger)
 
     findings_path = OUTPUT_DIR / "findings.json"
-    findings_path.write_text(json.dumps([asdict(f) for f in findings], indent=2))
+    findings_path.write_text(json.dumps([asdict(f) for f in findings], indent=2), encoding="utf-8")
     logger.info(f"Wrote {findings_path} ({len(findings)} findings)")
 
     # Report
     report_path = OUTPUT_DIR / "report.md"
-    report_path.write_text(render_report(findings, clean, cfg["profile"]))
+    report_path.write_text(render_report(findings, clean, cfg["profile"]), encoding="utf-8")
     logger.info(f"Wrote {report_path}")
 
     logger.info("")
