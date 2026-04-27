@@ -1,33 +1,30 @@
 """
-Enhanced findings modules addressing the 10-point coverage gaps.
+Enhanced findings modules for the UniFi security audit.
 
-Drop-in replacement/addition for the stub modules in parser.py.
-Imports and helpers assumed available from parser.py.
+find_wireless_tuning and find_remote_access accept NormalizedSite (src/normalize.py).
+Remaining functions (find_firewall_threats, find_firmware, find_logging, find_backup_config)
+will be ported in Task 4.
 """
 
 from __future__ import annotations
-from typing import Any
-# from parser import Finding, _get_collection, _get_setting  # in real build
 
 
 # =============================================================================
 # NEW: Wireless tuning (Section 6.5)
 # =============================================================================
 
-def find_wireless_tuning(colls: dict) -> list:
-    """Per-AP radio tuning: TX power, unused bands, rogue AP detection, fast roaming."""
-    from parser import Finding, _get_collection, _get_setting
+def find_wireless_tuning(site) -> list:
+    """Per-AP radio tuning: TX power, unused bands, rogue AP detection, PMF."""
+    from models import Finding
 
     findings = []
-    devices = [d for d in _get_collection(colls, "device") if d.get("type") == "uap"]
+    devices = [d for d in site.devices if d.get("type") == "uap"]
 
-    # --- TX power audit per AP per radio ---
     for d in devices:
         ap_name = d.get("name") or d.get("mac", "unnamed")
         for r in d.get("radio_table", []):
-            band = r.get("radio", "unknown")  # ng | na | 6e
+            band = r.get("radio", "unknown")
             band_label = {"ng": "2.4 GHz", "na": "5 GHz", "6e": "6 GHz"}.get(band, band)
-
             if r.get("tx_power_mode") == "high":
                 findings.append(Finding(
                     id=f"RF-{d.get('mac', 'x')}-{band}-TX",
@@ -38,32 +35,25 @@ def find_wireless_tuning(colls: dict) -> list:
                     current_state=(
                         f"AP '{ap_name}' {band_label} radio is set to High TX power. "
                         "High power extends coverage past your physical space, inviting "
-                        "opportunistic attacks from parking lots, neighboring units, and "
-                        "drive-by reconnaissance."
+                        "opportunistic attacks from parking lots and drive-by reconnaissance."
                     ),
                     recommendation=(
-                        "Set TX power to Auto (default) or Medium for typical indoor use. "
-                        "Use WiFiman or a WiFi analyzer to confirm coverage does not bleed "
-                        "meaningfully past your property line. Exception: intentional outdoor "
-                        "or large-property coverage."
+                        "Set TX power to Auto or Medium for typical indoor use. "
+                        "Exception: intentional outdoor or large-property coverage."
                     ),
-                    intent_question="Is extended coverage deliberate (outdoor, large property, neighbor sharing)?",
+                    intent_question="Is extended coverage deliberate (outdoor, large property)?",
                     maps_to={"cis_v8": "12.5", "nist_csf": "PR.PT-4"},
                     effort="quick",
                     impact="low",
                 ))
 
-    # --- 2.4 GHz radio audit ---
     aps_with_24 = [
         d for d in devices
         if any(r.get("radio") == "ng" and not r.get("disabled") for r in d.get("radio_table", []))
     ]
     if aps_with_24:
-        # Count clients actually using 2.4 GHz at the time of backup
-        clients = _get_collection(colls, "user")
-        clients_on_24 = sum(1 for c in clients if c.get("radio") == "ng")
-        total_wifi_clients = sum(1 for c in clients if c.get("radio"))
-
+        clients_on_24 = sum(1 for c in site.clients if c.get("radio") == "ng")
+        total_wifi = sum(1 for c in site.clients if c.get("radio"))
         findings.append(Finding(
             id="RF-BAND-24GHZ",
             section="Wireless tuning",
@@ -71,27 +61,39 @@ def find_wireless_tuning(colls: dict) -> list:
             status="recommendation",
             title="2.4 GHz radio active across AP(s)",
             current_state=(
-                f"{len(aps_with_24)} AP(s) have 2.4 GHz enabled. At last backup, "
-                f"{clients_on_24} of {total_wifi_clients} Wi-Fi clients were using 2.4 GHz. "
-                "2.4 GHz is the most crowded, most attacked, and oldest Wi-Fi band. "
-                "It's also where most cheap IoT connects."
+                f"{len(aps_with_24)} AP(s) have 2.4 GHz enabled. "
+                f"{clients_on_24} of {total_wifi} Wi-Fi clients are on 2.4 GHz."
             ),
             recommendation=(
-                "Identify which specific devices need 2.4 GHz. If few/none do, disable the "
-                "2.4 GHz radio to shrink attack surface. If some IoT requires it, put those "
-                "devices on a dedicated IoT SSID mapped to a restricted VLAN - then you can "
-                "disable 2.4 GHz on the main SSID while keeping it for IoT only."
+                "Identify which devices need 2.4 GHz. If few do, disable it to shrink "
+                "attack surface. If IoT requires it, isolate those on a dedicated VLAN."
             ),
-            intent_question="Do you have devices that truly require 2.4 GHz? Which ones?",
+            intent_question="Do you have devices that truly require 2.4 GHz?",
             maps_to={"cis_v8": "12.5"},
             effort="medium",
             impact="medium",
-            evidence={"aps_24ghz": len(aps_with_24), "clients_24ghz": clients_on_24, "total_wifi": total_wifi_clients},
+            evidence={"aps_24ghz": len(aps_with_24), "clients_24ghz": clients_on_24, "total_wifi": total_wifi},
         ))
 
-    # --- Rogue AP detection ---
-    rogue_setting = _get_setting(colls, "rogueap") or {}
-    if not rogue_setting.get("report_rogue"):
+    rogue_setting = site.settings.get("rogueap")
+    if rogue_setting is None:
+        findings.append(Finding(
+            id="RF-ROGUE-001",
+            section="Wireless tuning",
+            severity="info",
+            status="unknown",
+            title="Rogue AP detection: cannot check via live API",
+            current_state=(
+                "Rogue AP detection state is not exposed by the Network Integration API. "
+                "Use backup-file mode to audit this, or check Settings → WiFi → Advanced."
+            ),
+            recommendation="Enable Rogue AP Detection in Settings → WiFi → Advanced.",
+            intent_question="Is rogue AP detection currently enabled?",
+            maps_to={"cis_v8": "12.6", "nist_csf": "DE.CM-7"},
+            effort="quick",
+            impact="medium",
+        ))
+    elif not rogue_setting.get("report_rogue"):
         findings.append(Finding(
             id="RF-ROGUE-001",
             section="Wireless tuning",
@@ -99,24 +101,18 @@ def find_wireless_tuning(colls: dict) -> list:
             status="gap",
             title="Rogue AP detection not enabled",
             current_state=(
-                "Rogue AP reporting is disabled. If someone nearby sets up a fake version "
-                "of your SSID to capture credentials (evil twin attack), your controller "
-                "will not notice or alert."
+                "Rogue AP reporting is disabled. A fake version of your SSID "
+                "would not be detected."
             ),
-            recommendation=(
-                "Enable Rogue AP Detection in Settings > WiFi > Advanced. Review the "
-                "neighboring APs list monthly. Investigate anything broadcasting your "
-                "SSID names that isn't yours."
-            ),
+            recommendation="Enable Rogue AP Detection in Settings → WiFi → Advanced.",
             intent_question="Want rogue AP detection on? (no performance cost)",
             maps_to={"cis_v8": "12.6", "nist_csf": "DE.CM-7"},
             effort="quick",
             impact="medium",
         ))
 
-    # --- PMF (Protected Management Frames) audit on WPA3 SSIDs ---
-    for w in _get_collection(colls, "wlanconf"):
-        if not w.get("enabled"):
+    for w in site.wlans:
+        if not w.get("enabled", True):
             continue
         name = w.get("name", "<unnamed>")
         wpa_mode = w.get("wpa_mode", "")
@@ -129,11 +125,10 @@ def find_wireless_tuning(colls: dict) -> list:
                 status="gap",
                 title=f"SSID '{name}' uses WPA3 but PMF is disabled",
                 current_state=(
-                    f"SSID '{name}' has WPA3 enabled but Protected Management Frames "
-                    "(PMF / 802.11w) is off. PMF is a WPA3 requirement that protects "
-                    "management frames from deauthentication and disassociation attacks."
+                    f"SSID '{name}' has WPA3 but PMF (802.11w) is off. "
+                    "PMF is a WPA3 requirement that blocks deauth attacks."
                 ),
-                recommendation=f"Set PMF to Required on '{name}' (WPA3 mandates it).",
+                recommendation=f"Set PMF to Required on '{name}'.",
                 intent_question=None,
                 maps_to={"cis_v8": "12.5"},
                 effort="quick",
@@ -147,15 +142,23 @@ def find_wireless_tuning(colls: dict) -> list:
 # ENHANCED: VPN and remote access (Section 8)
 # =============================================================================
 
-def find_remote_access(colls: dict) -> list:
-    """Remote access paths with opinionated protocol preference."""
-    from parser import Finding, _get_collection, _get_setting
+def find_remote_access(site) -> list:
+    """Remote access paths: PPTP, L2TP, WireGuard, OpenVPN, port-forward exposure."""
+    from models import Finding
 
     findings = []
+    vpn_by_type: dict[str, dict] = {}
+    for v in site.vpn_configs:
+        t = (v.get("type") or "").lower().replace("-", "_")
+        if v.get("enabled", True):
+            vpn_by_type[t] = v
 
-    # Check for PPTP (cryptographically broken)
-    pptp = _get_setting(colls, "vpn_pptp") or _get_setting(colls, "pptp_server")
-    if pptp and pptp.get("enabled"):
+    pptp = vpn_by_type.get("pptp")
+    l2tp = vpn_by_type.get("l2tp") or vpn_by_type.get("l2tp_ipsec")
+    wireguard = vpn_by_type.get("wireguard") or vpn_by_type.get("wg")
+    openvpn = vpn_by_type.get("openvpn")
+
+    if pptp:
         findings.append(Finding(
             id="VPN-PPTP-001",
             section="Remote access",
@@ -163,14 +166,12 @@ def find_remote_access(colls: dict) -> list:
             status="gap",
             title="PPTP VPN enabled (broken protocol)",
             current_state=(
-                "PPTP is enabled as a VPN server. PPTP's authentication (MS-CHAPv2) is "
-                "cryptographically broken; credentials and session traffic can be recovered "
-                "by anyone on the path between the user and the server."
+                "PPTP is enabled. MS-CHAPv2 is cryptographically broken; credentials "
+                "and session traffic can be recovered by anyone on-path."
             ),
             recommendation=(
-                "Disable PPTP immediately. Replace with WireGuard (preferred) or OpenVPN. "
-                "All credentials that have ever been used over PPTP should be considered "
-                "potentially compromised and rotated."
+                "Disable PPTP immediately. Replace with WireGuard. "
+                "Rotate all credentials ever used over PPTP."
             ),
             intent_question=None,
             maps_to={"cis_v8": "4.4", "nist_csf": "PR.AC-3"},
@@ -178,12 +179,7 @@ def find_remote_access(colls: dict) -> list:
             impact="high",
         ))
 
-    # L2TP/IPsec - discouraged but functional
-    l2tp = _get_setting(colls, "vpn_l2tp") or _get_setting(colls, "l2tp_server")
-    wireguard = _get_setting(colls, "vpn_wireguard") or _get_setting(colls, "wireguard")
-    openvpn = _get_setting(colls, "vpn_openvpn") or _get_setting(colls, "openvpn_server")
-
-    if l2tp and l2tp.get("enabled") and not (wireguard or openvpn):
+    if l2tp and not (wireguard or openvpn):
         findings.append(Finding(
             id="VPN-L2TP-001",
             section="Remote access",
@@ -191,53 +187,37 @@ def find_remote_access(colls: dict) -> list:
             status="recommendation",
             title="L2TP/IPsec is the only VPN (consider WireGuard)",
             current_state=(
-                "L2TP/IPsec is enabled as the only VPN. L2TP/IPsec works but is legacy: "
-                "often blocked by hotel/public Wi-Fi (UDP 500/4500/1701), slower, and "
-                "more complex than WireGuard."
+                "L2TP/IPsec is the only VPN. It is often blocked by hotel/public Wi-Fi "
+                "and slower than WireGuard."
             ),
-            recommendation=(
-                "Keep L2TP if specific clients require it, but add WireGuard as the "
-                "primary VPN. WireGuard is dramatically faster, traverses NAT/firewalls "
-                "more reliably, and has a smaller, modern codebase."
-            ),
-            intent_question="Do you have a client that specifically needs L2TP?",
+            recommendation="Add WireGuard as the primary VPN.",
+            intent_question="Do you have a client that specifically requires L2TP?",
             maps_to={"cis_v8": "4.4"},
             effort="medium",
             impact="medium",
         ))
 
-    # Port forwards without VPN = exposure instead of secured remote
-    port_forwards = [p for p in _get_collection(colls, "portforward") if p.get("enabled")]
-    has_vpn = any((
-        (wireguard and wireguard.get("enabled")),
-        (openvpn and openvpn.get("enabled")),
-        (l2tp and l2tp.get("enabled")),
-    ))
-    if port_forwards and not has_vpn:
+    active_forwards = [p for p in site.port_forwards if p.get("enabled", True)]
+    has_vpn = bool(wireguard or openvpn or l2tp)
+    if active_forwards and not has_vpn:
         findings.append(Finding(
             id="VPN-MISSING-001",
             section="Remote access",
             severity="high",
             status="gap",
-            title=f"{len(port_forwards)} services exposed to internet, no VPN configured",
+            title=f"{len(active_forwards)} services exposed to internet, no VPN configured",
             current_state=(
-                f"{len(port_forwards)} port forwards expose internal services directly "
-                "to the internet. No VPN is configured, suggesting these are the primary "
-                "remote-access path."
+                f"{len(active_forwards)} port forwards expose internal services. "
+                "No VPN is configured."
             ),
-            recommendation=(
-                "Set up WireGuard VPN, then remove all port forwards that exist only for "
-                "remote access. Port forwards should be reserved for services that must "
-                "be public (rare in home/small-business)."
-            ),
-            intent_question="Are any of these port forwards for services that must be public-facing (vs. just your own remote access)?",
+            recommendation="Set up WireGuard VPN, then remove port forwards used only for remote access.",
+            intent_question="Are any port forwards for services that must be public-facing?",
             maps_to={"cis_v8": "4.4", "nist_csf": "PR.AC-3"},
             effort="medium",
             impact="high",
         ))
 
-    # Good path: WireGuard configured
-    if wireguard and wireguard.get("enabled"):
+    if wireguard:
         findings.append(Finding(
             id="VPN-WG-OK",
             section="Remote access",
