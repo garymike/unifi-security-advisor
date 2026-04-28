@@ -1,9 +1,7 @@
 """
 Enhanced findings modules for the UniFi security audit.
 
-find_wireless_tuning and find_remote_access accept NormalizedSite (src/normalize.py).
-Remaining functions (find_firewall_threats, find_firmware, find_logging, find_backup_config)
-will be ported in Task 4.
+All functions accept a NormalizedSite (src/normalize.py) as their first argument.
 """
 
 from __future__ import annotations
@@ -239,39 +237,38 @@ def find_remote_access(site) -> list:
 # ENHANCED: Firewall (split geo/content/safe-search)
 # =============================================================================
 
-def find_firewall_threats(colls: dict) -> list:
-    """Extends find_firewall with geo/content/safe-search split."""
-    from parser import Finding, _get_collection, _get_setting
+def find_firewall_threats(site) -> list:
+    """Geo-IP blocking (both directions) and DNS content filtering."""
+    from models import Finding
 
     findings = []
 
-    # Geo-IP: check both directions
-    rules = _get_collection(colls, "firewallrule")
-    groups = {g.get("_id"): g for g in _get_collection(colls, "firewallgroup")}
-
-    def _is_geo_rule(rule):
-        for group_id_list in (rule.get("src_firewallgroup_ids", []), rule.get("dst_firewallgroup_ids", [])):
-            for gid in group_id_list:
-                g = groups.get(gid, {})
-                if g.get("group_type", "").startswith("country") or "geo" in g.get("name", "").lower():
+    def _has_geo_policy(direction_hint: str) -> bool:
+        for p in site.firewall_policies:
+            if not p.get("enabled", True):
+                continue
+            action = p.get("action", "")
+            if action != "drop":
+                continue
+            src = p.get("source", {})
+            if src.get("geo"):
+                name = (p.get("name") or "").lower()
+                d = p.get("direction", "").upper()
+                if direction_hint in d or direction_hint.lower() in name:
                     return True
         return False
 
-    wan_in_geo = any(r for r in rules if r.get("ruleset") == "WAN_IN" and r.get("action") == "drop" and _is_geo_rule(r))
-    wan_out_geo = any(r for r in rules if r.get("ruleset") == "WAN_OUT" and r.get("action") == "drop" and _is_geo_rule(r))
-
-    if not wan_in_geo:
+    if not _has_geo_policy("WAN_IN"):
         findings.append(Finding(
             id="FW-GEO-IN",
             section="Firewall",
             severity="low",
             status="recommendation",
             title="No Geo-IP blocking on inbound WAN",
-            current_state="No Geo-IP rule found blocking inbound traffic from high-risk regions.",
+            current_state="No policy found blocking inbound traffic from high-risk regions.",
             recommendation=(
                 "Block inbound connections from countries you have no business receiving "
-                "traffic from. Common blocklist: CN, RU, KP, IR (adjust based on your context). "
-                "Low false-positive rate for most users."
+                "traffic from (e.g. CN, RU, KP, IR). Low false-positive rate for most users."
             ),
             intent_question="Do you expect inbound traffic from these regions?",
             maps_to={"cis_v8": "13.4"},
@@ -279,7 +276,7 @@ def find_firewall_threats(colls: dict) -> list:
             impact="medium",
         ))
 
-    if not wan_out_geo:
+    if not _has_geo_policy("WAN_OUT"):
         findings.append(Finding(
             id="FW-GEO-OUT",
             section="Firewall",
@@ -287,20 +284,38 @@ def find_firewall_threats(colls: dict) -> list:
             status="recommendation",
             title="No Geo-IP blocking on outbound WAN (often overlooked)",
             current_state=(
-                "No outbound Geo-IP rule found. Outbound geo-blocking is less common but "
-                "valuable: a compromised device calling home to a C2 server in a blocked "
-                "region will fail."
+                "No outbound Geo-IP policy found. A compromised device calling home "
+                "to a C2 in a blocked region would succeed."
             ),
-            recommendation="Consider outbound geo-blocking for the same regions you block inbound.",
-            intent_question="Do any of your legitimate services talk to servers in high-risk regions?",
+            recommendation="Apply outbound geo-blocking for the same regions you block inbound.",
+            intent_question="Do any of your services legitimately talk to servers in high-risk regions?",
             maps_to={"cis_v8": "13.4"},
             effort="quick",
             impact="low",
         ))
 
-    # Content filtering (DNS-based)
-    dns_filter = _get_setting(colls, "dns_filtering") or _get_setting(colls, "content_filtering") or {}
-    if not dns_filter.get("enabled"):
+    dns_filter = site.settings.get("dns_filtering")
+    if dns_filter is None:
+        findings.append(Finding(
+            id="FW-CONTENT-001",
+            section="Firewall",
+            severity="info",
+            status="unknown",
+            title="Content filtering: cannot check via live API",
+            current_state=(
+                "DNS content filtering state is not exposed by the Network Integration API. "
+                "Use backup-file mode to audit this, or check Settings → Security → Content Filtering."
+            ),
+            recommendation=(
+                "Enable Content Filtering with the Security category at minimum. "
+                "This blocks known-malicious domains for every device."
+            ),
+            intent_question="Is DNS content filtering currently enabled?",
+            maps_to={"cis_v8": "9.3", "nist_csf": "PR.PT-4"},
+            effort="quick",
+            impact="medium",
+        ))
+    elif not dns_filter.get("enabled"):
         findings.append(Finding(
             id="FW-CONTENT-001",
             section="Firewall",
@@ -309,15 +324,12 @@ def find_firewall_threats(colls: dict) -> list:
             title="Content filtering not configured",
             current_state=(
                 "DNS-based content filtering is off. No automatic blocking of malware "
-                "domains, C2 infrastructure, or phishing sites at the DNS layer."
+                "domains or phishing sites at the DNS layer."
             ),
             recommendation=(
-                "Enable Content Filtering with the Security category at minimum. This blocks "
-                "known-malicious domains for every device without per-device config. Add the "
-                "Family category if your household includes children. Content filtering is "
-                "DNS-based, so it's visible (blocked pages show as errors) rather than hidden."
+                "Enable Content Filtering with the Security category at minimum."
             ),
-            intent_question="Should the network block known-malicious domains for all devices automatically?",
+            intent_question="Should the network block known-malicious domains automatically?",
             maps_to={"cis_v8": "9.3", "nist_csf": "PR.PT-4"},
             effort="quick",
             impact="medium",
@@ -342,37 +354,51 @@ EOL_MODELS = {
 }
 
 
-def find_firmware(colls: dict) -> list:
-    """Firmware currency, update domain audit, EOL, known-vulnerable."""
-    from parser import Finding, _get_collection, _get_setting
+def find_firmware(site) -> list:
+    """Firmware currency: auto-update, EOL hardware, stale major versions."""
+    from models import Finding
 
     findings = []
-    devices = _get_collection(colls, "device")
 
-    # Auto-update toggle
-    auto_update = _get_setting(colls, "auto_update") or {}
-    if not auto_update.get("enabled"):
+    auto_update = site.settings.get("auto_update")
+    if auto_update is None:
+        findings.append(Finding(
+            id="FW-AUTO-001",
+            section="Firmware",
+            severity="info",
+            status="unknown",
+            title="Auto-update setting: cannot check via live API",
+            current_state=(
+                "Auto-update state is not exposed by the Network Integration API. "
+                "Use backup-file mode or check Settings → System → Updates."
+            ),
+            recommendation=(
+                "Enable automatic firmware updates in a maintenance window (e.g. 03:00–05:00)."
+            ),
+            intent_question="Is automatic firmware update enabled?",
+            maps_to={"cis_v8": "7.3", "nist_csf": "PR.IP-12"},
+            effort="quick",
+            impact="medium",
+        ))
+    elif not auto_update.get("enabled"):
         findings.append(Finding(
             id="FW-AUTO-001",
             section="Firmware",
             severity="medium",
             status="gap",
             title="Automatic firmware updates disabled",
-            current_state="Devices do not auto-update firmware within a maintenance window.",
+            current_state="Devices do not auto-update firmware.",
             recommendation=(
-                "Enable automatic firmware updates in a maintenance window (e.g., 03:00-05:00). "
-                "Ubiquiti regularly ships security patches; delayed patching leaves known "
-                "vulnerabilities exposed."
+                "Enable automatic firmware updates in a maintenance window (e.g. 03:00–05:00)."
             ),
-            intent_question="Any reason to hold back updates (specific firmware quirk, testing)?",
+            intent_question="Any reason to hold back updates (firmware quirk, testing)?",
             maps_to={"cis_v8": "7.3", "nist_csf": "PR.IP-12"},
             effort="quick",
             impact="medium",
         ))
 
-    # EOL hardware
     eol_devices = []
-    for d in devices:
+    for d in site.devices:
         model = d.get("model", "").upper()
         if model in EOL_MODELS:
             eol_devices.append({
@@ -382,55 +408,49 @@ def find_firmware(colls: dict) -> list:
                 "eol_date": EOL_MODELS[model]["eol_date"],
             })
 
-    if eol_devices:
-        eol_count = sum(1 for d in eol_devices if d["status"] == "eol")
-        warning_count = sum(1 for d in eol_devices if d["status"] == "eol_warning")
+    eol_count = sum(1 for d in eol_devices if d["status"] == "eol")
+    warning_count = sum(1 for d in eol_devices if d["status"] == "eol_warning")
 
-        if eol_count:
-            findings.append(Finding(
-                id="FW-EOL-001",
-                section="Firmware",
-                severity="high",
-                status="gap",
-                title=f"{eol_count} device(s) past end-of-support",
-                current_state=(
-                    f"{eol_count} device(s) are past Ubiquiti's end-of-support date. "
-                    "These devices no longer receive security patches, even for severe vulnerabilities."
-                ),
-                recommendation=(
-                    "Plan replacement for EOL devices. Budget-conscious path: prioritize "
-                    "devices that face the internet (gateway, edge APs) first; interior "
-                    "switches can be replaced on a longer timeline."
-                ),
-                intent_question="What's your replacement budget and timeline?",
-                maps_to={"cis_v8": "7.3", "nist_csf": "PR.IP-12"},
-                effort="project",
-                impact="high",
-                evidence={"devices": eol_devices},
-            ))
+    if eol_count:
+        findings.append(Finding(
+            id="FW-EOL-001",
+            section="Firmware",
+            severity="high",
+            status="gap",
+            title=f"{eol_count} device(s) past end-of-support",
+            current_state=(
+                f"{eol_count} device(s) are past Ubiquiti's end-of-support date "
+                "and no longer receive security patches."
+            ),
+            recommendation=(
+                "Plan replacement. Prioritise internet-facing devices first."
+            ),
+            intent_question="What is your replacement budget and timeline?",
+            maps_to={"cis_v8": "7.3", "nist_csf": "PR.IP-12"},
+            effort="project",
+            impact="high",
+            evidence={"devices": [d for d in eol_devices if d["status"] == "eol"]},
+        ))
 
-        if warning_count:
-            findings.append(Finding(
-                id="FW-EOL-002",
-                section="Firmware",
-                severity="medium",
-                status="recommendation",
-                title=f"{warning_count} device(s) approaching EOL",
-                current_state=f"{warning_count} device(s) will reach end-of-support within 12 months.",
-                recommendation="Start planning replacements during your normal refresh cycle.",
-                intent_question="Is hardware refresh on your roadmap?",
-                effort="project",
-                impact="medium",
-                evidence={"devices": [d for d in eol_devices if d["status"] == "eol_warning"]},
-            ))
+    if warning_count:
+        findings.append(Finding(
+            id="FW-EOL-002",
+            section="Firmware",
+            severity="medium",
+            status="recommendation",
+            title=f"{warning_count} device(s) approaching EOL",
+            current_state=f"{warning_count} device(s) reach end-of-support within 12 months.",
+            recommendation="Start planning replacements during your normal refresh cycle.",
+            intent_question="Is hardware refresh on your roadmap?",
+            maps_to={"cis_v8": "7.3"},
+            effort="project",
+            impact="medium",
+            evidence={"devices": [d for d in eol_devices if d["status"] == "eol_warning"]},
+        ))
 
-    # Stale firmware check (simplified: flag anything clearly behind a reasonable threshold)
-    # Real implementation: maintain a current_version_per_model.json
-    for d in devices:
+    for d in site.devices:
         ver = d.get("version", "")
-        # This is placeholder logic; real version cross-ref needs a maintained dataset
         if ver and "." in ver:
-            # Example: flag if version starts with 6.x or lower (very outdated)
             try:
                 major = int(ver.split(".")[0])
                 if major < 7:
@@ -439,7 +459,7 @@ def find_firmware(colls: dict) -> list:
                         section="Firmware",
                         severity="high",
                         status="gap",
-                        title=f"Device '{d.get('name', d.get('mac'))}' on major version behind",
+                        title=f"Device '{d.get('name', d.get('mac'))}' on outdated major version",
                         current_state=f"Firmware {ver} is multiple major versions behind current.",
                         recommendation="Update to latest stable firmware in a maintenance window.",
                         intent_question=None,
@@ -466,19 +486,35 @@ RETENTION_PROFILES = {
 }
 
 
-def find_logging(colls: dict, profile: str = "home_office") -> list:
+def find_logging(site, profile: str = "home_office") -> list:
     """Privacy-aware logging findings."""
-    from parser import Finding, _get_collection, _get_setting
+    from models import Finding
 
     findings = []
-    mgmt = _get_setting(colls, "mgmt") or {}
-    dpi = _get_setting(colls, "dpi") or {}
-
-    syslog_configured = mgmt.get("syslog_host") or mgmt.get("advanced_feature_enabled")
     retention_profile = RETENTION_PROFILES.get(profile, RETENTION_PROFILES["home_office"])
 
-    # Syslog not forwarding
-    if not syslog_configured:
+    mgmt = site.settings.get("mgmt")
+    if mgmt is None:
+        findings.append(Finding(
+            id="LOG-FWD-001",
+            section="Logging",
+            severity="info",
+            status="unknown",
+            title="Syslog setting: cannot check via live API",
+            current_state=(
+                "Syslog forwarding state is not exposed by the Network Integration API. "
+                "Use backup-file mode or check Settings → System → Logging."
+            ),
+            recommendation=(
+                f"For a {profile.replace('_', ' ')} profile, forward syslog to an "
+                f"external destination. Retention target: {retention_profile['admin_days'][0]} days."
+            ),
+            intent_question="Is syslog forwarding to an external destination currently configured?",
+            maps_to={"cis_v8": "8.2", "nist_csf": "DE.AE-3"},
+            effort="medium",
+            impact="medium",
+        ))
+    elif not (mgmt.get("syslog_host") or mgmt.get("advanced_feature_enabled")):
         findings.append(Finding(
             id="LOG-FWD-001",
             section="Logging",
@@ -487,10 +523,8 @@ def find_logging(colls: dict, profile: str = "home_office") -> list:
             title="Logs not forwarded to external destination",
             current_state="All logs live only on the gateway. Gateway loss = log loss.",
             recommendation=(
-                f"For a {profile.replace('_', ' ')} profile, forward syslog to an "
-                f"external destination. Retention target: {retention_profile['admin_days'][0]} days "
-                "minimum. Options: syslog receiver on your NAS, a cloud SIEM, or a small "
-                "log-receiver VM."
+                f"Forward syslog to an external destination. "
+                f"Retention target: {retention_profile['admin_days'][0]} days minimum."
             ),
             intent_question="Do you want to set up external log storage?",
             maps_to={"cis_v8": "8.2", "nist_csf": "DE.AE-3"},
@@ -498,30 +532,28 @@ def find_logging(colls: dict, profile: str = "home_office") -> list:
             impact="medium",
         ))
 
-    # DPI client-level logging on home profile = privacy recommendation
-    dpi_level = dpi.get("level", "disabled")
-    if profile.startswith("home") and dpi_level in ("client", "fingerprint"):
-        findings.append(Finding(
-            id="LOG-PRIV-001",
-            section="Logging",
-            severity="low",
-            status="recommendation",
-            title="Client-level DPI logging may exceed household need",
-            current_state=(
-                f"DPI is set to '{dpi_level}', which retains per-client, per-application "
-                "browsing metadata. For a home profile, this can be more detail than needed "
-                "and creates privacy exposure if the backup or controller is compromised."
-            ),
-            recommendation=(
-                "Consider aggregate/protocol-only DPI for a home network. Full client DPI "
-                "is more appropriate for business or regulated environments where the "
-                "detailed audit trail justifies the privacy cost."
-            ),
-            intent_question="Do you actively use the per-client DPI views for troubleshooting or monitoring?",
-            maps_to={"nist_csf": "PR.DS-5"},
-            effort="quick",
-            impact="low",
-        ))
+    dpi = site.settings.get("dpi")
+    if dpi and profile.startswith("home"):
+        dpi_level = dpi.get("level", "disabled")
+        if dpi_level in ("client", "fingerprint"):
+            findings.append(Finding(
+                id="LOG-PRIV-001",
+                section="Logging",
+                severity="low",
+                status="recommendation",
+                title="Client-level DPI logging may exceed household need",
+                current_state=(
+                    f"DPI is set to '{dpi_level}', retaining per-client, per-application "
+                    "browsing metadata. For a home profile, this can be more detail than needed."
+                ),
+                recommendation=(
+                    "Consider aggregate/protocol-only DPI for a home network."
+                ),
+                intent_question="Do you actively use the per-client DPI views?",
+                maps_to={"nist_csf": "PR.DS-5"},
+                effort="quick",
+                impact="low",
+            ))
 
     return findings
 
@@ -530,11 +562,31 @@ def find_logging(colls: dict, profile: str = "home_office") -> list:
 # ENHANCED: Backup (tested restore, destination diversity)
 # =============================================================================
 
-def find_backup_config(colls: dict) -> list:
-    from parser import Finding, _get_collection, _get_setting
+def find_backup_config(site) -> list:
+    """Backup: auto-backup state, destination diversity, tested-restore."""
+    from models import Finding
 
     findings = []
-    auto_backup = _get_setting(colls, "auto_backup") or {}
+    auto_backup = site.settings.get("auto_backup")
+
+    if auto_backup is None:
+        findings.append(Finding(
+            id="BAK-001",
+            section="Backup",
+            severity="info",
+            status="unknown",
+            title="Backup setting: cannot check via live API",
+            current_state=(
+                "Auto-backup state is not exposed by the Network Integration API. "
+                "Use backup-file mode or check Settings → System → Backup."
+            ),
+            recommendation="Enable daily automatic backups, retention at least 7 days.",
+            intent_question="Is automatic backup currently enabled?",
+            maps_to={"cis_v8": "11.2", "nist_csf": "PR.IP-4"},
+            effort="quick",
+            impact="high",
+        ))
+        return findings
 
     if not auto_backup.get("enabled"):
         findings.append(Finding(
@@ -550,11 +602,9 @@ def find_backup_config(colls: dict) -> list:
             effort="quick",
             impact="high",
         ))
-        return findings  # No point in checking retention/destination if disabled
+        return findings
 
-    # Destination diversity
-    destination = auto_backup.get("destination", "local")
-    if destination == "local":
+    if auto_backup.get("destination", "local") == "local":
         findings.append(Finding(
             id="BAK-002",
             section="Backup",
@@ -562,15 +612,12 @@ def find_backup_config(colls: dict) -> list:
             status="gap",
             title="Backups stored only on the gateway itself",
             current_state=(
-                "Auto-backups are saved only to the gateway. If the gateway is lost "
-                "(hardware failure, theft, or worst case, ransomware against the device), "
+                "Auto-backups are saved only to the gateway. If the gateway is lost, "
                 "the backups go with it."
             ),
             recommendation=(
-                "Add an off-device destination. Options: (1) UniFi cloud backup (linked "
-                "to your SSO account), (2) SMB share on one of your NAS devices, (3) "
-                "periodic manual download to a laptop. Rule of 3-2-1: 3 copies, 2 "
-                "different media, 1 offsite."
+                "Add an off-device destination: UniFi cloud backup, SMB share on a NAS, "
+                "or periodic manual download. Rule of 3-2-1: 3 copies, 2 media, 1 offsite."
             ),
             intent_question="Which off-device option fits your setup best?",
             maps_to={"cis_v8": "11.3"},
@@ -578,7 +625,6 @@ def find_backup_config(colls: dict) -> list:
             impact="medium",
         ))
 
-    # Tested-restore (always flags; user confirms in gap questions)
     findings.append(Finding(
         id="BAK-003",
         section="Backup",
@@ -586,14 +632,12 @@ def find_backup_config(colls: dict) -> list:
         status="unknown",
         title="Backup restore not verified (Schrödinger backup)",
         current_state=(
-            "The backup file exists and automatic backups are running. But without a "
-            "tested restore, the backup's viability is unknown. A backup that has never "
-            "been restored is only hypothetically useful."
+            "Backups are running. But without a tested restore, viability is unknown. "
+            "A backup that has never been restored is only hypothetically useful."
         ),
         recommendation=(
-            "Schedule a quarterly restore test to a lab/throwaway controller or to a "
-            "second gateway if you have one. At minimum: decrypt and open the backup "
-            "file with an offline tool once a year to confirm it's parseable."
+            "Schedule a quarterly restore test. At minimum: decrypt and open the backup "
+            "file with an offline tool once a year to confirm it is parseable."
         ),
         intent_question="Have you ever restored this backup, and when?",
         maps_to={"cis_v8": "11.5", "nist_csf": "PR.IP-4"},
