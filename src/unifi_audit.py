@@ -52,6 +52,7 @@ from pathlib import Path
 from typing import Any
 
 from models import Finding
+from normalize import normalize_api, _extract_list
 
 try:
     import requests
@@ -370,8 +371,6 @@ def _find_segmentation(clean: dict, profile: str) -> list[Finding]:
     findings = []
     for site_id, site in _all_sites(clean):
         networks = _extract_list(site.get("networks"))
-        if networks is None:
-            continue
         user_nets = [n for n in networks if n.get("purpose") in ("corporate", "guest", "vlan-only")]
         if len(user_nets) <= 1:
             findings.append(Finding(
@@ -403,8 +402,6 @@ def _find_wifi(clean: dict, profile: str) -> list[Finding]:
     findings = []
     for site_id, site in _all_sites(clean):
         wlans = _extract_list(site.get("wlans"))
-        if wlans is None:
-            continue
         for w in wlans:
             if not w.get("enabled", True):
                 continue
@@ -539,19 +536,6 @@ def _find_api_coverage(clean: dict, profile: str) -> list[Finding]:
             evidence={"missing": [p.get("name") for p in missing]},
         )]
     return []
-
-
-def _extract_list(data: Any) -> list | None:
-    """Handle varying response shapes for list endpoints."""
-    if data is None:
-        return None
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        for key in ("data", "items", "results"):
-            if key in data and isinstance(data[key], list):
-                return data[key]
-    return None
 
 
 # =============================================================================
