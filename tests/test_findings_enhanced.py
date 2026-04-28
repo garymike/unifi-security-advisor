@@ -2,7 +2,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from normalize import NormalizedSite
-from findings_enhanced import find_wireless_tuning, find_remote_access
+from findings_enhanced import find_wireless_tuning, find_remote_access, find_firewall_threats, find_firmware, find_logging, find_backup_config
 
 def _site(**kwargs) -> NormalizedSite:
     """Build a minimal NormalizedSite for testing."""
@@ -138,3 +138,108 @@ def test_wlan_without_enabled_key_treated_as_active():
     }])
     ids = [f.id for f in find_wireless_tuning(site)]
     assert "RF-PMF-NoFlag" in ids
+
+
+# --- find_firewall_threats ---
+
+def test_no_geo_inbound_emits_recommendation():
+    site = _site(firewall_policies=[])
+    ids = [f.id for f in find_firewall_threats(site)]
+    assert "FW-GEO-IN" in ids
+
+def test_geo_inbound_policy_suppresses_finding():
+    site = _site(firewall_policies=[{
+        "enabled": True, "action": "drop",
+        "source": {"geo": ["CN", "RU"]}, "direction": "WAN_IN",
+    }])
+    ids = [f.id for f in find_firewall_threats(site)]
+    assert "FW-GEO-IN" not in ids
+
+def test_dns_filtering_unknown_when_no_settings():
+    site = _site()
+    findings = find_firewall_threats(site)
+    cf = [f for f in findings if f.id == "FW-CONTENT-001"]
+    assert cf
+    assert cf[0].status == "unknown"
+
+def test_dns_filtering_gap_when_disabled():
+    site = _site(settings={"dns_filtering": {"enabled": False}})
+    findings = find_firewall_threats(site)
+    cf = [f for f in findings if f.id == "FW-CONTENT-001"]
+    assert cf
+    assert cf[0].status == "recommendation"
+
+
+# --- find_firmware ---
+
+def test_eol_device_emits_high():
+    site = _site(devices=[{"model": "UAP-AC-LITE", "name": "OldAP", "version": "5.43.0"}])
+    findings = find_firmware(site)
+    eol = [f for f in findings if f.id == "FW-EOL-001"]
+    assert eol
+    assert eol[0].severity == "high"
+
+def test_stale_major_version_emits_finding():
+    site = _site(devices=[{"model": "UDM", "name": "GW", "version": "6.5.55", "mac": "aa:bb"}])
+    findings = find_firmware(site)
+    stale = [f for f in findings if f.id.startswith("FW-VER-")]
+    assert stale
+
+def test_auto_update_unknown_when_no_settings():
+    site = _site()
+    findings = find_firmware(site)
+    au = [f for f in findings if f.id == "FW-AUTO-001"]
+    assert au
+    assert au[0].status == "unknown"
+
+def test_auto_update_gap_when_disabled():
+    site = _site(settings={"auto_update": {"enabled": False}})
+    findings = find_firmware(site)
+    au = [f for f in findings if f.id == "FW-AUTO-001"]
+    assert au
+    assert au[0].status == "gap"
+
+
+# --- find_logging ---
+
+def test_syslog_unknown_when_no_settings():
+    site = _site()
+    findings = find_logging(site, "home_office")
+    fwd = [f for f in findings if f.id == "LOG-FWD-001"]
+    assert fwd
+    assert fwd[0].status == "unknown"
+
+def test_syslog_gap_when_not_configured():
+    site = _site(settings={"mgmt": {"syslog_host": None}})
+    findings = find_logging(site, "home_office")
+    fwd = [f for f in findings if f.id == "LOG-FWD-001"]
+    assert fwd
+    assert fwd[0].status == "recommendation"
+
+
+# --- find_backup_config ---
+
+def test_backup_unknown_when_no_settings():
+    site = _site()
+    findings = find_backup_config(site)
+    bak = [f for f in findings if f.id == "BAK-001"]
+    assert bak
+    assert bak[0].status == "unknown"
+
+def test_backup_gap_when_disabled():
+    site = _site(settings={"auto_backup": {"enabled": False}})
+    findings = find_backup_config(site)
+    bak = [f for f in findings if f.id == "BAK-001"]
+    assert bak
+    assert bak[0].status == "gap"
+
+def test_backup_local_only_emits_destination_finding():
+    site = _site(settings={"auto_backup": {"enabled": True, "destination": "local"}})
+    findings = find_backup_config(site)
+    ids = [f.id for f in findings]
+    assert "BAK-002" in ids
+
+def test_backup_schrodinger_always_emitted_when_enabled():
+    site = _site(settings={"auto_backup": {"enabled": True, "destination": "cloud"}})
+    ids = [f.id for f in find_backup_config(site)]
+    assert "BAK-003" in ids
