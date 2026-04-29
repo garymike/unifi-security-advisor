@@ -562,7 +562,7 @@ def find_logging(site, profile: str = "home_office") -> list:
 # ENHANCED: Backup (tested restore, destination diversity)
 # =============================================================================
 
-def find_backup_config(site) -> list:
+def find_backup_config(site, profile: str = "home_office") -> list:
     """Backup: auto-backup state, destination diversity, tested-restore."""
     from models import Finding
 

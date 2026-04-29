@@ -52,7 +52,15 @@ from pathlib import Path
 from typing import Any
 
 from models import Finding
-from normalize import normalize_api, _extract_list
+from normalize import normalize_api
+from findings_enhanced import (
+    find_wireless_tuning,
+    find_remote_access as find_remote_access_enhanced,
+    find_firewall_threats,
+    find_firmware,
+    find_logging,
+    find_backup_config,
+)
 
 try:
     import requests
@@ -335,181 +343,135 @@ def _extract_sites(sites_response: Any) -> list[dict]:
 # FINDINGS PHASE: run analysis on sanitized data
 # =============================================================================
 
-def analyze(clean: dict, profile: str, logger: logging.Logger) -> list[Finding]:
-    """Run all findings modules. Each module is wrapped so one failure
-    doesn't abort the audit."""
+def analyze(sites: list, profile: str, logger: logging.Logger) -> list[Finding]:
+    """Run all findings modules across all normalized sites."""
     findings: list[Finding] = []
     modules = [
-        ("segmentation", _find_segmentation),
-        ("wifi", _find_wifi),
-        ("firewall", _find_firewall),
-        ("remote_access", _find_remote_access),
-        ("devices", _find_devices),
-        ("api_coverage", _find_api_coverage),  # meta-finding on what we could/couldn't see
+        ("segmentation",     _find_segmentation),
+        ("wifi",             _find_wifi),
+        ("firewall",         _find_firewall),
+        ("remote_access",    find_remote_access_enhanced),
+        ("devices",          _find_devices),
+        ("wireless_tuning",  find_wireless_tuning),
+        ("firewall_threats", find_firewall_threats),
+        ("firmware",         find_firmware),
+        ("logging",          find_logging),
+        ("backup",           find_backup_config),
     ]
-    for name, fn in modules:
-        try:
-            findings.extend(fn(clean, profile))
-        except Exception as e:
-            logger.warning(f"Module {name} failed: {e}")
-    # Sort by severity
+    for site in sites:
+        for name, fn in modules:
+            try:
+                findings.extend(fn(site, profile))
+            except Exception as e:
+                logger.warning(f"Module {name} failed on site {site.site_id}: {e}")
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     findings.sort(key=lambda f: (order.get(f.severity, 5), f.section))
     return findings
 
 
-def _all_sites(clean: dict) -> list[tuple[str, dict]]:
-    """Yield (site_id, site_data) for each site found."""
-    out = []
-    for key, val in clean.items():
-        if key.startswith("site_") and isinstance(val, dict):
-            out.append((key[5:], val))
-    return out
+def _find_segmentation(site, profile: str) -> list[Finding]:
+    networks = site.networks
+    user_nets = [n for n in networks if n.get("purpose") in ("corporate", "guest", "vlan-only")]
+    if len(user_nets) <= 1:
+        return [Finding(
+            id=f"SEG-001-{site.site_id}",
+            section="Segmentation",
+            severity="high",
+            status="gap",
+            title="Flat network (no segmentation)",
+            current_state=(
+                f"Site '{site.site_name}' has {len(user_nets)} user-defined network(s). "
+                "Devices share a broadcast domain; a compromise of any device can reach any other."
+            ),
+            recommendation=(
+                "Create separate networks for main, IoT, guest, and management. "
+                "Map SSIDs to appropriate VLANs. Enable Zone-Based Firewall rules."
+            ),
+            intent_question="Do you want to segment the network?",
+            maps_to={"nist_csf": "PR.AC-5", "cis_v8": "12.2"},
+            effort="project",
+            impact="high",
+            evidence={"network_count": len(user_nets)},
+        )]
+    return []
 
 
-def _find_segmentation(clean: dict, profile: str) -> list[Finding]:
+def _find_wifi(site, profile: str) -> list[Finding]:
     findings = []
-    for site_id, site in _all_sites(clean):
-        networks = _extract_list(site.get("networks"))
-        user_nets = [n for n in networks if n.get("purpose") in ("corporate", "guest", "vlan-only")]
-        if len(user_nets) <= 1:
-            findings.append(Finding(
-                id=f"SEG-001-{site_id}",
-                section="Segmentation",
-                severity="high",
-                status="gap",
-                title="Flat network (no segmentation)",
-                current_state=(
-                    f"Site has {len(user_nets)} user-defined network(s). "
-                    "Devices share a broadcast domain; a compromise of any "
-                    "device can reach any other."
-                ),
-                recommendation=(
-                    "Create separate networks for main, IoT, guest, and management. "
-                    "Map SSIDs to the appropriate VLANs. Enable Network Isolation "
-                    "and Zone-Based Firewall rules."
-                ),
-                intent_question="Do you want to segment the network?",
-                maps_to={"nist_csf": "PR.AC-5", "cis_v8": "12.2"},
-                effort="project",
-                impact="high",
-                evidence={"network_count": len(user_nets)},
-            ))
-    return findings
-
-
-def _find_wifi(clean: dict, profile: str) -> list[Finding]:
-    findings = []
-    for site_id, site in _all_sites(clean):
-        wlans = _extract_list(site.get("wlans"))
-        for w in wlans:
-            if not w.get("enabled", True):
-                continue
-            name = w.get("name", "<unnamed>")
-            security = (w.get("security") or w.get("securityProtocol") or "").lower()
-            if "wpa2" in security and "wpa3" not in security:
-                findings.append(Finding(
-                    id=f"WIFI-{site_id}-{name}-WPA",
-                    section="Wi-Fi",
-                    severity="low",
-                    status="recommendation",
-                    title=f"SSID '{name}' is WPA2-only",
-                    current_state=f"SSID '{name}' uses WPA2. WPA3 or mixed mode offers stronger protection.",
-                    recommendation="Switch to WPA2/WPA3 mixed mode, or WPA3-only if all clients support it.",
-                    intent_question=f"Do any clients on '{name}' require WPA2-only?",
-                    maps_to={"cis_v8": "12.5"},
-                    effort="quick",
-                    impact="low",
-                ))
-            # PSK strength (we only see the fingerprint now, not the value)
-            psk = w.get("x_passphrase")
-            if isinstance(psk, dict) and psk.get("length", 0) < 12:
-                findings.append(Finding(
-                    id=f"WIFI-{site_id}-{name}-PSK",
-                    section="Wi-Fi",
-                    severity="high",
-                    status="gap",
-                    title=f"SSID '{name}' has a short passphrase",
-                    current_state=f"Passphrase is {psk.get('length')} characters. Short PSKs are vulnerable to offline attacks.",
-                    recommendation="Use a passphrase of at least 16 characters with mixed case, numbers, and symbols.",
-                    intent_question=None,
-                    maps_to={"cis_v8": "5.2"},
-                    effort="quick",
-                    impact="high",
-                ))
-    return findings
-
-
-def _find_firewall(clean: dict, profile: str) -> list[Finding]:
-    findings = []
-    for site_id, site in _all_sites(clean):
-        port_forwards = _extract_list(site.get("port_forwards"))
-        if port_forwards:
-            active = [p for p in port_forwards if p.get("enabled", True)]
-            if active:
-                findings.append(Finding(
-                    id=f"FW-{site_id}-PF",
-                    section="Firewall",
-                    severity="info",
-                    status="recommendation",
-                    title=f"{len(active)} port forward(s) active",
-                    current_state=f"{len(active)} port forwards expose internal services.",
-                    recommendation="Review each forward. Prefer VPN for admin access; use source IP allowlists for public services.",
-                    intent_question="Want to review each port forward?",
-                    maps_to={"cis_v8": "4.4"},
-                    effort="medium",
-                    impact="high",
-                    evidence={"count": len(active)},
-                ))
-    return findings
-
-
-def _find_remote_access(clean: dict, profile: str) -> list[Finding]:
-    findings = []
-    for site_id, site in _all_sites(clean):
-        vpn_configs = _extract_list(site.get("vpn_configs"))
-        port_forwards = _extract_list(site.get("port_forwards")) or []
-        has_vpn = bool(vpn_configs) and any(v.get("enabled", True) for v in vpn_configs)
-        has_forwards = any(p.get("enabled", True) for p in port_forwards)
-        if has_forwards and not has_vpn:
-            findings.append(Finding(
-                id=f"VPN-MISSING-{site_id}",
-                section="Remote access",
-                severity="high",
-                status="gap",
-                title="Port forwards active without a configured VPN",
-                current_state="Services exposed to the internet, no VPN configured for private access.",
-                recommendation="Set up WireGuard VPN; remove port forwards that exist only for your own remote access.",
-                intent_question="Are port forwards for public services, or for your remote access?",
-                maps_to={"cis_v8": "4.4"},
-                effort="medium",
-                impact="high",
-            ))
-    return findings
-
-
-def _find_devices(clean: dict, profile: str) -> list[Finding]:
-    findings = []
-    for site_id, site in _all_sites(clean):
-        devices = _extract_list(site.get("devices"))
-        if not devices:
+    for w in site.wlans:
+        if not w.get("enabled", True):
             continue
-        ssh_on = [d for d in devices if d.get("sshEnabled") or d.get("ssh_enabled")]
-        if ssh_on:
+        name = w.get("name", "<unnamed>")
+        security = (w.get("security") or w.get("securityProtocol") or "").lower()
+        if "wpa2" in security and "wpa3" not in security:
             findings.append(Finding(
-                id=f"DEV-SSH-{site_id}",
-                section="Admin",
-                severity="medium",
+                id=f"WIFI-{site.site_id}-{name}-WPA",
+                section="Wi-Fi",
+                severity="low",
                 status="recommendation",
-                title=f"SSH enabled on {len(ssh_on)} device(s)",
-                current_state=f"SSH is enabled on {len(ssh_on)} device(s). This is a remote admin surface.",
-                recommendation="Disable SSH unless actively used. If needed, key-based auth only, scoped to management VLAN.",
-                intent_question="Do you use SSH to these devices?",
-                maps_to={"cis_v8": "4.6"},
+                title=f"SSID '{name}' is WPA2-only",
+                current_state=f"SSID '{name}' uses WPA2. WPA3 or mixed mode offers stronger protection.",
+                recommendation="Switch to WPA2/WPA3 mixed mode, or WPA3-only if all clients support it.",
+                intent_question=f"Do any clients on '{name}' require WPA2-only?",
+                maps_to={"cis_v8": "12.5"},
                 effort="quick",
-                impact="medium",
+                impact="low",
+            ))
+        psk = w.get("x_passphrase")
+        if isinstance(psk, dict) and psk.get("length", 0) < 12:
+            findings.append(Finding(
+                id=f"WIFI-{site.site_id}-{name}-PSK",
+                section="Wi-Fi",
+                severity="high",
+                status="gap",
+                title=f"SSID '{name}' has a short passphrase",
+                current_state=f"Passphrase is {psk.get('length')} characters. Short PSKs are vulnerable to offline attacks.",
+                recommendation="Use a passphrase of at least 16 characters with mixed case, numbers, and symbols.",
+                intent_question=None,
+                maps_to={"cis_v8": "5.2"},
+                effort="quick",
+                impact="high",
             ))
     return findings
+
+
+def _find_firewall(site, profile: str) -> list[Finding]:
+    active = [p for p in site.port_forwards if p.get("enabled", True)]
+    if active:
+        return [Finding(
+            id=f"FW-{site.site_id}-PF",
+            section="Firewall",
+            severity="info",
+            status="recommendation",
+            title=f"{len(active)} port forward(s) active",
+            current_state=f"{len(active)} port forwards expose internal services.",
+            recommendation="Review each. Prefer VPN for admin access; use source IP allowlists for public services.",
+            intent_question="Want to review each port forward?",
+            maps_to={"cis_v8": "4.4"},
+            effort="medium",
+            impact="high",
+            evidence={"count": len(active)},
+        )]
+    return []
+
+
+def _find_devices(site, profile: str) -> list[Finding]:
+    ssh_on = [d for d in site.devices if d.get("sshEnabled") or d.get("ssh_enabled")]
+    if ssh_on:
+        return [Finding(
+            id=f"DEV-SSH-{site.site_id}",
+            section="Admin",
+            severity="medium",
+            status="recommendation",
+            title=f"SSH enabled on {len(ssh_on)} device(s)",
+            current_state=f"SSH is enabled on {len(ssh_on)} device(s). This is a remote admin surface.",
+            recommendation="Disable SSH unless actively used. If needed, key-based auth only, scoped to management VLAN.",
+            intent_question="Do you use SSH to these devices?",
+            maps_to={"cis_v8": "4.6"},
+            effort="quick",
+            impact="medium",
+        )]
+    return []
 
 
 def _find_api_coverage(clean: dict, profile: str) -> list[Finding]:
@@ -617,6 +579,10 @@ def main():
     logger.info("Sanitizing collected data...")
     clean = sanitize(raw)
 
+    logger.info("Normalizing collected data into site objects...")
+    sites = normalize_api(clean, cfg["profile"])
+    logger.info(f"  -> {len(sites)} site(s) normalized")
+
     # Write sanitized raw dump for inspection
     raw_path = OUTPUT_DIR / "raw_sanitized.json"
     raw_path.write_text(json.dumps(clean, indent=2, default=str))
@@ -624,7 +590,8 @@ def main():
 
     # Run findings
     logger.info("Running findings analysis...")
-    findings = analyze(clean, cfg["profile"], logger)
+    findings = analyze(sites, cfg["profile"], logger)
+    findings.extend(_find_api_coverage(clean, cfg["profile"]))
 
     findings_path = OUTPUT_DIR / "findings.json"
     findings_path.write_text(json.dumps([asdict(f) for f in findings], indent=2))
