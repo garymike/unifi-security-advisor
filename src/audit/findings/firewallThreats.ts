@@ -7,7 +7,7 @@ function hasGeoPolicy(policies: Record<string, unknown>[], directionHint: string
     if (!src['geo']) continue;
     const dir = String(p['direction'] ?? '').toUpperCase();
     const name = String(p['name'] ?? '').toLowerCase();
-    if (dir.includes(directionHint) || directionHint.toLowerCase() in name) return true;
+    if (dir.includes(directionHint) || name.includes(directionHint.toLowerCase())) return true;
   }
   return false;
 }
