@@ -369,6 +369,32 @@ def _sort_findings(findings: list[Finding]) -> list[Finding]:
     return top + rest
 
 
+PROFILE_OVERRIDES: dict[str, dict[str, dict]] = {
+    "home": {
+        "LOG-FWD-001":  {"severity": "low"},
+        "LOG-PRIV-001": {"severity": "medium"},
+    },
+    "regulated_hipaa": {
+        "LOG-FWD-001":  {"severity": "high"},
+        "BAK-001":      {"severity": "critical"},
+    },
+    "regulated_pci": {
+        "LOG-FWD-001":  {"severity": "high"},
+        "FW-GEO-IN":    {"severity": "medium"},
+    },
+}
+
+
+def _apply_profile_overrides(findings: list[Finding], profile: str) -> list[Finding]:
+    """Mutate severity/impact on findings that have a profile-specific override."""
+    overrides = PROFILE_OVERRIDES.get(profile, {})
+    for f in findings:
+        if f.id in overrides:
+            for attr, val in overrides[f.id].items():
+                setattr(f, attr, val)
+    return findings
+
+
 def analyze(sites: list, profile: str, logger: logging.Logger) -> list[Finding]:
     """Run all findings modules across all normalized sites."""
     findings: list[Finding] = []
@@ -390,6 +416,7 @@ def analyze(sites: list, profile: str, logger: logging.Logger) -> list[Finding]:
                 findings.extend(fn(site, profile))
             except Exception as e:
                 logger.warning(f"Module {name} failed on site {site.site_id}: {e}")
+    _apply_profile_overrides(findings, profile)
     return _sort_findings(findings)
 
 

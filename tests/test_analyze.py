@@ -71,3 +71,28 @@ def test_fw_eol_critical_floats():
     low = _make_finding("LOW-001", "low")
     result = unifi_audit._sort_findings([low, eol])
     assert result[0].id == "FW-EOL-001"
+
+def test_home_profile_log_fwd_is_low():
+    f = _make_finding("LOG-FWD-001", "medium")
+    result = unifi_audit._apply_profile_overrides([f], "home")
+    assert result[0].severity == "low"
+
+def test_regulated_hipaa_log_fwd_is_high():
+    f = _make_finding("LOG-FWD-001", "medium")
+    result = unifi_audit._apply_profile_overrides([f], "regulated_hipaa")
+    assert result[0].severity == "high"
+
+def test_regulated_hipaa_bak001_is_critical():
+    f = _make_finding("BAK-001", "high")
+    result = unifi_audit._apply_profile_overrides([f], "regulated_hipaa")
+    assert result[0].severity == "critical"
+
+def test_unknown_finding_id_unchanged():
+    f = _make_finding("SOME-UNKNOWN-999", "medium")
+    result = unifi_audit._apply_profile_overrides([f], "regulated_hipaa")
+    assert result[0].severity == "medium"
+
+def test_unknown_profile_unchanged():
+    f = _make_finding("LOG-FWD-001", "medium")
+    result = unifi_audit._apply_profile_overrides([f], "nonexistent_profile")
+    assert result[0].severity == "medium"
