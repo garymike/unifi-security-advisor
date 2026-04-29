@@ -11,7 +11,7 @@ from __future__ import annotations
 # NEW: Wireless tuning (Section 6.5)
 # =============================================================================
 
-def find_wireless_tuning(site) -> list:
+def find_wireless_tuning(site, profile: str = "home_office") -> list:
     """Per-AP radio tuning: TX power, unused bands, rogue AP detection, PMF."""
     from models import Finding
 
@@ -140,7 +140,7 @@ def find_wireless_tuning(site) -> list:
 # ENHANCED: VPN and remote access (Section 8)
 # =============================================================================
 
-def find_remote_access(site) -> list:
+def find_remote_access(site, profile: str = "home_office") -> list:
     """Remote access paths: PPTP, L2TP, WireGuard, OpenVPN, port-forward exposure."""
     from models import Finding
 
@@ -237,7 +237,7 @@ def find_remote_access(site) -> list:
 # ENHANCED: Firewall (split geo/content/safe-search)
 # =============================================================================
 
-def find_firewall_threats(site) -> list:
+def find_firewall_threats(site, profile: str = "home_office") -> list:
     """Geo-IP blocking (both directions) and DNS content filtering."""
     from models import Finding
 
@@ -354,7 +354,7 @@ EOL_MODELS = {
 }
 
 
-def find_firmware(site) -> list:
+def find_firmware(site, profile: str = "home_office") -> list:
     """Firmware currency: auto-update, EOL hardware, stale major versions."""
     from models import Finding
 
