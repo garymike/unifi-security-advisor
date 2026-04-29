@@ -1,0 +1,8 @@
+# Cargo configuration for the Tauri Rust crate.
+# If link.exe resolution fails (Git's link.exe shadowing MSVC's),
+# uncomment the linker override below and ensure the Windows SDK
+# import libs (kernel32.lib etc.) are on LIB path.
+# Requires: Visual Studio Build Tools or Windows SDK.
+#
+# [target.x86_64-pc-windows-msvc]
+# linker = "rust-lld"
