@@ -1,6 +1,6 @@
 # Phase 2a: TypeScript Audit Core + CLI Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Rewrite the Python audit core in TypeScript, producing a working CLI tool (`node dist/cli.js`) that outputs the same sanitized markdown + JSON report as the Python script.
 
@@ -45,7 +45,7 @@
 - Create: `tsconfig.json`
 - Create: `src/audit/__tests__/.gitkeep`
 
-- [ ] **Step 1: Create `package.json`**
+- [x] **Step 1: Create `package.json`**
 
 ```json
 {
@@ -68,7 +68,7 @@
 }
 ```
 
-- [ ] **Step 2: Create `tsconfig.json`**
+- [x] **Step 2: Create `tsconfig.json`**
 
 ```json
 {
@@ -88,13 +88,13 @@
 }
 ```
 
-- [ ] **Step 3: Install dependencies**
+- [x] **Step 3: Install dependencies**
 
 ```bash
 npm install
 ```
 
-- [ ] **Step 4: Verify Vitest works**
+- [x] **Step 4: Verify Vitest works**
 
 Create `src/audit/__tests__/scaffold.test.ts`:
 
@@ -115,7 +115,7 @@ npm test
 
 Expected: `1 passed`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json tsconfig.json src/audit/__tests__/scaffold.test.ts
@@ -131,7 +131,7 @@ git commit -m "feat: typescript project scaffold with vitest"
 - Create: `src/audit/constants.ts`
 - Modify: `src/audit/__tests__/scaffold.test.ts` → replace with `src/audit/__tests__/types.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 Create `src/audit/__tests__/types.test.ts`:
 
@@ -153,7 +153,7 @@ describe('Finding type', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect compile error (types.ts missing)**
+- [x] **Step 2: Run — expect compile error (types.ts missing)**
 
 ```bash
 npm test
@@ -161,7 +161,7 @@ npm test
 
 Expected: TypeScript error about missing module
 
-- [ ] **Step 3: Create `src/audit/types.ts`**
+- [x] **Step 3: Create `src/audit/types.ts`**
 
 ```typescript
 export type Severity = 'info' | 'low' | 'medium' | 'high' | 'critical';
@@ -212,7 +212,7 @@ export interface NormalizedSite {
 export type FindingModule = (site: NormalizedSite, profile: string) => Finding[];
 ```
 
-- [ ] **Step 4: Create `src/audit/constants.ts`**
+- [x] **Step 4: Create `src/audit/constants.ts`**
 
 ```typescript
 import type { Finding } from './types.js';
@@ -256,7 +256,7 @@ export const EOL_MODELS: Record<string, { status: string; eolDate: string }> = {
 };
 ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 ```bash
 npm test
@@ -264,7 +264,7 @@ npm test
 
 Expected: 1 passed
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/audit/types.ts src/audit/constants.ts src/audit/__tests__/types.test.ts
@@ -281,7 +281,7 @@ git commit -m "feat: add Finding/NormalizedSite types and audit constants"
 - Create: `src/audit/__tests__/sanitize.test.ts`
 - Create: `src/audit/__tests__/normalize.test.ts`
 
-- [ ] **Step 1: Write sanitize tests**
+- [x] **Step 1: Write sanitize tests**
 
 Create `src/audit/__tests__/sanitize.test.ts`:
 
@@ -322,7 +322,7 @@ describe('sanitize', () => {
 });
 ```
 
-- [ ] **Step 2: Write normalize tests**
+- [x] **Step 2: Write normalize tests**
 
 Create `src/audit/__tests__/normalize.test.ts`:
 
@@ -372,7 +372,7 @@ describe('extractList', () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failures**
+- [x] **Step 3: Run — expect failures**
 
 ```bash
 npm test
@@ -380,7 +380,7 @@ npm test
 
 Expected: errors on both test files (modules don't exist)
 
-- [ ] **Step 4: Create `src/audit/sanitize.ts`**
+- [x] **Step 4: Create `src/audit/sanitize.ts`**
 
 ```typescript
 import { createHash } from 'node:crypto';
@@ -423,7 +423,7 @@ export function sanitize(obj: unknown): unknown {
 }
 ```
 
-- [ ] **Step 5: Create `src/audit/normalize.ts`**
+- [x] **Step 5: Create `src/audit/normalize.ts`**
 
 ```typescript
 import type { NormalizedSite } from './types.js';
@@ -475,7 +475,7 @@ export function normalizeApi(clean: Record<string, unknown>, profile: string): N
 }
 ```
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 ```bash
 npm test
@@ -483,7 +483,7 @@ npm test
 
 Expected: all sanitize and normalize tests pass
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/audit/sanitize.ts src/audit/normalize.ts src/audit/__tests__/sanitize.test.ts src/audit/__tests__/normalize.test.ts
@@ -498,7 +498,7 @@ git commit -m "feat: add sanitize and normalizeApi modules with tests"
 - Create: `src/audit/client.ts`
 - Create: `src/audit/__tests__/client.test.ts`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `src/audit/__tests__/client.test.ts`:
 
@@ -531,7 +531,7 @@ describe('UniFiClient', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failures**
+- [x] **Step 2: Run — expect failures**
 
 ```bash
 npm test -- --reporter=verbose src/audit/__tests__/client.test.ts
@@ -539,7 +539,7 @@ npm test -- --reporter=verbose src/audit/__tests__/client.test.ts
 
 Expected: `Cannot find module '../client.js'`
 
-- [ ] **Step 3: Create `src/audit/client.ts`**
+- [x] **Step 3: Create `src/audit/client.ts`**
 
 ```typescript
 export interface ClientConfig {
@@ -605,7 +605,7 @@ export class UniFiClient {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 npm test
@@ -613,7 +613,7 @@ npm test
 
 Expected: all client tests pass
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/audit/client.ts src/audit/__tests__/client.test.ts
@@ -632,7 +632,7 @@ git commit -m "feat: add UniFiClient with env-based config"
 - Create: `src/audit/findings/devices.ts`
 - Create: `src/audit/__tests__/findings/core.test.ts`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `src/audit/__tests__/findings/core.test.ts`:
 
@@ -729,7 +729,7 @@ describe('findDevices', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failures**
+- [x] **Step 2: Run — expect failures**
 
 ```bash
 npm test
@@ -737,7 +737,7 @@ npm test
 
 Expected: module not found errors for finding modules
 
-- [ ] **Step 3: Create `src/audit/findings/segmentation.ts`**
+- [x] **Step 3: Create `src/audit/findings/segmentation.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -763,7 +763,7 @@ export function findSegmentation(site: NormalizedSite, _profile: string): Findin
 }
 ```
 
-- [ ] **Step 4: Create `src/audit/findings/wifi.ts`**
+- [x] **Step 4: Create `src/audit/findings/wifi.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -802,7 +802,7 @@ export function findWifi(site: NormalizedSite, _profile: string): Finding[] {
 }
 ```
 
-- [ ] **Step 5: Create `src/audit/findings/firewall.ts`**
+- [x] **Step 5: Create `src/audit/findings/firewall.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -822,7 +822,7 @@ export function findFirewall(site: NormalizedSite, _profile: string): Finding[] 
 }
 ```
 
-- [ ] **Step 6: Create `src/audit/findings/remoteAccess.ts`**
+- [x] **Step 6: Create `src/audit/findings/remoteAccess.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -881,7 +881,7 @@ export function findRemoteAccess(site: NormalizedSite, _profile: string): Findin
 }
 ```
 
-- [ ] **Step 7: Create `src/audit/findings/devices.ts`**
+- [x] **Step 7: Create `src/audit/findings/devices.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -901,7 +901,7 @@ export function findDevices(site: NormalizedSite, _profile: string): Finding[] {
 }
 ```
 
-- [ ] **Step 8: Run tests**
+- [x] **Step 8: Run tests**
 
 ```bash
 npm test
@@ -909,7 +909,7 @@ npm test
 
 Expected: all core findings tests pass
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/audit/findings/ src/audit/__tests__/findings/
@@ -929,7 +929,7 @@ git commit -m "feat: add core finding modules (segmentation, wifi, firewall, rem
 - Create: `src/audit/findings/apiCoverage.ts`
 - Create: `src/audit/__tests__/findings/enhanced.test.ts`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `src/audit/__tests__/findings/enhanced.test.ts`:
 
@@ -1039,7 +1039,7 @@ describe('findApiCoverage', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failures**
+- [x] **Step 2: Run — expect failures**
 
 ```bash
 npm test
@@ -1047,7 +1047,7 @@ npm test
 
 Expected: module not found errors
 
-- [ ] **Step 3: Create `src/audit/findings/wirelessTuning.ts`**
+- [x] **Step 3: Create `src/audit/findings/wirelessTuning.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -1134,7 +1134,7 @@ export function findWirelessTuning(site: NormalizedSite, _profile: string): Find
 }
 ```
 
-- [ ] **Step 4: Create `src/audit/findings/firewallThreats.ts`**
+- [x] **Step 4: Create `src/audit/findings/firewallThreats.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -1197,7 +1197,7 @@ export function findFirewallThreats(site: NormalizedSite, _profile: string): Fin
 }
 ```
 
-- [ ] **Step 5: Create `src/audit/findings/firmware.ts`**
+- [x] **Step 5: Create `src/audit/findings/firmware.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -1275,7 +1275,7 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
 }
 ```
 
-- [ ] **Step 6: Create `src/audit/findings/logging.ts`**
+- [x] **Step 6: Create `src/audit/findings/logging.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -1331,7 +1331,7 @@ export function findLogging(site: NormalizedSite, profile: string): Finding[] {
 }
 ```
 
-- [ ] **Step 7: Create `src/audit/findings/backup.ts`**
+- [x] **Step 7: Create `src/audit/findings/backup.ts`**
 
 ```typescript
 import type { Finding, NormalizedSite } from '../types.js';
@@ -1386,7 +1386,7 @@ export function findBackup(site: NormalizedSite, _profile: string): Finding[] {
 }
 ```
 
-- [ ] **Step 8: Create `src/audit/findings/apiCoverage.ts`**
+- [x] **Step 8: Create `src/audit/findings/apiCoverage.ts`**
 
 ```typescript
 import type { Finding } from '../types.js';
@@ -1407,7 +1407,7 @@ export function findApiCoverage(clean: Record<string, unknown>): Finding[] {
 }
 ```
 
-- [ ] **Step 9: Run all tests**
+- [x] **Step 9: Run all tests**
 
 ```bash
 npm test
@@ -1415,7 +1415,7 @@ npm test
 
 Expected: all enhanced finding tests pass
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/audit/findings/ src/audit/__tests__/findings/enhanced.test.ts
@@ -1430,7 +1430,7 @@ git commit -m "feat: add enhanced finding modules (wireless, firewall, firmware,
 - Create: `src/audit/analyze.ts`
 - Create: `src/audit/__tests__/analyze.test.ts`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `src/audit/__tests__/analyze.test.ts`:
 
@@ -1485,7 +1485,7 @@ describe('applyProfileOverrides', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failures**
+- [x] **Step 2: Run — expect failures**
 
 ```bash
 npm test -- src/audit/__tests__/analyze.test.ts
@@ -1493,7 +1493,7 @@ npm test -- src/audit/__tests__/analyze.test.ts
 
 Expected: `Cannot find module '../analyze.js'`
 
-- [ ] **Step 3: Create `src/audit/analyze.ts`**
+- [x] **Step 3: Create `src/audit/analyze.ts`**
 
 ```typescript
 import type { Finding, FindingModule, NormalizedSite } from './types.js';
@@ -1567,7 +1567,7 @@ export function analyze(
 }
 ```
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 ```bash
 npm test
@@ -1575,7 +1575,7 @@ npm test
 
 Expected: all tests pass
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/audit/analyze.ts src/audit/__tests__/analyze.test.ts
@@ -1590,7 +1590,7 @@ git commit -m "feat: add analyze() pipeline with float-top sorting and profile o
 - Create: `src/audit/collect.ts`
 - Create: `src/audit/__tests__/collect.test.ts`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `src/audit/__tests__/collect.test.ts`:
 
@@ -1611,7 +1611,7 @@ describe('extractSites', () => {
 });
 ```
 
-- [ ] **Step 2: Create `src/audit/collect.ts`**
+- [x] **Step 2: Create `src/audit/collect.ts`**
 
 ```typescript
 import type { UniFiClient } from './client.js';
@@ -1701,7 +1701,7 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
 }
 ```
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```bash
 npm test
@@ -1709,7 +1709,7 @@ npm test
 
 Expected: all tests pass
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/audit/collect.ts src/audit/__tests__/collect.test.ts
@@ -1724,7 +1724,7 @@ git commit -m "feat: add collectAll() and extractSites()"
 - Create: `src/audit/report.ts`
 - Create: `src/cli.ts`
 
-- [ ] **Step 1: Create `src/audit/report.ts`**
+- [x] **Step 1: Create `src/audit/report.ts`**
 
 ```typescript
 import type { Finding } from './types.js';
@@ -1769,7 +1769,7 @@ export function renderReport(findings: Finding[], profile: string, endpointsProb
 }
 ```
 
-- [ ] **Step 2: Create `src/cli.ts`**
+- [x] **Step 2: Create `src/cli.ts`**
 
 ```typescript
 #!/usr/bin/env node
@@ -1834,7 +1834,7 @@ main().catch(err => {
 });
 ```
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 ```bash
 npm test
@@ -1842,7 +1842,7 @@ npm test
 
 Expected: all tests pass
 
-- [ ] **Step 4: Verify CLI compiles**
+- [x] **Step 4: Verify CLI compiles**
 
 ```bash
 npx tsc --noEmit
@@ -1850,7 +1850,7 @@ npx tsc --noEmit
 
 Expected: no errors
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git add src/audit/report.ts src/cli.ts
