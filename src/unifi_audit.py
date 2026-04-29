@@ -343,6 +343,32 @@ def _extract_sites(sites_response: Any) -> list[dict]:
 # FINDINGS PHASE: run analysis on sanitized data
 # =============================================================================
 
+ALWAYS_TOP_PREDICATES = [
+    lambda f: f.id.startswith("MFA-"),
+    lambda f: f.id == "SEG-MGMT-WAN",
+    lambda f: f.id.startswith("SEG-001"),
+    lambda f: f.id.startswith("CRED-DEFAULT"),
+    lambda f: f.id.startswith("FW-EOL") and f.severity in ("high", "critical"),
+    lambda f: f.id == "VPN-PPTP-001",
+]
+
+_SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+
+def _is_float_top(f: Finding) -> bool:
+    """Return True if this finding should always appear at the top of the report."""
+    return any(pred(f) for pred in ALWAYS_TOP_PREDICATES)
+
+
+def _sort_findings(findings: list[Finding]) -> list[Finding]:
+    """Float-top findings first (severity-ordered among themselves), then remainder by severity."""
+    top = [f for f in findings if _is_float_top(f)]
+    rest = [f for f in findings if not _is_float_top(f)]
+    top.sort(key=lambda f: _SEVERITY_ORDER.get(f.severity, 5))
+    rest.sort(key=lambda f: (_SEVERITY_ORDER.get(f.severity, 5), f.section))
+    return top + rest
+
+
 def analyze(sites: list, profile: str, logger: logging.Logger) -> list[Finding]:
     """Run all findings modules across all normalized sites."""
     findings: list[Finding] = []
@@ -364,9 +390,7 @@ def analyze(sites: list, profile: str, logger: logging.Logger) -> list[Finding]:
                 findings.extend(fn(site, profile))
             except Exception as e:
                 logger.warning(f"Module {name} failed on site {site.site_id}: {e}")
-    order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-    findings.sort(key=lambda f: (order.get(f.severity, 5), f.section))
-    return findings
+    return _sort_findings(findings)
 
 
 def _find_segmentation(site, profile: str) -> list[Finding]:
@@ -592,6 +616,7 @@ def main():
     logger.info("Running findings analysis...")
     findings = analyze(sites, cfg["profile"], logger)
     findings.extend(_find_api_coverage(clean, cfg["profile"]))
+    findings = _sort_findings(findings)
 
     findings_path = OUTPUT_DIR / "findings.json"
     findings_path.write_text(json.dumps([asdict(f) for f in findings], indent=2))
