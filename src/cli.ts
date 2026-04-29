@@ -55,6 +55,22 @@ async function main() {
 
   log('='.repeat(60));
   log('Done.');
+
+  if (process.argv.includes('--save')) {
+    try {
+      const { openDb, insertRun, insertFindings, insertSites } = await import('./db/queries.js');
+      const db = await openDb();
+      const runId = await insertRun(db, client.config.host || 'cloud', client.config.profile, sites.length);
+      await insertFindings(db, runId, findings);
+      await insertSites(db, runId, sites.map(s => ({
+        siteId: s.siteId, siteName: s.siteName, apiGaps: s.apiGaps,
+      })));
+      log(`Saved run ${runId} to local DB.`);
+    } catch {
+      log('Note: --save requires Tauri runtime context. DB write skipped in CLI mode.');
+    }
+  }
+
   log('NEXT STEPS');
   log('  1. Review report.md');
   log('  2. Revoke the API key in Site Manager');
