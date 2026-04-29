@@ -1,6 +1,6 @@
 # Phase 1 Finalization Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a normalized data layer so all finding modules are data-source agnostic, wire all enhanced findings into the live audit pipeline, and add float-to-top + profile-aware scoring.
 
@@ -34,13 +34,13 @@
 - Create: `tests/__init__.py`
 - Create: `tests/test_models.py`
 
-- [ ] **Step 1: Install pytest**
+- [x] **Step 1: Install pytest**
 
 ```bash
 pip install pytest
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/__init__.py` (empty file), then create `tests/test_models.py`:
 
@@ -71,7 +71,7 @@ def test_finding_optional_defaults():
     assert f.impact == "medium"
 ```
 
-- [ ] **Step 3: Run test — expect ImportError (module doesn't exist yet)**
+- [x] **Step 3: Run test — expect ImportError (module doesn't exist yet)**
 
 ```bash
 pytest tests/test_models.py -v
@@ -79,7 +79,7 @@ pytest tests/test_models.py -v
 
 Expected: `ModuleNotFoundError: No module named 'models'`
 
-- [ ] **Step 4: Create `src/models.py`**
+- [x] **Step 4: Create `src/models.py`**
 
 ```python
 from __future__ import annotations
@@ -102,7 +102,7 @@ class Finding:
     impact: str = "medium"
 ```
 
-- [ ] **Step 5: Run test — expect PASS**
+- [x] **Step 5: Run test — expect PASS**
 
 ```bash
 pytest tests/test_models.py -v
@@ -110,7 +110,7 @@ pytest tests/test_models.py -v
 
 Expected: 2 passed
 
-- [ ] **Step 6: Update `src/unifi_audit.py` — remove local `Finding`, import from `models`**
+- [x] **Step 6: Update `src/unifi_audit.py` — remove local `Finding`, import from `models`**
 
 Remove the `@dataclass class Finding` block (lines ~100–113). Add at the top of the imports section:
 
@@ -118,7 +118,7 @@ Remove the `@dataclass class Finding` block (lines ~100–113). Add at the top o
 from models import Finding
 ```
 
-- [ ] **Step 7: Smoke-check the import chain**
+- [x] **Step 7: Smoke-check the import chain**
 
 ```bash
 python -c "from unifi_audit import Finding; print('ok')"
@@ -126,7 +126,7 @@ python -c "from unifi_audit import Finding; print('ok')"
 
 Expected: `ok`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/models.py src/unifi_audit.py tests/__init__.py tests/test_models.py
@@ -142,7 +142,7 @@ git commit -m "feat: extract Finding dataclass to src/models.py"
 - Modify: `src/unifi_audit.py` (remove `_extract_list`, import from `normalize`)
 - Create: `tests/test_normalize.py`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/test_normalize.py`:
 
@@ -216,7 +216,7 @@ def test_extract_list_items_key():
     assert _extract_list({"items": ["a", "b"]}) == ["a", "b"]
 ```
 
-- [ ] **Step 2: Run — expect ImportError**
+- [x] **Step 2: Run — expect ImportError**
 
 ```bash
 pytest tests/test_normalize.py -v
@@ -224,7 +224,7 @@ pytest tests/test_normalize.py -v
 
 Expected: `ModuleNotFoundError: No module named 'normalize'`
 
-- [ ] **Step 3: Create `src/normalize.py`**
+- [x] **Step 3: Create `src/normalize.py`**
 
 ```python
 from __future__ import annotations
@@ -297,7 +297,7 @@ def normalize_api(clean: dict, profile: str) -> list[NormalizedSite]:
     return sites
 ```
 
-- [ ] **Step 4: Run tests — expect all pass**
+- [x] **Step 4: Run tests — expect all pass**
 
 ```bash
 pytest tests/test_normalize.py -v
@@ -305,7 +305,7 @@ pytest tests/test_normalize.py -v
 
 Expected: 12 passed
 
-- [ ] **Step 5: Remove `_extract_list` from `unifi_audit.py`, import from `normalize`**
+- [x] **Step 5: Remove `_extract_list` from `unifi_audit.py`, import from `normalize`**
 
 In `src/unifi_audit.py`, delete the `_extract_list` function (search for `def _extract_list`). Add to imports:
 
@@ -313,7 +313,7 @@ In `src/unifi_audit.py`, delete the `_extract_list` function (search for `def _e
 from normalize import normalize_api, _extract_list
 ```
 
-- [ ] **Step 6: Verify unifi_audit still imports cleanly**
+- [x] **Step 6: Verify unifi_audit still imports cleanly**
 
 ```bash
 python -c "import unifi_audit; print('ok')"
@@ -321,7 +321,7 @@ python -c "import unifi_audit; print('ok')"
 
 Expected: `ok`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/normalize.py src/unifi_audit.py tests/test_normalize.py
@@ -336,7 +336,7 @@ git commit -m "feat: add NormalizedSite + normalize_api() in src/normalize.py"
 - Modify: `src/findings_enhanced.py`
 - Create: `tests/test_findings_enhanced.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/test_findings_enhanced.py`:
 
@@ -467,7 +467,7 @@ def test_l2tp_plus_wireguard_no_l2tp_finding():
     assert "VPN-L2TP-001" not in ids
 ```
 
-- [ ] **Step 2: Run — expect failures (functions still use old signature)**
+- [x] **Step 2: Run — expect failures (functions still use old signature)**
 
 ```bash
 pytest tests/test_findings_enhanced.py -v
@@ -475,7 +475,7 @@ pytest tests/test_findings_enhanced.py -v
 
 Expected: errors or failures on all tests
 
-- [ ] **Step 3: Port `find_wireless_tuning` in `src/findings_enhanced.py`**
+- [x] **Step 3: Port `find_wireless_tuning` in `src/findings_enhanced.py`**
 
 Replace the existing `find_wireless_tuning(colls: dict)` function with:
 
@@ -605,7 +605,7 @@ def find_wireless_tuning(site) -> list:
     return findings
 ```
 
-- [ ] **Step 4: Port `find_remote_access` in `src/findings_enhanced.py`**
+- [x] **Step 4: Port `find_remote_access` in `src/findings_enhanced.py`**
 
 Replace the existing `find_remote_access(colls: dict)` function with:
 
@@ -703,7 +703,7 @@ def find_remote_access(site) -> list:
     return findings
 ```
 
-- [ ] **Step 5: Run tests — expect all pass**
+- [x] **Step 5: Run tests — expect all pass**
 
 ```bash
 pytest tests/test_findings_enhanced.py -v
@@ -711,7 +711,7 @@ pytest tests/test_findings_enhanced.py -v
 
 Expected: all wireless_tuning and remote_access tests pass
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/findings_enhanced.py tests/test_findings_enhanced.py
@@ -726,7 +726,7 @@ git commit -m "feat: port find_wireless_tuning and find_remote_access to Normali
 - Modify: `src/findings_enhanced.py`
 - Modify: `tests/test_findings_enhanced.py`
 
-- [ ] **Step 1: Add tests for the four remaining modules**
+- [x] **Step 1: Add tests for the four remaining modules**
 
 Append to `tests/test_findings_enhanced.py`:
 
@@ -838,7 +838,7 @@ def test_backup_schrodinger_always_emitted_when_enabled():
     assert "BAK-003" in ids
 ```
 
-- [ ] **Step 2: Run — expect failures**
+- [x] **Step 2: Run — expect failures**
 
 ```bash
 pytest tests/test_findings_enhanced.py -v -k "firewall_threats or firmware or logging or backup"
@@ -846,7 +846,7 @@ pytest tests/test_findings_enhanced.py -v -k "firewall_threats or firmware or lo
 
 Expected: failures (functions still use old signatures)
 
-- [ ] **Step 3: Port `find_firewall_threats` in `src/findings_enhanced.py`**
+- [x] **Step 3: Port `find_firewall_threats` in `src/findings_enhanced.py`**
 
 Replace the existing function:
 
@@ -952,7 +952,7 @@ def find_firewall_threats(site) -> list:
     return findings
 ```
 
-- [ ] **Step 4: Port `find_firmware` in `src/findings_enhanced.py`**
+- [x] **Step 4: Port `find_firmware` in `src/findings_enhanced.py`**
 
 Replace the existing function (keep `EOL_MODELS` dict unchanged):
 
@@ -1076,7 +1076,7 @@ def find_firmware(site) -> list:
     return findings
 ```
 
-- [ ] **Step 5: Port `find_logging` in `src/findings_enhanced.py`**
+- [x] **Step 5: Port `find_logging` in `src/findings_enhanced.py`**
 
 Replace the existing function (keep `RETENTION_PROFILES` dict unchanged):
 
@@ -1153,7 +1153,7 @@ def find_logging(site, profile: str = "home_office") -> list:
     return findings
 ```
 
-- [ ] **Step 6: Port `find_backup_config` in `src/findings_enhanced.py`**
+- [x] **Step 6: Port `find_backup_config` in `src/findings_enhanced.py`**
 
 Replace the existing function:
 
@@ -1244,7 +1244,7 @@ def find_backup_config(site) -> list:
     return findings
 ```
 
-- [ ] **Step 7: Remove dead imports from top of `findings_enhanced.py`**
+- [x] **Step 7: Remove dead imports from top of `findings_enhanced.py`**
 
 Delete the first few lines of the file (the old comment and `from __future__` block only — keep the module docstring):
 
@@ -1259,7 +1259,7 @@ from __future__ import annotations
 from typing import Any
 ```
 
-- [ ] **Step 8: Run all findings tests**
+- [x] **Step 8: Run all findings tests**
 
 ```bash
 pytest tests/test_findings_enhanced.py -v
@@ -1267,7 +1267,7 @@ pytest tests/test_findings_enhanced.py -v
 
 Expected: all tests pass
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/findings_enhanced.py tests/test_findings_enhanced.py
@@ -1281,7 +1281,7 @@ git commit -m "feat: port all findings_enhanced modules to NormalizedSite"
 **Files:**
 - Modify: `src/unifi_audit.py`
 
-- [ ] **Step 1: Add normalization call in `main()`**
+- [x] **Step 1: Add normalization call in `main()`**
 
 In `src/unifi_audit.py`, after `clean = sanitize(raw)` and before the findings analysis, add:
 
@@ -1292,7 +1292,7 @@ In `src/unifi_audit.py`, after `clean = sanitize(raw)` and before the findings a
     logger.info(f"  -> {len(sites)} site(s) normalized")
 ```
 
-- [ ] **Step 2: Add import for enhanced findings at top of file**
+- [x] **Step 2: Add import for enhanced findings at top of file**
 
 After the existing imports, add:
 
@@ -1307,7 +1307,7 @@ from findings_enhanced import (
 )
 ```
 
-- [ ] **Step 3: Refactor `analyze()` to accept `list[NormalizedSite]`**
+- [x] **Step 3: Refactor `analyze()` to accept `list[NormalizedSite]`**
 
 Replace the `analyze` signature and modules list:
 
@@ -1338,7 +1338,7 @@ def analyze(sites: list, profile: str, logger: logging.Logger) -> list[Finding]:
     return findings
 ```
 
-- [ ] **Step 4: Update inline finding functions to accept `(site, profile)` signature**
+- [x] **Step 4: Update inline finding functions to accept `(site, profile)` signature**
 
 Each of `_find_segmentation`, `_find_wifi`, `_find_firewall`, `_find_remote_access` (which is now unused — delete it), and `_find_devices` currently takes `(clean: dict, profile: str)`. Change them to `(site, profile: str)` and update their internals to use `site.networks`, `site.wlans`, `site.port_forwards`, `site.vpn_configs`, `site.devices` instead of `_all_sites(clean)` + `_extract_list(site.get(...))`.
 
@@ -1455,11 +1455,11 @@ def _find_devices(site, profile: str) -> list[Finding]:
     return []
 ```
 
-- [ ] **Step 5: Remove `_find_remote_access` (inline version) from `unifi_audit.py`**
+- [x] **Step 5: Remove `_find_remote_access` (inline version) from `unifi_audit.py`**
 
 Delete the `_find_remote_access` function — it is superseded by `find_remote_access_enhanced`.
 
-- [ ] **Step 6: Update `main()` to pass `sites` to `analyze()`**
+- [x] **Step 6: Update `main()` to pass `sites` to `analyze()`**
 
 Change:
 ```python
@@ -1470,11 +1470,11 @@ To:
     findings = analyze(sites, cfg["profile"], logger)
 ```
 
-- [ ] **Step 7: Remove now-unused helpers from `unifi_audit.py`**
+- [x] **Step 7: Remove now-unused helpers from `unifi_audit.py`**
 
 Delete `_all_sites()` — it is no longer called anywhere.
 
-- [ ] **Step 8: Smoke-test the full pipeline**
+- [x] **Step 8: Smoke-test the full pipeline**
 
 ```bash
 python -c "
@@ -1493,7 +1493,7 @@ print(f'findings: {len(findings)}')
 
 Expected: prints `findings: <N>` without error
 
-- [ ] **Step 9: Run full test suite**
+- [x] **Step 9: Run full test suite**
 
 ```bash
 pytest tests/ -v
@@ -1501,7 +1501,7 @@ pytest tests/ -v
 
 Expected: all tests pass
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/unifi_audit.py
@@ -1516,7 +1516,7 @@ git commit -m "feat: wire all enhanced finding modules into analyze() pipeline"
 - Modify: `src/unifi_audit.py`
 - Create: `tests/test_analyze.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/test_analyze.py`:
 
@@ -1569,7 +1569,7 @@ def test_two_float_top_sorted_among_themselves():
     assert ids[2] == "LOW-001"
 ```
 
-- [ ] **Step 2: Run — expect AttributeError (`_sort_findings` doesn't exist)**
+- [x] **Step 2: Run — expect AttributeError (`_sort_findings` doesn't exist)**
 
 ```bash
 pytest tests/test_analyze.py -v
@@ -1577,7 +1577,7 @@ pytest tests/test_analyze.py -v
 
 Expected: `AttributeError: module 'unifi_audit' has no attribute '_sort_findings'`
 
-- [ ] **Step 3: Add `ALWAYS_TOP_PREDICATES` and `_sort_findings()` to `unifi_audit.py`**
+- [x] **Step 3: Add `ALWAYS_TOP_PREDICATES` and `_sort_findings()` to `unifi_audit.py`**
 
 Add after the `Finding` import, before `analyze()`:
 
@@ -1607,7 +1607,7 @@ def _sort_findings(findings: list[Finding]) -> list[Finding]:
     return top + rest
 ```
 
-- [ ] **Step 4: Replace the sort in `analyze()` with `_sort_findings()`**
+- [x] **Step 4: Replace the sort in `analyze()` with `_sort_findings()`**
 
 In `analyze()`, replace:
 ```python
@@ -1620,7 +1620,7 @@ With:
     return _sort_findings(findings)
 ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 ```bash
 pytest tests/test_analyze.py -v
@@ -1628,7 +1628,7 @@ pytest tests/test_analyze.py -v
 
 Expected: all 4 tests pass
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/unifi_audit.py tests/test_analyze.py
@@ -1643,7 +1643,7 @@ git commit -m "feat: add always-float-to-top sorting for high-priority findings"
 - Modify: `src/unifi_audit.py`
 - Modify: `tests/test_analyze.py`
 
-- [ ] **Step 1: Add tests**
+- [x] **Step 1: Add tests**
 
 Append to `tests/test_analyze.py`:
 
@@ -1674,7 +1674,7 @@ def test_unknown_profile_unchanged():
     assert result[0].severity == "medium"
 ```
 
-- [ ] **Step 2: Run — expect AttributeError**
+- [x] **Step 2: Run — expect AttributeError**
 
 ```bash
 pytest tests/test_analyze.py -v -k "profile"
@@ -1682,7 +1682,7 @@ pytest tests/test_analyze.py -v -k "profile"
 
 Expected: `AttributeError: module 'unifi_audit' has no attribute '_apply_profile_overrides'`
 
-- [ ] **Step 3: Add `PROFILE_OVERRIDES` and `_apply_profile_overrides()` to `unifi_audit.py`**
+- [x] **Step 3: Add `PROFILE_OVERRIDES` and `_apply_profile_overrides()` to `unifi_audit.py`**
 
 Add after `_sort_findings`:
 
@@ -1713,7 +1713,7 @@ def _apply_profile_overrides(findings: list[Finding], profile: str) -> list[Find
     return findings
 ```
 
-- [ ] **Step 4: Wire `_apply_profile_overrides()` into `analyze()` before `_sort_findings()`**
+- [x] **Step 4: Wire `_apply_profile_overrides()` into `analyze()` before `_sort_findings()`**
 
 In `analyze()`, replace:
 ```python
@@ -1725,7 +1725,7 @@ With:
     return _sort_findings(findings)
 ```
 
-- [ ] **Step 5: Run full test suite**
+- [x] **Step 5: Run full test suite**
 
 ```bash
 pytest tests/ -v
@@ -1733,7 +1733,7 @@ pytest tests/ -v
 
 Expected: all tests pass
 
-- [ ] **Step 6: Final commit**
+- [x] **Step 6: Final commit**
 
 ```bash
 git add src/unifi_audit.py tests/test_analyze.py
