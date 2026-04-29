@@ -1,3 +1,5 @@
+import { Agent } from 'undici';
+
 export interface ClientConfig {
   key: string;
   host: string;
@@ -42,10 +44,14 @@ export class UniFiClient {
 
   async get(path: string): Promise<FetchResult> {
     const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
+    const options: RequestInit & { dispatcher?: unknown } = {
+      headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
+    };
+    if (!this.config.verifySSL) {
+      options.dispatcher = new Agent({ connect: { rejectUnauthorized: false } });
+    }
     try {
-      const resp = await fetch(url, {
-        headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
-      });
+      const resp = await fetch(url, options as RequestInit);
       let data: unknown;
       try { data = await resp.json(); } catch { data = { nonJsonResponse: true }; }
       return { status: resp.status, data };

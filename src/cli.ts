@@ -31,6 +31,12 @@ async function main() {
 
   log('Running findings analysis...');
   const sites = normalizeApi(clean, client.config.profile);
+  if (sites.length === 0) {
+    log('Warning: no sites normalized from API response. Check API key scope and controller connectivity.');
+    if (client.config.useCloud) {
+      log('  Cloud mode note: Site Manager API site-scoped data collection is not yet implemented (Phase 3).');
+    }
+  }
   const findings = analyze(sites, clean, client.config.profile, (mod, site, err) => {
     console.error(`Module ${mod} failed on ${site}: ${err}`);
   });
