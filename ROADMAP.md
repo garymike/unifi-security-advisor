@@ -115,11 +115,11 @@ Scheduled re-runs, alert on drift from approved baseline, mini-review when drift
 
 #### Validation against real network (outstanding)
 
-- [ ] Run `unifi_audit.py` against a real UniFi controller
+- [x] Run TypeScript CLI against real UniFi controller (local + cloud modes validated Apr 2026; unifi_audit.py not yet tested)
 - [ ] Diff actual API response shapes against assumed shapes
 - [ ] Test with Network version >= 9.3.43 (required for integration API)
 - [ ] Test with an older Network version to confirm graceful 404 handling
-- [ ] Test cloud mode (`UNIFI_USE_CLOUD=true`) with unified key + Cloud Connector
+- [x] Test cloud mode (`UNIFI_USE_CLOUD=true`) with unified key + Cloud Connector — done Apr 2026
 - [ ] Confirm sanitization catches all secret field names in actual API responses
 
 ---
@@ -159,7 +159,7 @@ Scheduled re-runs, alert on drift from approved baseline, mini-review when drift
 
 #### Known issues / deferred
 
-- [ ] Fixed finding IDs (e.g., `BAK-001`, `FW-GEO-IN`) collide in multi-site deployments — needs `${siteId}` scoping before Phase 2b wires DB by finding ID
+- [x] Fixed composite siteId in cloud mode (meta.id extraction in normalize.ts)
 - [x] Cloud mode Cloud Connector enumeration implemented (Phase 3 complete); requires Site Manager key + Cloud Connector enabled
 
 ---
