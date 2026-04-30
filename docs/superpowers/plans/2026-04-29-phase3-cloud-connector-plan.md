@@ -1,6 +1,6 @@
 # Phase 3: Cloud Connector Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Complete the cloud audit mode so it produces real findings by using the Cloud Connector to proxy Network Integration API requests through `api.ui.com`.
 
@@ -25,7 +25,7 @@
 - Modify: `src/audit/collect.ts`
 - Modify: `src/audit/__tests__/collect.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Open `src/audit/__tests__/collect.test.ts` and append:
 
@@ -51,7 +51,7 @@ describe('buildConnectorUrl', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests — expect failures**
+- [x] **Step 2: Run tests — expect failures**
 
 ```bash
 npm test -- --reporter=verbose src/audit/__tests__/collect.test.ts
@@ -59,7 +59,7 @@ npm test -- --reporter=verbose src/audit/__tests__/collect.test.ts
 
 Expected output: `Cannot find module` or `buildConnectorUrl is not exported`
 
-- [ ] **Step 3: Add `buildConnectorUrl` to `src/audit/collect.ts`**
+- [x] **Step 3: Add `buildConnectorUrl` to `src/audit/collect.ts`**
 
 Add this function after the `CLOUD_ENDPOINTS` constant (before `extractSites`):
 
@@ -69,7 +69,7 @@ export function buildConnectorUrl(consoleId: string, siteId: string, resource: s
 }
 ```
 
-- [ ] **Step 4: Run tests — expect all pass**
+- [x] **Step 4: Run tests — expect all pass**
 
 ```bash
 npm test -- --reporter=verbose src/audit/__tests__/collect.test.ts
@@ -77,7 +77,7 @@ npm test -- --reporter=verbose src/audit/__tests__/collect.test.ts
 
 Expected output: 6 passed (3 existing + 3 new)
 
-- [ ] **Step 5: Run full suite to confirm no regressions**
+- [x] **Step 5: Run full suite to confirm no regressions**
 
 ```bash
 npm test
@@ -85,7 +85,7 @@ npm test
 
 Expected: 76 passed (73 existing + 3 new)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/audit/collect.ts src/audit/__tests__/collect.test.ts
@@ -99,7 +99,7 @@ git commit -m "feat: add buildConnectorUrl helper for Cloud Connector URLs"
 **Files:**
 - Modify: `src/audit/collect.ts` (cloud branch only)
 
-- [ ] **Step 1: Replace the cloud branch in `collectAll`**
+- [x] **Step 1: Replace the cloud branch in `collectAll`**
 
 In `src/audit/collect.ts`, find the `if (client.config.useCloud)` block (lines 47–54). Replace it entirely with:
 
@@ -163,7 +163,7 @@ In `src/audit/collect.ts`, find the `if (client.config.useCloud)` block (lines 4
 
 **Important:** The `} else {` at the end of the replacement is the start of the existing local branch. Do not modify anything from `} else {` onwards.
 
-- [ ] **Step 2: Run the full test suite**
+- [x] **Step 2: Run the full test suite**
 
 ```bash
 npm test
@@ -171,7 +171,7 @@ npm test
 
 Expected: 76 passed (same count as after Task 1 — no new tests for the enumeration loop; integration testing against the real controller covers it)
 
-- [ ] **Step 3: Verify TypeScript compiles cleanly**
+- [x] **Step 3: Verify TypeScript compiles cleanly**
 
 ```bash
 npx tsc --noEmit
@@ -179,7 +179,7 @@ npx tsc --noEmit
 
 Expected: no errors
 
-- [ ] **Step 4: Smoke-test URL construction via npm test**
+- [x] **Step 4: Smoke-test URL construction via npm test**
 
 The three `buildConnectorUrl` tests added in Task 1 already verify the URL pattern for `devices`, `firewall-policies`, and `vpn-configs`. Run them to confirm the helper works correctly with the resource extraction pattern:
 
@@ -189,7 +189,7 @@ npm test -- --reporter=verbose src/audit/__tests__/collect.test.ts
 
 Expected: 6 passed, including `resource segment extracted from SITE_SCOPED path template`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/audit/collect.ts
@@ -207,7 +207,7 @@ This task runs the actual audit against your UniFi controller using `UNIFI_USE_C
 - Cloud Connector enabled on the console (`UniFi OS → System → Cloud Access → Cloud Connector`)
 - Node.js available in terminal
 
-- [ ] **Step 1: Build the TypeScript CLI**
+- [x] **Step 1: Build the TypeScript CLI**
 
 ```bash
 npm run build:audit
@@ -215,7 +215,7 @@ npm run build:audit
 
 Expected: compiles without errors, `dist/` directory updated
 
-- [ ] **Step 2: Run the audit in cloud mode**
+- [x] **Step 2: Run the audit in cloud mode**
 
 ```bash
 UNIFI_API_KEY='<your-key>' UNIFI_USE_CLOUD=true node dist/cli.js
@@ -238,7 +238,7 @@ Wrote findings.json (N findings)
 Wrote report.md
 ```
 
-- [ ] **Step 3: Verify findings were generated**
+- [x] **Step 3: Verify findings were generated**
 
 ```bash
 node -e "const d=JSON.parse(require('fs').readFileSync('audit_output/findings.json','utf8')); console.log('findings:', d.length, '| severities:', [...new Set(d.map(f=>f.severity))].join(', '))"
@@ -246,7 +246,7 @@ node -e "const d=JSON.parse(require('fs').readFileSync('audit_output/findings.js
 
 Expected: at least one finding, severities include `high` or `medium` (not all `info`)
 
-- [ ] **Step 4: Check the raw sanitized data for site coverage**
+- [x] **Step 4: Check the raw sanitized data for site coverage**
 
 ```bash
 node -e "const d=JSON.parse(require('fs').readFileSync('audit_output/raw_sanitized.json','utf8')); const siteKeys=Object.keys(d).filter(k=>k.startsWith('site_')); console.log('site keys:', siteKeys)"
@@ -254,18 +254,18 @@ node -e "const d=JSON.parse(require('fs').readFileSync('audit_output/raw_sanitiz
 
 Expected: at least one `site_*` key (e.g., `site_abc123_default`)
 
-- [ ] **Step 5: Review `audit_output/report.md`**
+- [x] **Step 5: Review `audit_output/report.md`**
 
 Open and scan for:
 - At least one finding with a `current_state` that references real data (e.g. actual SSID name, real device model)
 - No `[object Object]` or serialisation artifacts
 - Sanitised PSK shown as `{ length: N, fingerprint: "..." }` not raw value
 
-- [ ] **Step 6: Update ROADMAP**
+- [x] **Step 6: Update ROADMAP**
 
 In `ROADMAP.md`, change Phase 3 status from `scaffolded, needs validation` to `complete`. Add a note about Cloud Connector requirement.
 
-- [ ] **Step 7: Commit ROADMAP update**
+- [x] **Step 7: Commit ROADMAP update**
 
 ```bash
 git add ROADMAP.md
