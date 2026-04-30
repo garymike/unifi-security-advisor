@@ -21,9 +21,10 @@ export function normalizeApi(clean: Record<string, unknown>, profile: string): N
   const sites: NormalizedSite[] = [];
   for (const [key, val] of Object.entries(clean)) {
     if (!key.startsWith('site_') || typeof val !== 'object' || val === null) continue;
-    const siteId = key.slice(5);
     const siteData = val as Record<string, unknown>;
     const meta = (siteData['_meta'] ?? {}) as Record<string, unknown>;
+    // Prefer the real site id from _meta (cloud mode stores consoleId_siteId in the key)
+    const siteId = String(meta['id'] ?? meta['_id'] ?? key.slice(5));
     const siteName = String(meta['desc'] ?? meta['name'] ?? siteId);
     const apiGaps = [...EXPECTED_COLLECTIONS].filter(c => !(c in siteData)).sort();
     sites.push({

@@ -24,6 +24,21 @@ describe('normalizeApi', () => {
     expect(site.apiGaps).not.toContain('devices');
   });
   it('settings is empty in API mode', () => expect(normalizeApi(CLEAN, 'home')[0]!.settings).toEqual({}));
+
+  it('uses meta.id as siteId when present (cloud mode has composite key)', () => {
+    // Cloud mode produces keys like site_{consoleId}_{siteId} — meta.id holds the real siteId
+    const clean = {
+      'site_CONSOLEID_SITEID': {
+        _meta: { id: 'real-site-id', name: 'My Site', _consoleId: 'CONSOLEID' },
+        devices: { data: [] }, clients: { data: [] }, wlans: { data: [] },
+        networks: { data: [] }, port_forwards: { data: [] }, vpn_configs: { data: [] },
+        firewall_policies: { data: [] }, firewall_zones: { data: [] }, traffic_routes: { data: [] },
+      },
+    };
+    const site = normalizeApi(clean, 'home_office')[0]!;
+    expect(site.siteId).toBe('real-site-id');
+    expect(site.siteName).toBe('My Site');
+  });
 });
 
 describe('extractList', () => {
