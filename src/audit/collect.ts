@@ -23,6 +23,10 @@ const CLOUD_ENDPOINTS = [
   ['cloud_devices', 'https://api.ui.com/v1/devices'],
 ] as const;
 
+export function buildConnectorUrl(consoleId: string, siteId: string, resource: string): string {
+  return `https://api.ui.com/v1/connector/consoles/${consoleId}/proxy/network/integration/v1/sites/${siteId}/${resource}`;
+}
+
 export function extractSites(sitesResponse: unknown): Record<string, unknown>[] {
   if (Array.isArray(sitesResponse)) return sitesResponse as Record<string, unknown>[];
   if (sitesResponse !== null && typeof sitesResponse === 'object') {
