@@ -34,7 +34,7 @@ async function main() {
   if (sites.length === 0) {
     log('Warning: no sites normalized from API response. Check API key scope and controller connectivity.');
     if (client.config.useCloud) {
-      log('  Cloud mode note: Site Manager API site-scoped data collection is not yet implemented (Phase 3).');
+      log('  Cloud mode: ensure Cloud Connector is enabled on the console (UniFi OS → System → Cloud Access).');
     }
   }
   const findings = analyze(sites, clean, client.config.profile, (mod, site, err) => {
