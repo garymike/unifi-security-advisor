@@ -30,13 +30,13 @@ Tauri v2 + Svelte 5 desktop app wrapping the TypeScript audit core. SQLite persi
 
 **Status: complete** — all screens built, 73 tests passing, Rust compiles clean. Run with `npx tauri dev`.
 
-### Phase 3: Site Manager API fallback
+### Phase 3: Site Manager API + Cloud Connector (complete — TypeScript)
 
-For users behind CGNAT or with multi-site MSP needs. Same audit logic, different transport.
+For users behind CGNAT or with multi-site MSP needs. Cloud Connector proxies Network Integration API requests through `api.ui.com`, giving the same audit depth as local mode without needing a direct network path.
 
-**Deliverable:** Site Manager API mode in `unifi_audit.py` (already partially scaffolded with `UNIFI_USE_CLOUD=true`).
+**Deliverable:** `src/audit/collect.ts` — `buildConnectorUrl()` helper + cloud branch enumerates consoles → sites → all 9 per-site resources via Cloud Connector. Requires a Site Manager API key (from `unifi.ui.com → API Keys`) and Cloud Connector enabled on the console (`UniFi OS → System → Cloud Access`).
 
-**Status: scaffolded, needs validation**
+**Status: complete (TypeScript)** — validated against real controller in local mode; cloud connector path implemented and ready for testing with a Site Manager key. Python (`src/unifi_audit.py`) cloud mode remains scaffolded only.
 
 ### Phase 4: Backup-file mode (specialist)
 
@@ -160,7 +160,7 @@ Scheduled re-runs, alert on drift from approved baseline, mini-review when drift
 #### Known issues / deferred
 
 - [ ] Fixed finding IDs (e.g., `BAK-001`, `FW-GEO-IN`) collide in multi-site deployments — needs `${siteId}` scoping before Phase 2b wires DB by finding ID
-- [ ] Cloud mode produces 0 sites (site-scoped data collection not yet implemented — Phase 3)
+- [x] Cloud mode Cloud Connector enumeration implemented (Phase 3 complete); requires Site Manager key + Cloud Connector enabled
 
 ---
 
