@@ -60,6 +60,9 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
 
     // Step 2: Enumerate consoles and collect per-site data via Cloud Connector
     const hosts = extractSites(result['hosts']);
+    if (hosts.length === 0) {
+      result._errors.push({ endpoint: 'hosts', status: 0, hint: 'no consoles returned; check API key scope or Cloud Connector availability' });
+    }
     for (const host of hosts) {
       const consoleId = String(host['id'] ?? host['hostId'] ?? '');
       if (!consoleId) continue;
@@ -81,6 +84,7 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
         continue;
       }
 
+      await new Promise(r => setTimeout(r, 100));
       const siteList = extractSites(sitesData);
       result._siteCount += siteList.length;
 
@@ -97,7 +101,7 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
           const { status, data } = await client.get(url);
           result._endpointsProbed.push({ name: `${name}@${consoleId}_${siteId}`, path: url, status });
           if (status === 200) (result[siteKey] as Record<string, unknown>)[name] = data;
-          else if (status === 403) result._errors.push({ endpoint: `${name}@${consoleId}_${siteId}`, status });
+          else result._errors.push({ endpoint: `${name}@${consoleId}_${siteId}`, status });
           await new Promise(r => setTimeout(r, 100));
         }
       }
