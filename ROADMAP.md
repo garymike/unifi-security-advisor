@@ -22,16 +22,13 @@ Full TypeScript port of the Python audit core. Framework-agnostic; will be impor
 
 **Status: complete** — 55 tests passing, `tsc --noEmit` clean. Run with `npm run build && node dist/cli.js` after setting `UNIFI_API_KEY` + `UNIFI_HOST`.
 
-**Phase 2b: Tauri desktop app + wizard (not started)**
+**Phase 2b: Tauri desktop app + wizard (complete)**
 
 Tauri v2 + Svelte 5 desktop app wrapping the TypeScript audit core. SQLite persistence, profile inference + confirmation, skills-check tier routing, gap question wizard, "not sure" resolution paths, final report screen.
 
-**Deliverable:** Tauri app scaffold, `src/db/`, `src/wizard/`, `src/lib/`, `src/routes/`.
+**Deliverable:** `src-tauri/` (Rust shell), `src/db/`, `src/wizard/`, `src/lib/`, `src/routes/` (4 screens).
 
-**Design:** `docs/superpowers/specs/2026-04-27-phase2-wizard-design.md`
-**Plan:** `docs/superpowers/plans/2026-04-27-phase2b-tauri-wizard-plan.md`
-
-**Status: not started**
+**Status: complete** — all screens built, 73 tests passing, Rust compiles clean. Run with `npx tauri dev`.
 
 ### Phase 3: Site Manager API fallback
 
@@ -167,14 +164,19 @@ Scheduled re-runs, alert on drift from approved baseline, mini-review when drift
 
 ---
 
-### Phase 2b — Tauri desktop app + wizard (not started)
+### Phase 2b — Tauri desktop app + wizard
 
-- [ ] Tauri v2 project scaffold + Svelte 5 + @tauri-apps/plugin-sql
-- [ ] `src/db/schema.ts` + `src/db/queries.ts`
-- [ ] `src/wizard/orchestrator.ts` + `src/wizard/tiers.ts` + `src/wizard/profileInfer.ts`
-- [ ] `src/lib/AuditRunner.ts`
-- [ ] Home screen, connection setup, wizard screen, report screen (Svelte components)
-- [ ] CLI `--save` flag for persisting runs to local DB
+- [x] Tauri v2 project scaffold + Svelte 5 + SvelteKit + @tauri-apps/plugin-sql
+- [x] `src/db/schema.ts` + `src/db/queries.ts`
+- [x] `src/wizard/orchestrator.ts` + `src/wizard/tiers.ts` + `src/wizard/profileInfer.ts`
+- [x] `src/lib/AuditRunner.ts`
+- [x] Home screen (`src/routes/+page.svelte`) — past runs, start new audit
+- [x] Connection setup screen (`src/routes/audit/+page.svelte`) — API key, host, progress log
+- [x] Wizard screen (`src/routes/wizard/+page.svelte`) — profile confirm → skills check → gap questions
+- [x] Report screen (`src/routes/report/+page.svelte`) — severity filter, markdown export
+- [x] `src/lib/components/QuestionCard.svelte` + `src/lib/components/FindingRow.svelte`
+- [x] CLI `--save` flag for persisting runs to local DB
+- [x] Import path bug fix (home route depth correction)
 
 ---
 
