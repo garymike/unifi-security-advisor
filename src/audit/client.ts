@@ -1,4 +1,4 @@
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 
 export interface ClientConfig {
   key: string;
@@ -44,14 +44,14 @@ export class UniFiClient {
 
   async get(path: string): Promise<FetchResult> {
     const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
-    const options: RequestInit & { dispatcher?: unknown } = {
-      headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
-    };
-    if (!this.config.verifySSL) {
-      options.dispatcher = new Agent({ connect: { rejectUnauthorized: false } });
-    }
     try {
-      const resp = await fetch(url, options as RequestInit);
+      // Use undici's fetch with a custom Agent so rejectUnauthorized works for
+      // local controllers that use self-signed certificates.
+      const dispatcher = new Agent({ connect: { rejectUnauthorized: this.config.verifySSL } });
+      const resp = await undiciFetch(url, {
+        headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
+        dispatcher,
+      });
       let data: unknown;
       try { data = await resp.json(); } catch { data = { nonJsonResponse: true }; }
       return { status: resp.status, data };

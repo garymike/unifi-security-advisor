@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "build:audit": "tsc",
+    "build:audit": "tsc -p tsconfig.cli.json",
     "dev": "vite dev",
     "test": "vitest run",
     "test:watch": "vitest",

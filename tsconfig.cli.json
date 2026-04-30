@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": false
+  },
+  "include": ["src/audit/**/*.ts", "src/cli.ts", "src/db/**/*.ts", "src/wizard/**/*.ts", "src/lib/AuditRunner.ts"],
+  "exclude": ["src/**/*.svelte", "src/routes/**", "src/**/__tests__/**", "node_modules", "dist"]
+}
