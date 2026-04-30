@@ -27,7 +27,11 @@
       })));
       goto(`/wizard?runId=${runId}&profile=${result.inferredProfile}`);
     } catch (err) {
-      error = String(err);
+      console.error('[audit] startAudit failed:', err);
+      const msg = err instanceof Error
+        ? `${err.message}\n${err.stack ?? ''}`
+        : JSON.stringify(err, null, 2);
+      error = msg;
       running = false;
     }
   }
