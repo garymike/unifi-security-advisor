@@ -16,7 +16,7 @@
 
   onMount(async () => {
     try {
-      const { openDb, listRuns } = await import('../../db/queries.js');
+      const { openDb, listRuns } = await import('../db/queries.js');
       const db = await openDb();
       runs = await listRuns(db);
     } catch (e) {
