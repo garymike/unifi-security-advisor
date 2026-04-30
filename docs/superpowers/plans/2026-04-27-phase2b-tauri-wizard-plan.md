@@ -1,6 +1,6 @@
 # Phase 2b: Tauri Desktop App + Wizard Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Wrap the Phase 2a TypeScript audit core in a Tauri v2 desktop app with a Svelte 5 UI. Adds: SQLite persistence, profile inference + confirmation, skills-check tier routing, gap question wizard, "not sure" resolution paths, and a final report screen.
 
@@ -40,7 +40,7 @@
 - Create: entire `src-tauri/` directory (generated)
 - Modify: `package.json` (add Tauri scripts and deps)
 
-- [ ] **Step 1: Scaffold with create-tauri-app**
+- [x] **Step 1: Scaffold with create-tauri-app**
 
 From the project root (where `package.json` already exists):
 
@@ -57,13 +57,13 @@ When prompted:
 - What is your frontend dev command?: `npm run dev`
 - What is your frontend build command?: `npm run build`
 
-- [ ] **Step 2: Install Svelte + Vite**
+- [x] **Step 2: Install Svelte + Vite**
 
 ```bash
 npm install --save-dev svelte@5 @sveltejs/vite-plugin-svelte vite
 ```
 
-- [ ] **Step 3: Create `vite.config.ts`**
+- [x] **Step 3: Create `vite.config.ts`**
 
 ```typescript
 import { defineConfig } from 'vite';
@@ -78,7 +78,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: Add Tauri SQL plugin to `src-tauri/Cargo.toml`**
+- [x] **Step 4: Add Tauri SQL plugin to `src-tauri/Cargo.toml`**
 
 In `src-tauri/Cargo.toml`, add to `[dependencies]`:
 
@@ -86,7 +86,7 @@ In `src-tauri/Cargo.toml`, add to `[dependencies]`:
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 ```
 
-- [ ] **Step 5: Register the SQL plugin in `src-tauri/src/lib.rs`**
+- [x] **Step 5: Register the SQL plugin in `src-tauri/src/lib.rs`**
 
 Replace the contents of `src-tauri/src/lib.rs`:
 
@@ -100,13 +100,13 @@ pub fn run() {
 }
 ```
 
-- [ ] **Step 6: Install the JS side of the SQL plugin**
+- [x] **Step 6: Install the JS side of the SQL plugin**
 
 ```bash
 npm install @tauri-apps/plugin-sql
 ```
 
-- [ ] **Step 7: Verify Tauri builds**
+- [x] **Step 7: Verify Tauri builds**
 
 ```bash
 npx tauri build --debug
@@ -114,7 +114,7 @@ npx tauri build --debug
 
 Expected: compiles without error (may take a few minutes for first Rust build)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src-tauri/ vite.config.ts package.json
@@ -129,7 +129,7 @@ git commit -m "feat: tauri v2 scaffold with sql plugin"
 - Create: `src/db/schema.ts`
 - Create: `src/db/__tests__/schema.test.ts`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `src/db/__tests__/schema.test.ts`:
 
@@ -153,7 +153,7 @@ describe('CREATE_TABLES', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 ```bash
 npm test -- src/db/__tests__/schema.test.ts
@@ -161,7 +161,7 @@ npm test -- src/db/__tests__/schema.test.ts
 
 Expected: module not found
 
-- [ ] **Step 3: Create `src/db/schema.ts`**
+- [x] **Step 3: Create `src/db/schema.ts`**
 
 ```typescript
 export const CREATE_TABLES = [
@@ -210,7 +210,7 @@ export type Tier = 'guided' | 'standard' | 'pro';
 export type AnswerValue = 'yes' | 'no' | 'partially' | 'not_applicable' | 'deferred';
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 npm test -- src/db/__tests__/schema.test.ts
@@ -218,7 +218,7 @@ npm test -- src/db/__tests__/schema.test.ts
 
 Expected: 4 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/db/schema.ts src/db/__tests__/schema.test.ts
@@ -234,7 +234,7 @@ git commit -m "feat: add SQLite schema definitions"
 
 > Note: `@tauri-apps/plugin-sql` queries run via IPC in the desktop app and cannot be unit-tested without a running Tauri context. These functions are integration-tested by running the app in dev mode. The module is written defensively — all functions accept a `db` instance injected from the caller.
 
-- [ ] **Step 1: Create `src/db/queries.ts`**
+- [x] **Step 1: Create `src/db/queries.ts`**
 
 ```typescript
 import Database from '@tauri-apps/plugin-sql';
@@ -343,7 +343,7 @@ export async function listRuns(db: DbInstance): Promise<RunRow[]> {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/db/queries.ts
@@ -361,7 +361,7 @@ git commit -m "feat: add typed DB query functions for runs, findings, answers, s
 - Create: `src/audit/__tests__/wizard/orchestrator.test.ts`
 - Create: `src/audit/__tests__/wizard/profileInfer.test.ts`
 
-- [ ] **Step 1: Write orchestrator tests**
+- [x] **Step 1: Write orchestrator tests**
 
 Create `src/audit/__tests__/wizard/orchestrator.test.ts`:
 
@@ -434,7 +434,7 @@ describe('mergeAnswer', () => {
 });
 ```
 
-- [ ] **Step 2: Write profile inference tests**
+- [x] **Step 2: Write profile inference tests**
 
 Create `src/audit/__tests__/wizard/profileInfer.test.ts`:
 
@@ -485,7 +485,7 @@ describe('inferProfile', () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failures**
+- [x] **Step 3: Run — expect failures**
 
 ```bash
 npm test -- src/audit/__tests__/wizard/
@@ -493,7 +493,7 @@ npm test -- src/audit/__tests__/wizard/
 
 Expected: module not found
 
-- [ ] **Step 4: Create `src/wizard/orchestrator.ts`**
+- [x] **Step 4: Create `src/wizard/orchestrator.ts`**
 
 ```typescript
 import type { Finding } from '../audit/types.js';
@@ -529,7 +529,7 @@ export function mergeAnswer(finding: Finding, answer: AnswerValue, freeText: str
 }
 ```
 
-- [ ] **Step 5: Create `src/wizard/tiers.ts`**
+- [x] **Step 5: Create `src/wizard/tiers.ts`**
 
 ```typescript
 import type { Finding } from '../audit/types.js';
@@ -552,7 +552,7 @@ export function getTieredString(
 }
 ```
 
-- [ ] **Step 6: Create `src/wizard/profileInfer.ts`**
+- [x] **Step 6: Create `src/wizard/profileInfer.ts`**
 
 ```typescript
 import type { NormalizedSite } from '../audit/types.js';
@@ -597,7 +597,7 @@ export const ALL_PROFILES = [
 ] as const;
 ```
 
-- [ ] **Step 7: Run tests**
+- [x] **Step 7: Run tests**
 
 ```bash
 npm test -- src/audit/__tests__/wizard/
@@ -605,7 +605,7 @@ npm test -- src/audit/__tests__/wizard/
 
 Expected: all tests pass
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/wizard/ src/audit/__tests__/wizard/
@@ -621,7 +621,7 @@ git commit -m "feat: add wizard orchestrator, tier helpers, profile inference"
 
 This module bridges the Svelte UI to the audit core + DB. It runs the full audit pipeline and stores results in SQLite.
 
-- [ ] **Step 1: Create `src/lib/AuditRunner.ts`**
+- [x] **Step 1: Create `src/lib/AuditRunner.ts`**
 
 ```typescript
 import { UniFiClient } from '../audit/client.js';
@@ -683,7 +683,7 @@ export async function runAudit(
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/lib/AuditRunner.ts
@@ -698,7 +698,7 @@ git commit -m "feat: add AuditRunner bridge (audit core → db)"
 - Create: `src/routes/+page.svelte`
 - Create: `src/routes/audit/+page.svelte`
 
-- [ ] **Step 1: Create home screen `src/routes/+page.svelte`**
+- [x] **Step 1: Create home screen `src/routes/+page.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -748,7 +748,7 @@ git commit -m "feat: add AuditRunner bridge (audit core → db)"
 </main>
 ```
 
-- [ ] **Step 2: Create connection setup `src/routes/audit/+page.svelte`**
+- [x] **Step 2: Create connection setup `src/routes/audit/+page.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -838,7 +838,7 @@ git commit -m "feat: add AuditRunner bridge (audit core → db)"
 </main>
 ```
 
-- [ ] **Step 3: Verify in dev mode**
+- [x] **Step 3: Verify in dev mode**
 
 ```bash
 npx tauri dev
@@ -846,7 +846,7 @@ npx tauri dev
 
 Navigate to the home screen. Click "Start New Audit". The connection form should appear. (Full end-to-end only works with a real API key — use dummy values to verify the form renders correctly.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/routes/
@@ -861,7 +861,7 @@ git commit -m "feat: add home screen and connection setup UI"
 - Create: `src/routes/wizard/+page.svelte`
 - Create: `src/lib/components/QuestionCard.svelte`
 
-- [ ] **Step 1: Create `src/lib/components/QuestionCard.svelte`**
+- [x] **Step 1: Create `src/lib/components/QuestionCard.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -972,7 +972,7 @@ git commit -m "feat: add home screen and connection setup UI"
 </div>
 ```
 
-- [ ] **Step 2: Create `src/routes/wizard/+page.svelte`**
+- [x] **Step 2: Create `src/routes/wizard/+page.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -1119,7 +1119,7 @@ git commit -m "feat: add home screen and connection setup UI"
 </main>
 ```
 
-- [ ] **Step 3: Test in dev mode**
+- [x] **Step 3: Test in dev mode**
 
 ```bash
 npx tauri dev
@@ -1127,7 +1127,7 @@ npx tauri dev
 
 Run a full audit (or navigate directly to `/wizard?runId=test&profile=home_office`). Step through profile confirm → skills check → first question.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/routes/wizard/ src/lib/components/QuestionCard.svelte
@@ -1142,7 +1142,7 @@ git commit -m "feat: wizard screen — profile confirm, skills check, gap questi
 - Create: `src/routes/report/+page.svelte`
 - Create: `src/lib/components/FindingRow.svelte`
 
-- [ ] **Step 1: Create `src/lib/components/FindingRow.svelte`**
+- [x] **Step 1: Create `src/lib/components/FindingRow.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -1180,7 +1180,7 @@ git commit -m "feat: wizard screen — profile confirm, skills check, gap questi
 </div>
 ```
 
-- [ ] **Step 2: Create `src/routes/report/+page.svelte`**
+- [x] **Step 2: Create `src/routes/report/+page.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -1274,7 +1274,7 @@ git commit -m "feat: wizard screen — profile confirm, skills check, gap questi
 </main>
 ```
 
-- [ ] **Step 3: Test in dev mode**
+- [x] **Step 3: Test in dev mode**
 
 ```bash
 npx tauri dev
@@ -1282,7 +1282,7 @@ npx tauri dev
 
 Navigate to `/report?runId=<any-uuid>`. With a real run in the DB, findings should render with severity colors. The Export Markdown button should download a `.md` file.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/routes/report/ src/lib/components/FindingRow.svelte
@@ -1296,7 +1296,7 @@ git commit -m "feat: report screen with severity filter and markdown export"
 **Files:**
 - Modify: `src/cli.ts`
 
-- [ ] **Step 1: Add `--save` flag support to `src/cli.ts`**
+- [x] **Step 1: Add `--save` flag support to `src/cli.ts`**
 
 In `src/cli.ts`, after the report is written, add:
 
@@ -1319,7 +1319,7 @@ In `src/cli.ts`, after the report is written, add:
   }
 ```
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 ```bash
 npm test
@@ -1327,7 +1327,7 @@ npm test
 
 Expected: all tests pass
 
-- [ ] **Step 3: Final commit**
+- [x] **Step 3: Final commit**
 
 ```bash
 git add src/cli.ts
