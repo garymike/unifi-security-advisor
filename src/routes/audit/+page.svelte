@@ -15,23 +15,30 @@
     running = true; error = ''; progressLog = [];
 
     try {
+      progressLog = [...progressLog, '[1] importing db module...'];
       const { openDb, insertRun, insertFindings, insertSites } = await import('../../db/queries.js');
+      progressLog = [...progressLog, '[2] starting runAudit...'];
       const result = await runAudit(apiKey, host, useCloud, msg => {
         progressLog = [...progressLog, msg];
       });
+      progressLog = [...progressLog, `[3] runAudit done — ${result.findings.length} findings, ${result.sites.length} sites`];
       const db = await openDb();
+      progressLog = [...progressLog, '[4] db opened, inserting run...'];
       const runId = await insertRun(db, host || 'cloud', result.inferredProfile, result.sites.length);
+      progressLog = [...progressLog, `[5] run ${runId} created, inserting findings...`];
       await insertFindings(db, runId, result.findings);
+      progressLog = [...progressLog, '[6] findings inserted, inserting sites...'];
       await insertSites(db, runId, result.sites.map(s => ({
         siteId: s.siteId, siteName: s.siteName, apiGaps: s.apiGaps,
       })));
+      progressLog = [...progressLog, '[7] done — navigating to wizard'];
       goto(`/wizard?runId=${runId}&profile=${result.inferredProfile}`);
     } catch (err) {
-      console.error('[audit] startAudit failed:', err);
+      console.error('[audit] failed:', err);
       const msg = err instanceof Error
-        ? `${err.message}\n${err.stack ?? ''}`
-        : JSON.stringify(err, null, 2);
-      error = msg;
+        ? `${err.message}`
+        : (typeof err === 'object' ? JSON.stringify(err) : String(err));
+      error = `Error: ${msg}`;
       running = false;
     }
   }
