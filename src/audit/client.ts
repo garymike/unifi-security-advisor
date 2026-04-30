@@ -1,5 +1,4 @@
-import { Agent, fetch as undiciFetch } from 'undici';
-
+// undici is Node.js-only — imported dynamically so Vite doesn't bundle it for the browser
 const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export interface ClientConfig {
@@ -65,7 +64,8 @@ export class UniFiClient {
           headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
         });
       } else {
-        // Node.js CLI context — use undici with TLS bypass for self-signed certs
+        // Node.js CLI context — dynamically import undici (Node.js-only, not for browsers)
+        const { Agent, fetch: undiciFetch } = await import('undici');
         const dispatcher = new Agent({ connect: { rejectUnauthorized: this.config.verifySSL } });
         resp = await undiciFetch(url, {
           headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
