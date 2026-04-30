@@ -21,11 +21,20 @@ export class UniFiClient {
   }
 
   static fromEnv(env: Record<string, string | undefined> = process.env as Record<string, string>): UniFiClient {
-    const key = (env['UNIFI_API_KEY'] ?? '').trim();
-    if (!key) throw new Error('UNIFI_API_KEY environment variable not set');
-
     const host = (env['UNIFI_HOST'] ?? '').trim();
     const useCloud = ['1', 'true', 'yes'].includes((env['UNIFI_USE_CLOUD'] ?? '').toLowerCase());
+
+    // Key selection: prefer mode-specific names, fall back to generic UNIFI_API_KEY
+    const key = useCloud
+      ? (env['UNIFI_SITEMGR_API_KEY'] ?? env['UNIFI_API_KEY'] ?? '').trim()
+      : (env['UNIFI_NETWORK_API_KEY'] ?? env['UNIFI_API_KEY'] ?? '').trim();
+
+    if (!key) throw new Error(
+      useCloud
+        ? 'UNIFI_SITEMGR_API_KEY (or UNIFI_API_KEY) not set'
+        : 'UNIFI_NETWORK_API_KEY (or UNIFI_API_KEY) not set'
+    );
+
     if (!host && !useCloud) throw new Error('UNIFI_HOST not set (and UNIFI_USE_CLOUD not enabled)');
 
     const verifySslEnv = (env['UNIFI_VERIFY_SSL'] ?? '').toLowerCase();
