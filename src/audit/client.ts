@@ -1,5 +1,7 @@
 import { Agent, fetch as undiciFetch } from 'undici';
 
+const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 export interface ClientConfig {
   key: string;
   host: string;
@@ -54,13 +56,23 @@ export class UniFiClient {
   async get(path: string): Promise<FetchResult> {
     const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
     try {
-      // Use undici's fetch with a custom Agent so rejectUnauthorized works for
-      // local controllers that use self-signed certificates.
-      const dispatcher = new Agent({ connect: { rejectUnauthorized: this.config.verifySSL } });
-      const resp = await undiciFetch(url, {
-        headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
-        dispatcher,
-      });
+      let resp: { status: number; json(): Promise<unknown> };
+
+      if (IS_TAURI) {
+        // Tauri webview context — use plugin-http (proxied through Rust, handles TLS)
+        const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
+        resp = await tauriFetch(url, {
+          headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
+        });
+      } else {
+        // Node.js CLI context — use undici with TLS bypass for self-signed certs
+        const dispatcher = new Agent({ connect: { rejectUnauthorized: this.config.verifySSL } });
+        resp = await undiciFetch(url, {
+          headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
+          dispatcher,
+        });
+      }
+
       let data: unknown;
       try { data = await resp.json(); } catch { data = { nonJsonResponse: true }; }
       return { status: resp.status, data };
