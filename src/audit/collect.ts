@@ -49,12 +49,58 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
   const result: CollectResult = { _endpointsProbed: [], _errors: [], _siteCount: 0 };
 
   if (client.config.useCloud) {
+    // Step 1: Fetch metadata endpoints (hosts, sites list, devices list)
     for (const [name, url] of CLOUD_ENDPOINTS) {
       log(`GET ${url}`);
       const { status, data } = await client.get(url);
       result._endpointsProbed.push({ name, path: url, status });
       if (status === 200) result[name] = data;
       else if (status === 403) result._errors.push({ endpoint: name, status, hint: 'insufficient scope' });
+    }
+
+    // Step 2: Enumerate consoles and collect per-site data via Cloud Connector
+    const hosts = extractSites(result['hosts']);
+    for (const host of hosts) {
+      const consoleId = String(host['id'] ?? host['hostId'] ?? '');
+      if (!consoleId) continue;
+
+      // Enumerate sites for this console via Cloud Connector
+      const sitesUrl = `https://api.ui.com/v1/connector/consoles/${consoleId}/proxy/network/integration/v1/sites`;
+      log(`GET ${sitesUrl}`);
+      const { status: sitesStatus, data: sitesData } = await client.get(sitesUrl);
+      result._endpointsProbed.push({ name: `sites@${consoleId}`, path: sitesUrl, status: sitesStatus });
+
+      if (sitesStatus !== 200) {
+        if (sitesStatus === 403 || sitesStatus === 404) {
+          result._errors.push({
+            endpoint: `sites@${consoleId}`,
+            status: sitesStatus,
+            hint: 'Cloud Connector not enabled — enable in UniFi OS → System → Cloud Access',
+          });
+        }
+        continue;
+      }
+
+      const siteList = extractSites(sitesData);
+      result._siteCount += siteList.length;
+
+      for (const site of siteList) {
+        const siteId = String(site['id'] ?? site['_id'] ?? site['name'] ?? '');
+        if (!siteId) continue;
+        const siteKey = `site_${consoleId}_${siteId}`;
+        result[siteKey] = { _meta: { ...site, _consoleId: consoleId } };
+
+        for (const [name, pathTpl] of SITE_SCOPED) {
+          const resource = pathTpl.split('/').at(-1)!;
+          const url = buildConnectorUrl(consoleId, siteId, resource);
+          log(`GET ${url}`);
+          const { status, data } = await client.get(url);
+          result._endpointsProbed.push({ name: `${name}@${consoleId}_${siteId}`, path: url, status });
+          if (status === 200) (result[siteKey] as Record<string, unknown>)[name] = data;
+          else if (status === 403) result._errors.push({ endpoint: `${name}@${consoleId}_${siteId}`, status });
+          await new Promise(r => setTimeout(r, 100));
+        }
+      }
     }
   } else {
     for (const [name, path] of LOCAL_GLOBAL) {
