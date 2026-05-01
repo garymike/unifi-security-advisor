@@ -177,6 +177,11 @@ Scheduled re-runs, alert on drift from approved baseline, mini-review when drift
 - [x] `src/lib/components/QuestionCard.svelte` + `src/lib/components/FindingRow.svelte`
 - [x] CLI `--save` flag for persisting runs to local DB
 - [x] Import path bug fix (home route depth correction)
+- [x] Tailwind CSS v4 installed and wired
+- [x] SQL plugin permissions (allow-load, allow-execute, allow-select, allow-close)
+- [x] TLS: custom Rust command (`unifi_fetch`) with `danger_accept_invalid_certs` for self-signed certs
+- [x] Browser-compatible imports: undici dynamic, node:crypto → @noble/hashes
+- [x] **End-to-end validated against real Cloud Gateway Fiber** — full audit → wizard → report flow working
 
 ---
 
