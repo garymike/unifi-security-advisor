@@ -55,27 +55,27 @@ export class UniFiClient {
   async get(path: string): Promise<FetchResult> {
     const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
     try {
-      let resp: { status: number; json(): Promise<unknown> };
-
       if (IS_TAURI) {
-        // Tauri webview context — use plugin-http (proxied through Rust, handles TLS)
-        const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
-        resp = await tauriFetch(url, {
-          headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
+        // Tauri context — custom Rust command with danger_accept_invalid_certs(true)
+        // so local UniFi controllers with self-signed certs work correctly.
+        const { invoke } = await import('@tauri-apps/api/core');
+        const result = await invoke<{ status: number; data: unknown }>('unifi_fetch', {
+          url,
+          apiKey: this.config.key,
         });
+        return { status: result.status, data: result.data };
       } else {
         // Node.js CLI context — dynamically import undici (Node.js-only, not for browsers)
         const { Agent, fetch: undiciFetch } = await import('undici');
         const dispatcher = new Agent({ connect: { rejectUnauthorized: this.config.verifySSL } });
-        resp = await undiciFetch(url, {
+        const resp = await undiciFetch(url, {
           headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
           dispatcher,
         });
+        let data: unknown;
+        try { data = await resp.json(); } catch { data = { nonJsonResponse: true }; }
+        return { status: resp.status, data };
       }
-
-      let data: unknown;
-      try { data = await resp.json(); } catch { data = { nonJsonResponse: true }; }
-      return { status: resp.status, data };
     } catch (err) {
       return { status: 0, data: { error: String(err).replace(this.config.key, '<REDACTED>') } };
     }
