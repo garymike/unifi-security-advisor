@@ -9,11 +9,11 @@
   import type { AnswerValue, Tier } from '../../db/schema.js';
 
   const runId = $derived($page.url.searchParams.get('runId') ?? '');
-  const initialProfile = $derived($page.url.searchParams.get('profile') ?? 'home_office');
 
   type Step = 'profile' | 'skills' | 'questions' | 'done';
   let step: Step = $state('profile');
-  let confirmedProfile = $state(initialProfile);
+  // Read profile directly from URL — avoids $derived-in-$state initializer warning
+  let confirmedProfile = $state($page.url.searchParams.get('profile') ?? 'home_office');
   let tier: Tier = $state('standard');
   let findings: Finding[] = $state([]);
   let queue: Finding[] = $state([]);
@@ -81,6 +81,17 @@
       <button class="w-full text-left border rounded-lg px-4 py-3 hover:bg-blue-50" onclick={() => confirmTier('no')}>Not sure / first time hearing it</button>
     </div>
     <p class="text-xs text-gray-400 mt-4">This helps explain findings at the right level. You can change it any time.</p>
+
+  {:else if step === 'questions' && !currentFinding}
+    <!-- All questions exhausted but step wasn't updated — show done -->
+    <div class="text-center py-12">
+      <div class="text-4xl mb-4">✓</div>
+      <h1 class="text-xl font-bold mb-2">All questions answered</h1>
+      <p class="text-gray-500 mb-6">Your personalized report is ready.</p>
+      <button class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold" onclick={() => goto(`/report?runId=${runId}`)}>
+        View Report
+      </button>
+    </div>
 
   {:else if step === 'questions' && currentFinding}
     <div class="mb-4">
