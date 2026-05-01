@@ -81,8 +81,9 @@
   {/if}
 
   <div>
-    <label class="text-xs text-gray-400 block mb-1">Anything to add or clarify? (optional)</label>
+    <label for="free-text" class="text-xs text-gray-400 block mb-1">Anything to add or clarify? (optional)</label>
     <textarea
+      id="free-text"
       bind:value={freeText}
       rows="2"
       class="w-full border rounded-lg px-3 py-2 text-sm resize-none"
