@@ -1,4 +1,7 @@
-import { createHash } from 'node:crypto';
+// @ts-ignore -- @noble/hashes v2 subpaths lack .d.ts; runtime works fine
+import { sha256 } from '@noble/hashes/sha2.js';
+// @ts-ignore
+import { bytesToHex } from '@noble/hashes/utils.js';
 
 const SECRET_FIELDS = new Set([
   'x_passphrase', 'x_passphrase_rollover', 'x_radius_secret', 'x_shared_secret',
@@ -18,7 +21,7 @@ export interface Fingerprint {
 export function fingerprint(value: string): Fingerprint {
   return {
     length: value.length,
-    fingerprint: createHash('sha256').update(value).digest('hex').slice(0, 12),
+    fingerprint: bytesToHex(sha256(new TextEncoder().encode(value))).slice(0, 12),
     hasSymbols: /[^a-zA-Z0-9]/.test(value),
     hasDigits: /\d/.test(value),
     hasMixedCase: /[a-z]/.test(value) && /[A-Z]/.test(value),
