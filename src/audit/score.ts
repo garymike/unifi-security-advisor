@@ -2,7 +2,7 @@ import type { Finding, Status, Severity } from './types.js';
 
 export interface PostureScore {
   score: number;   // 0–100, clamped
-  grade: string;   // A | B | C | D | F
+  grade: string;   // A+/A/A- through D+/D/D- and F
   label: string;   // Strong | Good | Fair | Needs work | At risk
 }
 
@@ -21,14 +21,22 @@ export function computeScore(findings: Finding[]): PostureScore {
   }
   score = Math.round(Math.max(0, Math.min(100, score)));
   const grade =
-    score >= 90 ? 'A' :
-    score >= 75 ? 'B' :
-    score >= 60 ? 'C' :
-    score >= 45 ? 'D' : 'F';
+    score >= 97 ? 'A+' :
+    score >= 93 ? 'A'  :
+    score >= 90 ? 'A-' :
+    score >= 87 ? 'B+' :
+    score >= 83 ? 'B'  :
+    score >= 80 ? 'B-' :
+    score >= 77 ? 'C+' :
+    score >= 73 ? 'C'  :
+    score >= 70 ? 'C-' :
+    score >= 67 ? 'D+' :
+    score >= 63 ? 'D'  :
+    score >= 60 ? 'D-' : 'F';
   const label =
     score >= 90 ? 'Strong' :
-    score >= 75 ? 'Good' :
-    score >= 60 ? 'Fair' :
-    score >= 45 ? 'Needs work' : 'At risk';
+    score >= 80 ? 'Good' :
+    score >= 70 ? 'Fair' :
+    score >= 60 ? 'Needs work' : 'At risk';
   return { score, grade, label };
 }
