@@ -120,7 +120,7 @@ Scheduled re-runs, alert on drift from approved baseline, mini-review when drift
 - [ ] Test with Network version >= 9.3.43 (required for integration API)
 - [ ] Test with an older Network version to confirm graceful 404 handling
 - [x] Test cloud mode (`UNIFI_USE_CLOUD=true`) with unified key + Cloud Connector — done Apr 2026
-- [ ] Confirm sanitization catches all secret field names in actual API responses
+- [x] Confirm sanitization catches all secret field names in actual API responses — live API (devices/clients/networks) contains no secret fields; wlans/vpn_configs (404) are pre-covered in SECRET_FIELDS
 
 ---
 
