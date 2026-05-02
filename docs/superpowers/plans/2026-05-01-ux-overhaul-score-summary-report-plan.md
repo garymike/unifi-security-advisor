@@ -1,6 +1,6 @@
 # UX Overhaul: Score, Summary Screen, and Report Restructure
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a posture score (72 / B), restructure the report into Issues/Unknown/Good tabs, and expand the wizard's profile step into a full API summary screen.
 
@@ -31,7 +31,7 @@
 - Create: `src/audit/score.ts`
 - Create: `src/audit/__tests__/score.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/audit/__tests__/score.test.ts`:
 
@@ -127,7 +127,7 @@ describe('computeScore', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests — expect import error**
+- [x] **Step 2: Run tests — expect import error**
 
 ```bash
 npm test -- src/audit/__tests__/score.test.ts
@@ -135,7 +135,7 @@ npm test -- src/audit/__tests__/score.test.ts
 
 Expected: `Cannot find module '../score.js'`
 
-- [ ] **Step 3: Create `src/audit/score.ts`**
+- [x] **Step 3: Create `src/audit/score.ts`**
 
 ```typescript
 import type { Finding } from './types.js';
@@ -174,7 +174,7 @@ export function computeScore(findings: Finding[]): PostureScore {
 }
 ```
 
-- [ ] **Step 4: Run tests — expect all pass**
+- [x] **Step 4: Run tests — expect all pass**
 
 ```bash
 npm test -- src/audit/__tests__/score.test.ts
@@ -182,7 +182,7 @@ npm test -- src/audit/__tests__/score.test.ts
 
 Expected: 11 passed
 
-- [ ] **Step 5: Run full suite to confirm no regressions**
+- [x] **Step 5: Run full suite to confirm no regressions**
 
 ```bash
 npm test
@@ -190,7 +190,7 @@ npm test
 
 Expected: 78 passed (77 existing + 1 new test file with 11 tests, total increases)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/audit/score.ts src/audit/__tests__/score.test.ts
@@ -204,7 +204,7 @@ git commit -m "feat: add computeScore() posture score engine with grade + label"
 **Files:**
 - Modify: `src/routes/report/+page.svelte` (replace entirely)
 
-- [ ] **Step 1: Replace `src/routes/report/+page.svelte` with the new version**
+- [x] **Step 1: Replace `src/routes/report/+page.svelte` with the new version**
 
 ```svelte
 <script lang="ts">
@@ -335,7 +335,7 @@ git commit -m "feat: add computeScore() posture score engine with grade + label"
 </main>
 ```
 
-- [ ] **Step 2: Verify Vite build succeeds**
+- [x] **Step 2: Verify Vite build succeeds**
 
 ```bash
 npm run build
@@ -343,7 +343,7 @@ npm run build
 
 Expected: `✔ done` with no errors
 
-- [ ] **Step 3: Manually verify in the running app**
+- [x] **Step 3: Manually verify in the running app**
 
 Start `npx tauri dev`, run an audit, navigate to the report. Confirm:
 - Score shows in header (e.g. "72 / B")
@@ -354,7 +354,7 @@ Start `npx tauri dev`, run an audit, navigate to the report. Confirm:
 - "All" shows every finding
 - Export Markdown includes the score line
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/routes/report/+page.svelte
@@ -372,7 +372,7 @@ git commit -m "feat: restructure report — bucket tabs (Issues/Unknown/Good/All
 **Files:**
 - Modify: `src/routes/wizard/+page.svelte`
 
-- [ ] **Step 1: Add `computeScore` import and derived values to the script block**
+- [x] **Step 1: Add `computeScore` import and derived values to the script block**
 
 In `src/routes/wizard/+page.svelte`, add this import after the existing imports:
 
@@ -392,7 +392,7 @@ Then add these derived values after the existing `const progress` line (line 24)
   );
 ```
 
-- [ ] **Step 2: Replace the `{#if step === 'profile'}` block in the template**
+- [x] **Step 2: Replace the `{#if step === 'profile'}` block in the template**
 
 Find this block in the template (starts at line 56, ends at line 73):
 
@@ -497,7 +497,7 @@ Replace it with:
     </div>
 ```
 
-- [ ] **Step 3: Verify Vite build succeeds**
+- [x] **Step 3: Verify Vite build succeeds**
 
 ```bash
 npm run build
@@ -505,7 +505,7 @@ npm run build
 
 Expected: `✔ done` with no errors
 
-- [ ] **Step 4: Run the full test suite**
+- [x] **Step 4: Run the full test suite**
 
 ```bash
 npm test
@@ -513,7 +513,7 @@ npm test
 
 Expected: all tests pass (no change in count — this is a Svelte component change, not a TypeScript module change)
 
-- [ ] **Step 5: Manually verify in the running app**
+- [x] **Step 5: Manually verify in the running app**
 
 Start `npx tauri dev`, run a full audit. On the wizard's first screen, confirm:
 - Score hero shows (e.g. "72 / B · Fair")
@@ -524,7 +524,7 @@ Start `npx tauri dev`, run a full audit. On the wizard's first screen, confirm:
 - "Skip to report" goes directly to the report screen
 - When findings haven't loaded yet (e.g. slow DB), the score/bar don't render — only the profile selector shows
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/routes/wizard/+page.svelte
