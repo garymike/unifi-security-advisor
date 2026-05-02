@@ -1,6 +1,6 @@
 # Phase 7: Drift Monitoring Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a History tab with a line chart of all audit runs, and a diff engine that shows what changed between any two selected runs.
 
@@ -29,7 +29,7 @@
 - Create: `src/audit/diff.ts`
 - Create: `src/audit/__tests__/diff.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/audit/__tests__/diff.test.ts`:
 
@@ -118,7 +118,7 @@ describe('diffRuns', () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect module not found**
+- [x] **Step 2: Run — expect module not found**
 
 ```bash
 npm test -- src/audit/__tests__/diff.test.ts
@@ -126,7 +126,7 @@ npm test -- src/audit/__tests__/diff.test.ts
 
 Expected: `Cannot find module '../diff.js'`
 
-- [ ] **Step 3: Create `src/audit/diff.ts`**
+- [x] **Step 3: Create `src/audit/diff.ts`**
 
 ```typescript
 import type { Finding } from './types.js';
@@ -180,7 +180,7 @@ export function diffRuns(findingsA: Finding[], findingsB: Finding[]): DiffResult
 }
 ```
 
-- [ ] **Step 4: Run — expect 8 passed**
+- [x] **Step 4: Run — expect 8 passed**
 
 ```bash
 npm test -- src/audit/__tests__/diff.test.ts
@@ -188,7 +188,7 @@ npm test -- src/audit/__tests__/diff.test.ts
 
 Expected: 8 passed
 
-- [ ] **Step 5: Run full suite**
+- [x] **Step 5: Run full suite**
 
 ```bash
 npm test
@@ -196,7 +196,7 @@ npm test
 
 Expected: 101 passed (93 existing + 8 new)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/audit/diff.ts src/audit/__tests__/diff.test.ts
@@ -212,7 +212,7 @@ git commit -m "feat: add diffRuns() engine — added/removed/changed findings + 
 - Replace: `src/routes/+page.svelte`
 - Modify: `src/routes/wizard/+page.svelte`
 
-- [ ] **Step 1: Replace `src/routes/+layout.svelte`**
+- [x] **Step 1: Replace `src/routes/+layout.svelte`**
 
 The existing file only imports CSS. Replace its entire contents:
 
@@ -256,7 +256,7 @@ The existing file only imports CSS. Replace its entire contents:
 <slot />
 ```
 
-- [ ] **Step 2: Replace `src/routes/+page.svelte`**
+- [x] **Step 2: Replace `src/routes/+page.svelte`**
 
 Replace the entire home screen with a redirect to `/history`:
 
@@ -268,7 +268,7 @@ Replace the entire home screen with a redirect to `/history`:
 </script>
 ```
 
-- [ ] **Step 3: Verify the Vite build still succeeds**
+- [x] **Step 3: Verify the Vite build still succeeds**
 
 ```bash
 npm run build
@@ -276,7 +276,7 @@ npm run build
 
 Expected: `✔ done`
 
-- [ ] **Step 4: Verify tests unchanged**
+- [x] **Step 4: Verify tests unchanged**
 
 ```bash
 npm test
@@ -284,7 +284,7 @@ npm test
 
 Expected: 101 passed (same as after Task 1)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/+layout.svelte src/routes/+page.svelte
@@ -298,7 +298,7 @@ git commit -m "feat: add persistent tab bar (Analyze/Report/History); redirect /
 **Files:**
 - Create: `src/routes/history/+page.svelte`
 
-- [ ] **Step 1: Create `src/routes/history/+page.svelte`**
+- [x] **Step 1: Create `src/routes/history/+page.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -539,7 +539,7 @@ git commit -m "feat: add persistent tab bar (Analyze/Report/History); redirect /
 </main>
 ```
 
-- [ ] **Step 2: Verify Vite build**
+- [x] **Step 2: Verify Vite build**
 
 ```bash
 npm run build
@@ -547,7 +547,7 @@ npm run build
 
 Expected: `✔ done`
 
-- [ ] **Step 3: Verify test suite**
+- [x] **Step 3: Verify test suite**
 
 ```bash
 npm test
@@ -555,7 +555,7 @@ npm test
 
 Expected: 101 passed (unchanged — Svelte component has no unit tests)
 
-- [ ] **Step 4: Manually verify in the Tauri app**
+- [x] **Step 4: Manually verify in the Tauri app**
 
 Start `npx tauri dev`. Confirm:
 
@@ -569,7 +569,7 @@ Start `npx tauri dev`. Confirm:
 8. "View Report" links in the diff panel navigate to the correct report
 9. Wizard screen does NOT show the tab bar
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/history/+page.svelte

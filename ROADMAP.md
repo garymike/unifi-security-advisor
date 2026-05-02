@@ -62,13 +62,13 @@ Generate UniFi config changes that can be reviewed as a diff and applied via the
 
 **Status: not started, awaiting API write GA**
 
-### Phase 7: Continuous drift monitoring
+### Phase 7: Drift monitoring (complete — History tab)
 
-Scheduled re-runs, alert on drift from approved baseline, mini-review when drift detected.
+Visualise security posture over time and compare any two runs to see what changed.
 
-**Deliverable:** Scheduler + diff engine + alerting.
+**Deliverable:** `src/audit/diff.ts` (diff engine), `src/routes/history/+page.svelte` (SVG line chart + diff panel), persistent tab bar (Analyze / Report / History) via `src/routes/+layout.svelte`.
 
-**Status: not started**
+**Status: complete** — 101 tests passing. Run `npx tauri dev` and open the History tab. Scheduling and alerting remain out of scope; manual re-auditing with visual comparison covers the core use case.
 
 ---
 
