@@ -1,6 +1,9 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/stores';
+  import type { Snippet } from 'svelte';
+
+  let { children }: { children: Snippet } = $props();
 
   // Hide tabs during the wizard — it's a linear flow that must not be interrupted
   const showTabs = $derived(!$page.url.pathname.startsWith('/wizard'));
@@ -34,4 +37,4 @@
   </nav>
 {/if}
 
-<slot />
+{@render children()}

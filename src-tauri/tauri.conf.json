@@ -13,10 +13,13 @@
     "windows": [
       {
         "title": "UniFi Security Advisor",
-        "width": 800,
-        "height": 600,
+        "width": 960,
+        "height": 720,
+        "minWidth": 720,
+        "minHeight": 540,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "center": true
       }
     ],
     "security": {
