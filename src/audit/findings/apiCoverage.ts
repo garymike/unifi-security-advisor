@@ -7,8 +7,8 @@ export function findApiCoverage(clean: Record<string, unknown>): Finding[] {
   return [{
     id: 'META-COVERAGE', section: 'Audit scope', severity: 'info', status: 'unknown',
     title: `${missing.length} endpoint(s) not accessible; audit scope limited`,
-    currentState: `${missing.length} API endpoints returned 404 or failed. May be due to Network version (need 9.3.43+) or API scope.`,
-    recommendation: 'Update UniFi Network to latest stable.',
+    currentState: `${missing.length} API endpoint(s) returned 404. The Network Integration API v1 does not yet expose WLANs, firewall policies, port forwards, VPN configs, or traffic routes — Ubiquiti is rolling these out through 2026.`,
+    recommendation: 'For full coverage of these settings, use backup-file mode (Phase 4) which parses the .unf backup and sees all configuration.',
     intentQuestion: null,
     evidence: { missing: missing.map(p => p['name']) },
     mapsTo: {}, effort: 'quick', impact: 'low',
