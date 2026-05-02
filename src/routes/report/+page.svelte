@@ -12,6 +12,7 @@
   let showGood = $state(false);
 
   onMount(async () => {
+    if (!runId) return;
     const { openDb, getFindings } = await import('../../db/queries.js');
     findings = await getFindings(await openDb(), runId);
   });
@@ -119,6 +120,12 @@
       {/if}
     {/if}
   </div>
+
+  {#if !runId}
+    <p class="text-gray-400 text-center py-8">
+      No report selected. <a href="/" class="text-blue-600">Return home</a>.
+    </p>
+  {/if}
 
   <div class="mt-10 text-xs text-gray-400 border-t pt-4">
     All secrets replaced with fingerprints. No credentials in this report. Safe to share.

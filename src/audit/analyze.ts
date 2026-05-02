@@ -66,5 +66,8 @@ export function analyze(
   }
   findings.push(...findApiCoverage(clean));
   applyProfileOverrides(findings, profile);
+  for (const f of findings) {
+    if (isFloatTop(f)) f.floatTop = true;
+  }
   return sortFindings(findings);
 }
