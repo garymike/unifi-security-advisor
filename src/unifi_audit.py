@@ -537,11 +537,11 @@ def _find_api_coverage(clean: dict, profile: str) -> list[Finding]:
             status="unknown",
             title=f"{len(missing)} endpoint(s) not accessible; audit scope limited",
             current_state=(
-                f"{len(missing)} API endpoints returned 404 or failed. "
-                "This may be due to Network version (need 9.3.43+), API scope, "
-                "or endpoints not yet in the official integration API."
+                f"{len(missing)} API endpoint(s) returned 404. "
+                "The Network Integration API v1 does not yet expose WLANs, firewall policies, "
+                "port forwards, VPN configs, or traffic routes — Ubiquiti is rolling these out through 2026."
             ),
-            recommendation="Update UniFi Network to latest stable. For endpoints not yet in the official API, consider the backup-file mode as a complement.",
+            recommendation="For full coverage of these settings, use backup-file mode (Phase 4) which parses the .unf backup and sees all configuration.",
             intent_question=None,
             maps_to={},
             effort="quick",
