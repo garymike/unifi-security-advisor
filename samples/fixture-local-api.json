@@ -1,0 +1,249 @@
+{
+  "_endpointsProbed": [
+    {
+      "name": "info",
+      "path": "/proxy/network/integration/v1/info",
+      "status": 200
+    },
+    {
+      "name": "sites",
+      "path": "/proxy/network/integration/v1/sites",
+      "status": 200
+    },
+    {
+      "name": "devices@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/devices",
+      "status": 200
+    },
+    {
+      "name": "clients@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/clients",
+      "status": 200
+    },
+    {
+      "name": "wlans@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/wlans",
+      "status": 404
+    },
+    {
+      "name": "firewall_policies@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/firewall-policies",
+      "status": 404
+    },
+    {
+      "name": "firewall_zones@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/firewall-zones",
+      "status": 404
+    },
+    {
+      "name": "port_forwards@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/port-forwards",
+      "status": 404
+    },
+    {
+      "name": "vpn_configs@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/vpn-configs",
+      "status": 404
+    },
+    {
+      "name": "networks@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/networks",
+      "status": 200
+    },
+    {
+      "name": "traffic_routes@a0000000-0000-0000-0000-000000000001",
+      "path": "/proxy/network/integration/v1/sites/a0000000-0000-0000-0000-000000000001/traffic-routes",
+      "status": 404
+    }
+  ],
+  "_errors": [],
+  "_siteCount": 1,
+  "info": {
+    "applicationVersion": "10.3.58"
+  },
+  "sites": {
+    "offset": 0,
+    "limit": 25,
+    "count": 1,
+    "totalCount": 1,
+    "data": [
+      {
+        "id": "88f7af54-98f8-306a-a1c7-c9349722b1f6",
+        "internalReference": "default",
+        "name": "Default"
+      }
+    ]
+  },
+  "site_a0000000-0000-0000-0000-000000000001": {
+    "_meta": {
+      "id": "a0000000-0000-0000-0000-000000000001",
+      "internalReference": "default",
+      "name": "Default"
+    },
+    "devices": {
+      "data": [
+        {
+          "id": "device-id-0001",
+          "macAddress": "aa:00:00:00:00:01",
+          "ipAddress": "192.168.1.1",
+          "name": "CloudGateway",
+          "model": "UCG Fiber",
+          "state": "ONLINE",
+          "supported": true,
+          "firmwareVersion": "5.0.16",
+          "firmwareUpdatable": false,
+          "features": [
+            "switching"
+          ],
+          "interfaces": [
+            "ports"
+          ]
+        },
+        {
+          "id": "device-id-0002",
+          "macAddress": "aa:00:00:00:00:02",
+          "ipAddress": "192.168.1.2",
+          "name": "AccessPoint-01",
+          "model": "U7 Pro",
+          "state": "ONLINE",
+          "supported": true,
+          "firmwareVersion": "8.5.21",
+          "firmwareUpdatable": false,
+          "features": [
+            "accessPoint"
+          ],
+          "interfaces": [
+            "radios"
+          ]
+        }
+      ]
+    },
+    "clients": {
+      "data": [
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0001",
+          "name": "Client-01",
+          "connectedAt": "2026-04-05T00:05:23Z",
+          "ipAddress": "192.168.1.100",
+          "macAddress": "bb:00:00:00:00:01",
+          "uplinkDeviceId": "device-id-0003",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRED",
+          "id": "client-id-0002",
+          "name": "Client-02",
+          "connectedAt": "2026-04-05T00:05:28Z",
+          "ipAddress": "192.168.1.101",
+          "macAddress": "bb:00:00:00:00:02",
+          "uplinkDeviceId": "device-id-0001",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0003",
+          "name": "Client-03",
+          "connectedAt": "2026-04-22T08:04:13Z",
+          "ipAddress": "192.168.1.102",
+          "macAddress": "bb:00:00:00:00:03",
+          "uplinkDeviceId": "device-id-0002",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0004",
+          "name": "Client-04",
+          "connectedAt": "2026-04-22T08:04:13Z",
+          "ipAddress": "192.168.1.103",
+          "macAddress": "bb:00:00:00:00:04",
+          "uplinkDeviceId": "device-id-0002",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0005",
+          "name": "Client-05",
+          "connectedAt": "2026-04-22T08:04:14Z",
+          "ipAddress": "192.168.1.104",
+          "macAddress": "bb:00:00:00:00:05",
+          "uplinkDeviceId": "device-id-0002",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0006",
+          "name": "Client-06",
+          "connectedAt": "2026-04-22T08:04:15Z",
+          "ipAddress": "192.168.1.105",
+          "macAddress": "bb:00:00:00:00:06",
+          "uplinkDeviceId": "device-id-0002",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0007",
+          "name": "Client-07",
+          "connectedAt": "2026-04-22T08:04:16Z",
+          "ipAddress": "192.168.1.106",
+          "macAddress": "bb:00:00:00:00:07",
+          "uplinkDeviceId": "device-id-0002",
+          "access": {
+            "type": "DEFAULT"
+          }
+        },
+        {
+          "type": "WIRELESS",
+          "id": "client-id-0008",
+          "name": "Client-08",
+          "connectedAt": "2026-04-22T08:04:17Z",
+          "ipAddress": "192.168.1.107",
+          "macAddress": "bb:00:00:00:00:08",
+          "uplinkDeviceId": "device-id-0002",
+          "access": {
+            "type": "DEFAULT"
+          }
+        }
+      ]
+    },
+    "networks": {
+      "data": [
+        {
+          "management": "GATEWAY",
+          "id": "655847bb-d750-4d39-897f-be0bf654d7d0",
+          "name": "Primary",
+          "enabled": true,
+          "vlanId": 1,
+          "metadata": {
+            "origin": "SYSTEM_DEFINED",
+            "configurable": true
+          },
+          "default": true
+        },
+        {
+          "management": "GATEWAY",
+          "id": "25236f8a-eefc-404f-866d-0d305f56bb09",
+          "name": "IoT",
+          "enabled": true,
+          "vlanId": 2,
+          "metadata": {
+            "origin": "USER_DEFINED"
+          },
+          "default": false
+        }
+      ]
+    }
+  }
+}
