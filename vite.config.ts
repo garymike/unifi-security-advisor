@@ -9,5 +9,5 @@ export default defineConfig({
   envPrefix: ['VITE_', 'TAURI_'],
   build: { target: 'chrome105' },
   optimizeDeps: { exclude: ['undici'] },
-  ssr: { noExternal: ['@tauri-apps/plugin-http', '@tauri-apps/plugin-sql'] },
+  ssr: { noExternal: ['@tauri-apps/plugin-http', '@tauri-apps/plugin-sql', '@tauri-apps/plugin-dialog'] },
 });
