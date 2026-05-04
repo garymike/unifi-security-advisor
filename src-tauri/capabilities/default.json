@@ -17,6 +17,7 @@
         { "url": "https://**/**" },
         { "url": "https://**" }
       ]
-    }
+    },
+    "dialog:allow-open"
   ]
 }
