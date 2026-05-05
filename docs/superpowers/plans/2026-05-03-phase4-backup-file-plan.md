@@ -1,6 +1,6 @@
 # Phase 4: Backup-File Mode Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Parse UniFi `.unf` backup files via a Rust Tauri command to unlock all the `unknown` findings (WLANs, VPN, firewall rules, settings) that the live API v1 cannot yet expose.
 
@@ -32,7 +32,7 @@
 - Modify: `src-tauri/src/lib.rs`
 - Modify: `src-tauri/capabilities/default.json`
 
-- [ ] **Step 1: Add Cargo dependencies**
+- [x] **Step 1: Add Cargo dependencies**
 
 In `src-tauri/Cargo.toml`, add to `[dependencies]`:
 
@@ -45,7 +45,7 @@ bson = "2"
 tauri-plugin-dialog = "2"
 ```
 
-- [ ] **Step 2: Add `dialog:allow-open` capability**
+- [x] **Step 2: Add `dialog:allow-open` capability**
 
 In `src-tauri/capabilities/default.json`, add to the `permissions` array:
 
@@ -53,7 +53,7 @@ In `src-tauri/capabilities/default.json`, add to the `permissions` array:
 "dialog:allow-open"
 ```
 
-- [ ] **Step 3: Replace `src-tauri/src/lib.rs` entirely**
+- [x] **Step 3: Replace `src-tauri/src/lib.rs` entirely**
 
 ```rust
 use std::collections::HashMap;
@@ -204,7 +204,7 @@ pub fn run() {
 }
 ```
 
-- [ ] **Step 4: Verify Rust compiles (takes 2–5 minutes first time)**
+- [x] **Step 4: Verify Rust compiles (takes 2–5 minutes first time)**
 
 ```bash
 cd src-tauri && cargo check 2>&1 | tail -5
@@ -212,13 +212,13 @@ cd src-tauri && cargo check 2>&1 | tail -5
 
 Expected: `Finished \`dev\` profile` with no errors. If there are import errors for `block_padding`, the cbc crate path is `cbc::cipher::block_padding::NoPadding` — verify the exact path with `cargo doc --open` if needed.
 
-- [ ] **Step 5: Install dialog plugin npm package**
+- [x] **Step 5: Install dialog plugin npm package**
 
 ```bash
 npm install @tauri-apps/plugin-dialog
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/src/lib.rs src-tauri/capabilities/default.json package.json package-lock.json
@@ -233,14 +233,14 @@ git commit -m "feat: add parse_backup Rust command (AES+ZIP+BSON) and dialog plu
 - Create: `src/audit/normalizeBackup.ts`
 - Create: `src/audit/__tests__/normalizeBackup.test.ts`
 
-- [ ] **Step 1: Install CLI-only npm packages**
+- [x] **Step 1: Install CLI-only npm packages**
 
 ```bash
 npm install adm-zip bson
 npm install --save-dev @types/adm-zip
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `src/audit/__tests__/normalizeBackup.test.ts`:
 
@@ -338,7 +338,7 @@ describe('normalizeBackup', () => {
 });
 ```
 
-- [ ] **Step 3: Run tests — expect failures**
+- [x] **Step 3: Run tests — expect failures**
 
 ```bash
 npm test -- src/audit/__tests__/normalizeBackup.test.ts
@@ -346,7 +346,7 @@ npm test -- src/audit/__tests__/normalizeBackup.test.ts
 
 Expected: `Cannot find module '../normalizeBackup.js'`
 
-- [ ] **Step 4: Create `src/audit/normalizeBackup.ts`**
+- [x] **Step 4: Create `src/audit/normalizeBackup.ts`**
 
 ```typescript
 import type { NormalizedSite } from './types.js';
@@ -479,7 +479,7 @@ function parseBsonStream(
 }
 ```
 
-- [ ] **Step 5: Run tests — expect all pass**
+- [x] **Step 5: Run tests — expect all pass**
 
 ```bash
 npm test -- src/audit/__tests__/normalizeBackup.test.ts
@@ -487,7 +487,7 @@ npm test -- src/audit/__tests__/normalizeBackup.test.ts
 
 Expected: 13 passed
 
-- [ ] **Step 6: Run full suite**
+- [x] **Step 6: Run full suite**
 
 ```bash
 npm test
@@ -495,7 +495,7 @@ npm test
 
 Expected: 114 passed (101 existing + 13 new)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/audit/normalizeBackup.ts src/audit/__tests__/normalizeBackup.test.ts package.json package-lock.json
@@ -509,7 +509,7 @@ git commit -m "feat: add normalizeBackup() + parseBackupNodejs() — maps .unf c
 **Files:**
 - Create: `src/routes/backup/+page.svelte`
 
-- [ ] **Step 1: Create `src/routes/backup/+page.svelte`**
+- [x] **Step 1: Create `src/routes/backup/+page.svelte`**
 
 ```svelte
 <script lang="ts">
@@ -651,7 +651,7 @@ git commit -m "feat: add normalizeBackup() + parseBackupNodejs() — maps .unf c
 </main>
 ```
 
-- [ ] **Step 2: Verify Vite build**
+- [x] **Step 2: Verify Vite build**
 
 ```bash
 npm run build
@@ -659,7 +659,7 @@ npm run build
 
 Expected: `✔ done`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/routes/backup/+page.svelte
@@ -674,7 +674,7 @@ git commit -m "feat: add Backup tab UI — file picker, analysis progress, route
 - Modify: `src/routes/+layout.svelte`
 - Modify: `src/cli.ts`
 
-- [ ] **Step 1: Add Backup tab to `src/routes/+layout.svelte`**
+- [x] **Step 1: Add Backup tab to `src/routes/+layout.svelte`**
 
 Find the `tabs` array (currently 3 entries). Replace it:
 
@@ -687,7 +687,7 @@ Find the `tabs` array (currently 3 entries). Replace it:
   ] as const;
 ```
 
-- [ ] **Step 2: Add `--backup` flag to `src/cli.ts`**
+- [x] **Step 2: Add `--backup` flag to `src/cli.ts`**
 
 Replace the entire `main()` function body (and add a `runBackupMode` helper before it):
 
@@ -808,7 +808,7 @@ async function main() {
 }
 ```
 
-- [ ] **Step 3: Build CLI and verify it still works**
+- [x] **Step 3: Build CLI and verify it still works**
 
 ```bash
 npm run build:audit 2>&1 | tail -3
@@ -816,7 +816,7 @@ npm run build:audit 2>&1 | tail -3
 
 Expected: no TypeScript errors
 
-- [ ] **Step 4: Run full test suite**
+- [x] **Step 4: Run full test suite**
 
 ```bash
 npm test
@@ -824,7 +824,7 @@ npm test
 
 Expected: 114 passed (unchanged — layout and CLI changes have no unit tests)
 
-- [ ] **Step 5: Verify live API mode still works**
+- [x] **Step 5: Verify live API mode still works**
 
 ```bash
 export $(cat .env | xargs) && node dist/cli.js 2>&1 | grep "findings\|Done"
@@ -832,7 +832,7 @@ export $(cat .env | xargs) && node dist/cli.js 2>&1 | grep "findings\|Done"
 
 Expected: `Wrote findings.json (9 findings)` and `Done.`
 
-- [ ] **Step 6: Verify backup CLI mode works (requires a real .unf file)**
+- [x] **Step 6: Verify backup CLI mode works (requires a real .unf file)**
 
 Generate a backup from UniFi Network → System → Backup → Download. Then:
 
@@ -842,7 +842,7 @@ UNIFI_PROFILE=home_office node dist/cli.js --backup ./path/to/backup.unf 2>&1
 
 Expected: log shows collection count, WLAN count, finding count. `audit_output/report.md` contains findings for WLANs, firewall rules, VPN config, and settings-based findings that previously showed `unknown`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/routes/+layout.svelte src/cli.ts
@@ -855,9 +855,9 @@ git commit -m "feat: add Backup tab to nav; add --backup flag to CLI"
 
 The Rust changes from Task 1 require a full `npx tauri dev` restart (Cargo compile).
 
-- [ ] **Step 1: Stop existing `npx tauri dev` process (Ctrl+C)**
+- [x] **Step 1: Stop existing `npx tauri dev` process (Ctrl+C)**
 
-- [ ] **Step 2: Start fresh**
+- [x] **Step 2: Start fresh**
 
 ```bash
 npx tauri dev
@@ -865,11 +865,11 @@ npx tauri dev
 
 Wait for Rust compile (2–5 minutes for new crates). The window reopens when done.
 
-- [ ] **Step 3: Verify Backup tab appears in nav**
+- [x] **Step 3: Verify Backup tab appears in nav**
 
 Open the app. Confirm four tabs: **Analyze | Backup | Report | History**
 
-- [ ] **Step 4: Verify Backup tab UI**
+- [x] **Step 4: Verify Backup tab UI**
 
 Click the Backup tab. Confirm:
 - "Browse…" button and explanatory text render
@@ -878,7 +878,7 @@ Click the Backup tab. Confirm:
 - Profile dropdown shows all 5 profiles
 - "Analyze Backup →" button is disabled until a file is selected
 
-- [ ] **Step 5: Run a backup analysis end-to-end**
+- [x] **Step 5: Run a backup analysis end-to-end**
 
 Generate a backup: UniFi Network → System → Backup → Download Now → wait → Download.
 
@@ -892,7 +892,7 @@ Select the `.unf` file in the Backup tab. Click "Analyze Backup →". Confirm:
   - `LOG-FWD-001` should reflect actual syslog config
 - History tab shows the backup run with `backup:filename.unf` label
 
-- [ ] **Step 6: Final commit if any small fixes were needed**
+- [x] **Step 6: Final commit if any small fixes were needed**
 
 ```bash
 git add -A

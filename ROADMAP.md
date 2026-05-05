@@ -38,13 +38,13 @@ For users behind CGNAT or with multi-site MSP needs. Cloud Connector proxies Net
 
 **Status: complete (TypeScript)** — validated against real controller in local mode; cloud connector path implemented and ready for testing with a Site Manager key. Python (`src/unifi_audit.py`) cloud mode remains scaffolded only.
 
-### Phase 4: Backup-file mode (specialist)
+### Phase 4: Backup-file mode (complete — TypeScript)
 
-`.unf` and `.unifi` parsing for airgap/forensic/MSP-handoff use cases. Same finding modules consume parsed data instead of API responses.
+Parse `.unf` backups entirely offline to unlock all findings that the live API v1 cannot yet expose (WLANs, VPN, firewall rules, settings-based findings).
 
-**Deliverable:** `src/parser.py` (skeleton exists), `.unifi` decryption support.
+**Deliverable:** `src/audit/normalizeBackup.ts` (normalizeBackup + parseBackupNodejs), `src/routes/backup/+page.svelte` (Backup tab UI), `src-tauri/src/lib.rs` (`parse_backup` Rust command), `--backup` CLI flag. Python `src/parser.py` skeleton preserved for reference.
 
-**Status: skeleton only**
+**Status: complete (TypeScript)** — 114 tests passing. New Backup tab in app (Analyze | Backup | Report | History). Requires Tauri restart after install. `.unifi` console-level format remains out of scope.
 
 ### Phase 5: MCP integration (optional add-on)
 
