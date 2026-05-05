@@ -8,13 +8,61 @@ import { normalizeApi } from './audit/normalize.js';
 import { analyze } from './audit/analyze.js';
 import { renderReport } from './audit/report.js';
 
+async function runBackupMode(
+  backupPath: string,
+  outputDir: string,
+  log: (msg: string) => void,
+): Promise<void> {
+  const profile = process.env['UNIFI_PROFILE'] ?? 'home_office';
+  log('='.repeat(60));
+  log('UniFi Security Advisor - backup file mode');
+  log(`File: ${backupPath}`);
+  log(`Profile: ${profile}`);
+  log('='.repeat(60));
+
+  const { parseBackupNodejs, normalizeBackup } = await import('./audit/normalizeBackup.js');
+
+  log('Parsing backup file...');
+  const collections = await parseBackupNodejs(backupPath);
+  log(`Parsed ${Object.keys(collections).length} collections`);
+
+  const sites = normalizeBackup(collections, profile);
+  log(`Normalized — ${sites[0]?.wlans.length ?? 0} WLANs, ${sites[0]?.devices.length ?? 0} devices`);
+
+  log('Running findings analysis...');
+  const findings = analyze(sites, {}, profile, (mod, site, err) => {
+    console.error(`Module ${mod} failed on ${site}: ${err}`);
+  });
+
+  await writeFile(join(outputDir, 'findings.json'), JSON.stringify(findings, null, 2));
+  log(`Wrote findings.json (${findings.length} findings)`);
+
+  const report = renderReport(findings, profile, 0, 0);
+  await writeFile(join(outputDir, 'report.md'), report);
+  log('Wrote report.md');
+  log('Done.');
+  log('NEXT STEPS');
+  log('  1. Review report.md');
+}
+
 async function main() {
-  const client = UniFiClient.fromEnv();
   const outputDir = process.env['UNIFI_OUTPUT_DIR'] ?? './audit_output';
   await mkdir(outputDir, { recursive: true });
-
   const log = (msg: string) => console.log(msg);
 
+  const backupIdx = process.argv.indexOf('--backup');
+  if (backupIdx !== -1) {
+    const backupPath = process.argv[backupIdx + 1];
+    if (!backupPath) {
+      console.error('Error: --backup requires a file path\nUsage: node dist/cli.js --backup ./backup.unf');
+      process.exit(1);
+    }
+    await runBackupMode(backupPath, outputDir, log);
+    return;
+  }
+
+  // Live API mode
+  const client = UniFiClient.fromEnv();
   log('='.repeat(60));
   log('UniFi Security Advisor - starting audit');
   log(`Mode: ${client.config.useCloud ? 'cloud (Site Manager)' : 'local'}`);
@@ -52,7 +100,6 @@ async function main() {
   );
   await writeFile(join(outputDir, 'report.md'), report);
   log('Wrote report.md');
-
   log('='.repeat(60));
   log('Done.');
 
