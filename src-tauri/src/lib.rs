@@ -47,25 +47,32 @@ fn parse_backup(path: String) -> Result<serde_json::Value, String> {
 
     type Aes128CbcDec = Decryptor<Aes128>;
 
-    // 1. Read and decrypt
-    let ciphertext = std::fs::read(&path)
+    // 1. Read file
+    let raw = std::fs::read(&path)
         .map_err(|e| format!("Cannot read '{}': {}", path, e))?;
 
-    let decrypted = Aes128CbcDec::new(UNF_KEY.into(), UNF_IV.into())
-        .decrypt_padded_vec_mut::<NoPadding>(&ciphertext)
-        .map_err(|e| format!("AES decryption failed: {:?}", e))?;
+    // 2. Determine if file is a plain ZIP (.unifi from newer devices) or AES-encrypted (.unf)
+    let zip_data: Vec<u8> = if raw.len() >= 4 && &raw[..4] == b"PK\x03\x04" {
+        // Already a plain ZIP — .unifi files from newer devices skip encryption
+        raw
+    } else {
+        // Try AES-128-CBC decryption (static public keys used by all UniFi tools)
+        let decrypted = Aes128CbcDec::new(UNF_KEY.into(), UNF_IV.into())
+            .decrypt_padded_vec_mut::<NoPadding>(&raw)
+            .map_err(|e| format!("AES decryption failed: {:?}", e))?;
 
-    // 2. Verify ZIP magic bytes
-    if decrypted.len() < 4 || &decrypted[..4] != b"PK\x03\x04" {
-        return Err(
-            "Not a valid .unf backup (wrong ZIP signature). \
-             Ensure you selected a UniFi Network backup file, not a console backup."
-                .to_string(),
-        );
-    }
+        if decrypted.len() < 4 || &decrypted[..4] != b"PK\x03\x04" {
+            return Err(
+                "Not a valid UniFi backup file (unrecognised format). \
+                 Try downloading from UniFi Network → UCG Fiber → Control Plane → Backups."
+                    .to_string(),
+            );
+        }
+        decrypted
+    };
 
     // 3. Open ZIP
-    let mut zip = ZipArchive::new(Cursor::new(&decrypted))
+    let mut zip = ZipArchive::new(Cursor::new(&zip_data))
         .map_err(|e| format!("ZIP error: {}", e))?;
 
     let names: Vec<String> = (0..zip.len())
