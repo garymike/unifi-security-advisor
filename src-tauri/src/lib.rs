@@ -51,24 +51,42 @@ fn parse_backup(path: String) -> Result<serde_json::Value, String> {
     let raw = std::fs::read(&path)
         .map_err(|e| format!("Cannot read '{}': {}", path, e))?;
 
-    // 2. Determine if file is a plain ZIP (.unifi from newer devices) or AES-encrypted (.unf)
-    let zip_data: Vec<u8> = if raw.len() >= 4 && &raw[..4] == b"PK\x03\x04" {
-        // Already a plain ZIP — .unifi files from newer devices skip encryption
-        raw
-    } else {
-        // Try AES-128-CBC decryption (static public keys used by all UniFi tools)
-        let decrypted = Aes128CbcDec::new(UNF_KEY.into(), UNF_IV.into())
-            .decrypt_padded_vec_mut::<NoPadding>(&raw)
-            .map_err(|e| format!("AES decryption failed: {:?}", e))?;
-
-        if decrypted.len() < 4 || &decrypted[..4] != b"PK\x03\x04" {
-            return Err(
-                "Not a valid UniFi backup file (unrecognised format). \
-                 Try downloading from UniFi Network → UCG Fiber → Control Plane → Backups."
-                    .to_string(),
-            );
+    // 2. Locate ZIP data using multiple strategies
+    let zip_data: Vec<u8> = {
+        // Strategy A: plain ZIP (no encryption)
+        if raw.len() >= 4 && &raw[..4] == b"PK\x03\x04" {
+            raw.clone()
         }
-        decrypted
+        // Strategy B: ZIP magic found after a header (some .unifi formats have a prefix)
+        else if let Some(offset) = raw[..raw.len().min(256)]
+            .windows(4)
+            .position(|w| w == b"PK\x03\x04")
+        {
+            raw[offset..].to_vec()
+        }
+        // Strategy C: AES-128-CBC with standard .unf keys
+        else {
+            match Aes128CbcDec::new(UNF_KEY.into(), UNF_IV.into())
+                .decrypt_padded_vec_mut::<NoPadding>(&raw)
+            {
+                Ok(d) if d.len() >= 4 && &d[..4] == b"PK\x03\x04" => d,
+                // Diagnostic: show file header bytes so we can identify the format
+                _ => {
+                    let header = raw
+                        .iter()
+                        .take(24)
+                        .map(|b| format!("{:02x}", b))
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    return Err(format!(
+                        "Unrecognised backup format (file header: {}). \
+                         This may be a newer .unifi format not yet supported. \
+                         Please share this error message so support can be added.",
+                        header
+                    ));
+                }
+            }
+        }
     };
 
     // 3. Open ZIP
