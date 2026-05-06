@@ -64,28 +64,15 @@ fn parse_backup(path: String) -> Result<serde_json::Value, String> {
         {
             raw[offset..].to_vec()
         }
-        // Strategy C: AES-128-CBC with standard .unf keys
+        // Strategy C: AES-128-CBC with standard .unf static key + static IV
+        else if let Ok(d) = Aes128CbcDec::new(UNF_KEY.into(), UNF_IV.into())
+            .decrypt_padded_vec_mut::<NoPadding>(&raw)
+        {
+            if d.len() >= 4 && &d[..4] == b"PK\x03\x04" { d }
+            else { try_embedded_iv_strategies(&raw)? }
+        }
         else {
-            match Aes128CbcDec::new(UNF_KEY.into(), UNF_IV.into())
-                .decrypt_padded_vec_mut::<NoPadding>(&raw)
-            {
-                Ok(d) if d.len() >= 4 && &d[..4] == b"PK\x03\x04" => d,
-                // Diagnostic: show file header bytes so we can identify the format
-                _ => {
-                    let header = raw
-                        .iter()
-                        .take(24)
-                        .map(|b| format!("{:02x}", b))
-                        .collect::<Vec<_>>()
-                        .join(" ");
-                    return Err(format!(
-                        "Unrecognised backup format (file header: {}). \
-                         This may be a newer .unifi format not yet supported. \
-                         Please share this error message so support can be added.",
-                        header
-                    ));
-                }
-            }
+            try_embedded_iv_strategies(&raw)?
         }
     };
 
@@ -140,6 +127,58 @@ fn parse_backup(path: String) -> Result<serde_json::Value, String> {
     }
 
     serde_json::to_value(collections).map_err(|e| e.to_string())
+}
+
+/// Try multiple AES-128-CBC strategies where the IV is embedded in the file.
+/// Newer .unifi formats store a random per-file IV inside the backup instead of
+/// using the static IV, making each backup uniquely encrypted.
+fn try_embedded_iv_strategies(raw: &[u8]) -> Result<Vec<u8>, String> {
+    use aes::Aes128;
+    use cbc::cipher::{block_padding::NoPadding, BlockDecryptMut, KeyIvInit};
+    use cbc::Decryptor;
+    type Aes128CbcDec = Decryptor<Aes128>;
+
+    // Try each candidate (header_len, iv_offset): skip header bytes, read 16-byte IV, decrypt rest
+    let candidates: &[(usize, usize)] = &[
+        (0, 0),    // IV at bytes 0–15, data from 16
+        (4, 4),    // 4-byte magic + IV at bytes 4–19, data from 20
+        (8, 8),    // 8-byte header + IV at 8–23, data from 24
+        (16, 0),   // 16-byte header, then static IV on remaining
+        (32, 16),  // 32-byte header with IV embedded at 16–31
+    ];
+
+    for &(data_start, iv_start) in candidates {
+        let iv_end = iv_start + 16;
+        if raw.len() <= iv_end.max(data_start) { continue; }
+        if iv_end > data_start && data_start < iv_start { continue; }
+
+        let actual_data_start = data_start.max(iv_end);
+        if raw.len() <= actual_data_start { continue; }
+
+        let iv: [u8; 16] = raw[iv_start..iv_end].try_into().unwrap();
+        let payload = &raw[actual_data_start..];
+
+        if let Ok(d) = Aes128CbcDec::new(UNF_KEY.into(), &iv.into())
+            .decrypt_padded_vec_mut::<NoPadding>(payload)
+        {
+            if d.len() >= 4 && &d[..4] == b"PK\x03\x04" {
+                return Ok(d);
+            }
+        }
+    }
+
+    // Nothing worked — emit diagnostic hex for the first 32 bytes
+    let header = raw.iter().take(32)
+        .map(|b| format!("{:02x}", b))
+        .collect::<Vec<_>>()
+        .join(" ");
+    Err(format!(
+        "Unrecognised .unifi backup format (header: {}). \
+         The Cloud Gateway Fiber may use device-specific encryption keys not yet \
+         reverse-engineered by the community. \
+         Try the Python CLI as a workaround: python src/parser.py analyze backup.unifi",
+        header
+    ))
 }
 
 fn parse_bson_stream(data: &[u8]) -> Result<Vec<serde_json::Value>, String> {
