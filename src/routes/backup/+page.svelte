@@ -21,7 +21,7 @@
   async function browse() {
     const { open } = await import('@tauri-apps/plugin-dialog');
     const selected = await open({
-      filters: [{ name: 'UniFi Backup', extensions: ['unf'] }],
+      filters: [{ name: 'UniFi Backup', extensions: ['unf', 'unifi'] }],
       multiple: false,
     });
     if (typeof selected === 'string') {
@@ -98,7 +98,7 @@
         {/if}
       </div>
       <p class="text-xs text-gray-400 mt-1">
-        Generated in UniFi Network → System → Backup. File stays on your machine.
+        Generated in UniFi Network → System → Backup. Supports both .unf and .unifi formats. File stays on your machine.
       </p>
     </div>
 
