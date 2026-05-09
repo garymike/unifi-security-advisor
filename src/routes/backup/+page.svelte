@@ -98,7 +98,7 @@
         {/if}
       </div>
       <p class="text-xs text-gray-400 mt-1">
-        Generated in UniFi Network → System → Backup. Supports both .unf and .unifi formats. File stays on your machine.
+        Supports .unf and .unifi formats. Older controllers (USG, UDM) work well. Cloud Gateway Fiber console backups use device-specific encryption not yet publicly documented — use the Analyze tab (live API) for CGF devices instead.
       </p>
     </div>
 
