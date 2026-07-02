@@ -22,6 +22,12 @@ src-tauri/target/
 .env.local
 *.env
 
+# Audit output — contains real network data (device names, site IDs)
+audit_output/
+
+# Claude Code superpowers scratch state
+.superpowers/
+
 # OS
 .DS_Store
 Thumbs.db
