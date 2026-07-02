@@ -5,13 +5,14 @@ export function findWirelessTuning(site: NormalizedSite, _profile: string): Find
   const aps = site.devices.filter(d => d['type'] === 'uap');
 
   for (const d of aps) {
-    const apName = String(d['name'] ?? d['mac'] ?? 'unnamed');
+    const mac = d['mac'] ?? d['macAddress'] ?? 'unknown';
+    const apName = String(d['name'] ?? mac ?? 'unnamed');
     for (const r of (d['radio_table'] as Record<string, unknown>[] ?? [])) {
       const band = String(r['radio'] ?? 'unknown');
       const bandLabel = ({ ng: '2.4 GHz', na: '5 GHz', '6e': '6 GHz' } as Record<string, string>)[band] ?? band;
       if (r['tx_power_mode'] === 'high') {
         findings.push({
-          id: `RF-${d['mac']}-${band}-TX`, section: 'Wireless tuning', severity: 'low', status: 'recommendation',
+          id: `RF-${mac}-${band}-TX`, section: 'Wireless tuning', severity: 'low', status: 'recommendation',
           title: `AP '${apName}' broadcasting at High power on ${bandLabel}`,
           currentState: `AP '${apName}' ${bandLabel} radio is set to High TX power. High power extends coverage past your physical space.`,
           recommendation: 'Set TX power to Auto or Medium for typical indoor use.',

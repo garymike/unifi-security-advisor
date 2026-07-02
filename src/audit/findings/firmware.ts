@@ -28,7 +28,7 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
   const eolDevices: Record<string, unknown>[] = [];
   for (const d of site.devices) {
     const model = String(d['model'] ?? '').toUpperCase();
-    if (model in EOL_MODELS) eolDevices.push({ ...EOL_MODELS[model]!, name: d['name'] ?? d['mac'], model });
+    if (model in EOL_MODELS) eolDevices.push({ ...EOL_MODELS[model]!, name: d['name'] ?? d['mac'] ?? d['macAddress'], model });
   }
 
   const eolCount = eolDevices.filter(d => d['status'] === 'eol').length;
@@ -55,12 +55,13 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
   });
 
   for (const d of site.devices) {
-    const ver = String(d['version'] ?? '');
+    const mac = d['mac'] ?? d['macAddress'];
+    const ver = String(d['version'] ?? d['firmwareVersion'] ?? '');
     if (ver.includes('.')) {
       const major = parseInt(ver.split('.')[0]!, 10);
       if (!isNaN(major) && major < 7) findings.push({
-        id: `FW-VER-${d['mac'] ?? 'x'}`, section: 'Firmware', severity: 'high', status: 'gap',
-        title: `Device '${d['name'] ?? d['mac']}' on outdated major version`,
+        id: `FW-VER-${mac ?? 'x'}`, section: 'Firmware', severity: 'high', status: 'gap',
+        title: `Device '${d['name'] ?? mac}' on outdated major version`,
         currentState: `Firmware ${ver} is multiple major versions behind current.`,
         recommendation: 'Update to latest stable firmware in a maintenance window.',
         intentQuestion: null, evidence: {}, mapsTo: { cis_v8: '7.3' }, effort: 'quick', impact: 'high',
