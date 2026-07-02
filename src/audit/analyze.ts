@@ -11,6 +11,7 @@ import { findFirmware } from './findings/firmware.js';
 import { findLogging } from './findings/logging.js';
 import { findBackup } from './findings/backup.js';
 import { findApiCoverage } from './findings/apiCoverage.js';
+import { findKnownAdvisories } from './findings/knownAdvisories.js';
 
 const MODULES: Array<[string, FindingModule]> = [
   ['segmentation',    findSegmentation],
@@ -20,6 +21,7 @@ const MODULES: Array<[string, FindingModule]> = [
   ['devices',         findDevices],
   ['wirelessTuning',  findWirelessTuning],
   ['firewallThreats', findFirewallThreats],
+  ['knownAdvisories', findKnownAdvisories],
   ['firmware',        findFirmware],
   ['logging',         findLogging],
   ['backup',          findBackup],

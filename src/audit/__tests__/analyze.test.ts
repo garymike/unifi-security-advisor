@@ -30,6 +30,15 @@ describe('sortFindings', () => {
   it('site-scoped VPN-PPTP-001-<siteId> still floats above medium', () => {
     expect(sortFindings([f('MEDIUM-001'), f('VPN-PPTP-001-site-a', 'critical')])[0]!.id).toBe('VPN-PPTP-001-site-a');
   });
+  it('ADV-* critical/high floats above medium', () => {
+    expect(sortFindings([f('MEDIUM-001'), f('ADV-test-site-a', 'critical')])[0]!.id).toBe('ADV-test-site-a');
+  });
+  it('ADV-* below high severity does not float (unlike SEG-MGMT-WAN)', () => {
+    expect(sortFindings([f('ADV-test-site-a', 'low'), f('HIGH-001', 'high')])[0]!.id).toBe('HIGH-001');
+  });
+  it('SEG-MGMT-WAN-<siteId> floats regardless of severity (site-scoped id)', () => {
+    expect(sortFindings([f('MEDIUM-001'), f('SEG-MGMT-WAN-site-a', 'info')])[0]!.id).toBe('SEG-MGMT-WAN-site-a');
+  });
   it('non-float sorted by severity', () => {
     expect(sortFindings([f('L', 'low'), f('H', 'high'), f('M', 'medium')]).map(x => x.id)).toEqual(['H', 'M', 'L']);
   });
