@@ -208,7 +208,7 @@ Visualise security posture over time and compare any two runs to see what change
 ### Open questions
 
 - ✅ Sample data fixture added: `samples/fixture-local-api.json` — anonymized Cloud Gateway Fiber response (2 devices, 2 networks, 6 404 endpoints)
-- Multi-site finding ID scoping: fix `BAK-001` → `BAK-001-${siteId}` pattern before Phase 2b wires SQLite primary keys — needs PROFILE_OVERRIDES key updates too.
+- ✅ Multi-site finding ID scoping — fixed. 7 finding modules now emit `${ID}-${siteId}`; `applyProfileOverrides` and the `VPN-PPTP-001` always-float predicate updated to prefix-match.
 
 ---
 
