@@ -64,6 +64,8 @@ segmented, so `SEG-001` does not fire). Deliberately mixes in one EOL access poi
 (`UAP-AC-LITE`, firmware `5.2.3`) and one EOL-warning controller (`UCK-G2`) to exercise the
 firmware/hardware-age findings, and sets that EOL AP's TX power to `high` on both radios.
 
+Also includes a second gateway-class device (`FailoverGateway`, model `UCG-Fiber`, firmware `5.0.10`) specifically to exercise the known-advisories cross-reference against CVE-2026-34908/34909/34910 (the actively-exploited UniFi OS RCE chain) — it should produce a critical `ADV-CVE-2026-34908-9-10` finding. Because `firmwareVersion` is the same field `firmware.ts`'s outdated-major-version check reads, this device *also* triggers its own `FW-VER-*` finding (in addition to the AP's) — an honest side effect of the acknowledged ambiguity between UniFi-OS-scale and per-device-firmware-scale version numbers, not a bug.
+
 **Expected with `small_business` profile:** `FW-EOL-001` (high/gap), `FW-EOL-002`
 (medium/recommendation), `FW-VER-<mac>` (high/gap — firmware major version < 7),
 `RF-<mac>-ng-TX` + `RF-<mac>-na-TX` (low — high TX power), `DEV-SSH` (medium — gateway has SSH

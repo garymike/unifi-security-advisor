@@ -78,6 +78,22 @@ describe('fixture: small-business (multi-AP, segmented, mixed hardware age)', ()
     expect(find(findings, 'LOG-FWD-001')).toMatchObject({ severity: 'info', status: 'unknown' });
     expect(find(findings, 'BAK-001')).toMatchObject({ severity: 'info', status: 'unknown' });
   });
+
+  it('flags the failover gateway against the known UniFi OS RCE advisory', () => {
+    const adv = find(findings, 'ADV-');
+    expect(adv).toMatchObject({ status: 'gap', severity: 'critical' });
+    const devices = adv!.evidence['devices'] as Array<{ name: unknown }>;
+    expect(devices.some(d => d.name === 'FailoverGateway')).toBe(true);
+  });
+
+  it('also flags the failover gateways firmware as outdated major version - same field, different version-numbering domain as the advisory check, both correctly fire', () => {
+    const verFindings = findings.filter(f => f.id.startsWith('FW-VER-'));
+    expect(verFindings).toHaveLength(2);
+    expect(verFindings.some(f => f.id === 'FW-VER-aa:20:00:00:00:06')).toBe(true);
+    // The pre-existing single-match assertion elsewhere in this file still
+    // resolves to the UAP-AC-LITE's finding (FW-VER-aa:20:00:00:00:04) because
+    // it's pushed earlier in device-iteration order and Array.sort is stable.
+  });
 });
 
 describe('fixture: regulated (simulated compliance environment)', () => {
