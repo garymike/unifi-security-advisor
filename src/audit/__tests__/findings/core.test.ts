@@ -43,13 +43,13 @@ describe('findFirewall', () => {
 
 describe('findRemoteAccess', () => {
   it('critical for PPTP', () => {
-    expect(findRemoteAccess(site({ vpnConfigs: [{ type: 'pptp', enabled: true }] }), 'home_office').find(f => f.id === 'VPN-PPTP-001')?.severity).toBe('critical');
+    expect(findRemoteAccess(site({ vpnConfigs: [{ type: 'pptp', enabled: true }] }), 'home_office').find(f => f.id.startsWith('VPN-PPTP-001'))?.severity).toBe('critical');
   });
   it('VPN-WG-OK for wireguard', () => {
-    expect(findRemoteAccess(site({ vpnConfigs: [{ type: 'wireguard', enabled: true }] }), 'home_office').find(f => f.id === 'VPN-WG-OK')?.status).toBe('ok');
+    expect(findRemoteAccess(site({ vpnConfigs: [{ type: 'wireguard', enabled: true }] }), 'home_office').find(f => f.id.startsWith('VPN-WG-OK'))?.status).toBe('ok');
   });
   it('VPN-MISSING-001 for forwards without VPN', () => {
-    expect(findRemoteAccess(site({ portForwards: [{ enabled: true }] }), 'home_office').some(f => f.id === 'VPN-MISSING-001')).toBe(true);
+    expect(findRemoteAccess(site({ portForwards: [{ enabled: true }] }), 'home_office').some(f => f.id.startsWith('VPN-MISSING-001'))).toBe(true);
   });
 });
 

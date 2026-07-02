@@ -10,7 +10,7 @@ export const ALWAYS_TOP_PREDICATES: Array<(f: Finding) => boolean> = [
   (f) => f.id.startsWith('SEG-001'),
   (f) => f.id.startsWith('CRED-DEFAULT'),
   (f) => f.id.startsWith('FW-EOL') && (f.severity === 'high' || f.severity === 'critical'),
-  (f) => f.id === 'VPN-PPTP-001',
+  (f) => f.id.startsWith('VPN-PPTP-001'),
 ];
 
 export const PROFILE_OVERRIDES: Record<string, Record<string, Partial<Finding>>> = {
