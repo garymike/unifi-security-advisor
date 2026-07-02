@@ -6,7 +6,7 @@ export function findBackup(site: NormalizedSite, _profile: string): Finding[] {
 
   if (autoBackup === undefined) {
     findings.push({
-      id: 'BAK-001', section: 'Backup', severity: 'info', status: 'unknown',
+      id: `BAK-001-${site.siteId}`, section: 'Backup', severity: 'info', status: 'unknown',
       title: 'Backup setting: cannot check via live API',
       currentState: 'Auto-backup state is not exposed by the API.',
       recommendation: 'Enable daily automatic backups, retention at least 7 days.',
@@ -18,7 +18,7 @@ export function findBackup(site: NormalizedSite, _profile: string): Finding[] {
 
   if (!autoBackup['enabled']) {
     findings.push({
-      id: 'BAK-001', section: 'Backup', severity: 'high', status: 'gap',
+      id: `BAK-001-${site.siteId}`, section: 'Backup', severity: 'high', status: 'gap',
       title: 'Automatic backups disabled',
       currentState: 'Controller config backups are not running automatically.',
       recommendation: 'Enable daily automatic backups, retention at least 7 days.',
@@ -28,7 +28,7 @@ export function findBackup(site: NormalizedSite, _profile: string): Finding[] {
   }
 
   if ((autoBackup['destination'] ?? 'local') === 'local') findings.push({
-    id: 'BAK-002', section: 'Backup', severity: 'medium', status: 'gap',
+    id: `BAK-002-${site.siteId}`, section: 'Backup', severity: 'medium', status: 'gap',
     title: 'Backups stored only on the gateway itself',
     currentState: 'Auto-backups are saved only to the gateway. Gateway loss = backup loss.',
     recommendation: 'Add an off-device destination: cloud backup, SMB share, or periodic download.',
@@ -37,7 +37,7 @@ export function findBackup(site: NormalizedSite, _profile: string): Finding[] {
   });
 
   findings.push({
-    id: 'BAK-003', section: 'Backup', severity: 'medium', status: 'unknown',
+    id: `BAK-003-${site.siteId}`, section: 'Backup', severity: 'medium', status: 'unknown',
     title: 'Backup restore not verified (Schrödinger backup)',
     currentState: 'Backups are running. Without a tested restore, viability is unknown.',
     recommendation: 'Schedule a quarterly restore test.',

@@ -16,7 +16,7 @@ export function findFirewallThreats(site: NormalizedSite, _profile: string): Fin
   const findings: Finding[] = [];
 
   if (!hasGeoPolicy(site.firewallPolicies, 'WAN_IN')) findings.push({
-    id: 'FW-GEO-IN', section: 'Firewall', severity: 'low', status: 'recommendation',
+    id: `FW-GEO-IN-${site.siteId}`, section: 'Firewall', severity: 'low', status: 'recommendation',
     title: 'No Geo-IP blocking on inbound WAN',
     currentState: 'No policy found blocking inbound traffic from high-risk regions.',
     recommendation: 'Block inbound from CN, RU, KP, IR.',
@@ -25,7 +25,7 @@ export function findFirewallThreats(site: NormalizedSite, _profile: string): Fin
   });
 
   if (!hasGeoPolicy(site.firewallPolicies, 'WAN_OUT')) findings.push({
-    id: 'FW-GEO-OUT', section: 'Firewall', severity: 'low', status: 'recommendation',
+    id: `FW-GEO-OUT-${site.siteId}`, section: 'Firewall', severity: 'low', status: 'recommendation',
     title: 'No Geo-IP blocking on outbound WAN (often overlooked)',
     currentState: 'No outbound Geo-IP policy. A compromised device could call home to a C2.',
     recommendation: 'Apply outbound geo-blocking for the same regions you block inbound.',
@@ -36,7 +36,7 @@ export function findFirewallThreats(site: NormalizedSite, _profile: string): Fin
   const dnsFilter = site.settings['dns_filtering'] as Record<string, unknown> | undefined;
   if (dnsFilter === undefined) {
     findings.push({
-      id: 'FW-CONTENT-001', section: 'Firewall', severity: 'info', status: 'unknown',
+      id: `FW-CONTENT-001-${site.siteId}`, section: 'Firewall', severity: 'info', status: 'unknown',
       title: 'Content filtering: cannot check via live API',
       currentState: 'DNS content filtering state is not exposed by the API.',
       recommendation: 'Enable Content Filtering with the Security category at minimum.',
@@ -45,7 +45,7 @@ export function findFirewallThreats(site: NormalizedSite, _profile: string): Fin
     });
   } else if (!dnsFilter['enabled']) {
     findings.push({
-      id: 'FW-CONTENT-001', section: 'Firewall', severity: 'medium', status: 'recommendation',
+      id: `FW-CONTENT-001-${site.siteId}`, section: 'Firewall', severity: 'medium', status: 'recommendation',
       title: 'Content filtering not configured',
       currentState: 'DNS-based content filtering is off.',
       recommendation: 'Enable Content Filtering with the Security category at minimum.',

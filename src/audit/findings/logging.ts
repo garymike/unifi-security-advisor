@@ -12,7 +12,7 @@ export function findLogging(site: NormalizedSite, profile: string): Finding[] {
 
   if (mgmt === undefined) {
     findings.push({
-      id: 'LOG-FWD-001', section: 'Logging', severity: 'info', status: 'unknown',
+      id: `LOG-FWD-001-${site.siteId}`, section: 'Logging', severity: 'info', status: 'unknown',
       title: 'Syslog setting: cannot check via live API',
       currentState: 'Syslog forwarding state is not exposed by the API.',
       recommendation: `Forward syslog to an external destination. Retention target: ${ret.adminDays} days.`,
@@ -21,7 +21,7 @@ export function findLogging(site: NormalizedSite, profile: string): Finding[] {
     });
   } else if (!mgmt['syslog_host'] && !mgmt['advanced_feature_enabled']) {
     findings.push({
-      id: 'LOG-FWD-001', section: 'Logging',
+      id: `LOG-FWD-001-${site.siteId}`, section: 'Logging',
       severity: profile.startsWith('home') ? 'low' : 'medium', status: 'recommendation',
       title: 'Logs not forwarded to external destination',
       currentState: 'All logs live only on the gateway. Gateway loss = log loss.',
@@ -35,7 +35,7 @@ export function findLogging(site: NormalizedSite, profile: string): Finding[] {
   if (dpi && profile.startsWith('home')) {
     const dpiLevel = String(dpi['level'] ?? 'disabled');
     if (['client', 'fingerprint'].includes(dpiLevel)) findings.push({
-      id: 'LOG-PRIV-001', section: 'Logging', severity: 'low', status: 'recommendation',
+      id: `LOG-PRIV-001-${site.siteId}`, section: 'Logging', severity: 'low', status: 'recommendation',
       title: 'Client-level DPI logging may exceed household need',
       currentState: `DPI is set to '${dpiLevel}', retaining per-client browsing metadata.`,
       recommendation: 'Consider aggregate/protocol-only DPI for a home network.',

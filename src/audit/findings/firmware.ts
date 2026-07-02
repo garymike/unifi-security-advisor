@@ -7,7 +7,7 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
   const autoUpdate = site.settings['auto_update'] as Record<string, unknown> | undefined;
   if (autoUpdate === undefined) {
     findings.push({
-      id: 'FW-AUTO-001', section: 'Firmware', severity: 'info', status: 'unknown',
+      id: `FW-AUTO-001-${site.siteId}`, section: 'Firmware', severity: 'info', status: 'unknown',
       title: 'Auto-update setting: cannot check via live API',
       currentState: 'Auto-update state is not exposed by the API. Check Settings → System → Updates.',
       recommendation: 'Enable automatic firmware updates in a maintenance window (e.g. 03:00–05:00).',
@@ -16,7 +16,7 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
     });
   } else if (!autoUpdate['enabled']) {
     findings.push({
-      id: 'FW-AUTO-001', section: 'Firmware', severity: 'medium', status: 'gap',
+      id: `FW-AUTO-001-${site.siteId}`, section: 'Firmware', severity: 'medium', status: 'gap',
       title: 'Automatic firmware updates disabled',
       currentState: 'Devices do not auto-update firmware.',
       recommendation: 'Enable automatic firmware updates in a maintenance window.',
@@ -35,7 +35,7 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
   const warnCount = eolDevices.filter(d => d['status'] === 'eol_warning').length;
 
   if (eolCount) findings.push({
-    id: 'FW-EOL-001', section: 'Firmware', severity: 'high', status: 'gap',
+    id: `FW-EOL-001-${site.siteId}`, section: 'Firmware', severity: 'high', status: 'gap',
     title: `${eolCount} device(s) past end-of-support`,
     currentState: `${eolCount} device(s) are past Ubiquiti's end-of-support date and no longer receive security patches.`,
     recommendation: 'Plan replacement. Prioritise internet-facing devices first.',
@@ -45,7 +45,7 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
   });
 
   if (warnCount) findings.push({
-    id: 'FW-EOL-002', section: 'Firmware', severity: 'medium', status: 'recommendation',
+    id: `FW-EOL-002-${site.siteId}`, section: 'Firmware', severity: 'medium', status: 'recommendation',
     title: `${warnCount} device(s) approaching EOL`,
     currentState: `${warnCount} device(s) reach end-of-support within 12 months.`,
     recommendation: 'Start planning replacements during your normal refresh cycle.',

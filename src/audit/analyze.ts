@@ -43,8 +43,8 @@ export function sortFindings(findings: Finding[]): Finding[] {
 export function applyProfileOverrides(findings: Finding[], profile: string): void {
   const overrides = PROFILE_OVERRIDES[profile] ?? {};
   for (const f of findings) {
-    const o = overrides[f.id];
-    if (o) Object.assign(f, o);
+    const key = Object.keys(overrides).find(k => f.id === k || f.id.startsWith(`${k}-`));
+    if (key) Object.assign(f, overrides[key]);
   }
 }
 

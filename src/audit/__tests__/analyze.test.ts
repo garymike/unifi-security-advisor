@@ -1,6 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import type { Finding } from '../types.js';
-import { sortFindings, applyProfileOverrides } from '../analyze.js';
+import type { Finding, NormalizedSite } from '../types.js';
+import { sortFindings, applyProfileOverrides, analyze } from '../analyze.js';
+
+function site(id: string): NormalizedSite {
+  return {
+    siteId: id, siteName: id,
+    devices: [], clients: [], wlans: [], networks: [],
+    portForwards: [], vpnConfigs: [], firewallPolicies: [],
+    firewallZones: [], trafficRoutes: [], settings: {},
+    profile: 'home_office', apiGaps: [],
+  };
+}
 
 function f(id: string, severity: Finding['severity'] = 'medium'): Finding {
   return {
@@ -16,6 +26,9 @@ describe('sortFindings', () => {
   });
   it('SEG-001-x floats above low', () => {
     expect(sortFindings([f('LOW-001', 'low'), f('SEG-001-x', 'high')])[0]!.id).toBe('SEG-001-x');
+  });
+  it('site-scoped VPN-PPTP-001-<siteId> still floats above medium', () => {
+    expect(sortFindings([f('MEDIUM-001'), f('VPN-PPTP-001-site-a', 'critical')])[0]!.id).toBe('VPN-PPTP-001-site-a');
   });
   it('non-float sorted by severity', () => {
     expect(sortFindings([f('L', 'low'), f('H', 'high'), f('M', 'medium')]).map(x => x.id)).toEqual(['H', 'M', 'L']);
@@ -37,5 +50,23 @@ describe('applyProfileOverrides', () => {
     const findings = [f('UNKNOWN-999')];
     applyProfileOverrides(findings, 'regulated_hipaa');
     expect(findings[0]!.severity).toBe('medium');
+  });
+  it('regulated_hipaa sets site-scoped BAK-001-<siteId> to critical', () => {
+    const findings = [f('BAK-001-site-a', 'high')];
+    applyProfileOverrides(findings, 'regulated_hipaa');
+    expect(findings[0]!.severity).toBe('critical');
+  });
+  it('does not cross-match a longer id sharing the same prefix (FW-GEO-IN vs FW-GEO-INBOUND)', () => {
+    const findings = [f('FW-GEO-INBOUND-site-a', 'high')];
+    applyProfileOverrides(findings, 'regulated_pci');
+    expect(findings[0]!.severity).toBe('high');
+  });
+});
+
+describe('analyze — multi-site finding ID scoping', () => {
+  it('gives each site its own finding id instead of colliding', () => {
+    const findings = analyze([site('site-a'), site('site-b')], {}, 'home_office');
+    const bakUnknown = findings.filter(f => f.id.startsWith('BAK-001'));
+    expect(bakUnknown.map(f => f.id).sort()).toEqual(['BAK-001-site-a', 'BAK-001-site-b']);
   });
 });
