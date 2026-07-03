@@ -1,0 +1,144 @@
+{
+  "device": [
+    {
+      "model": "UDMA6A8",
+      "mac": "aa:00:00:00:01:00",
+      "version": "5.1.19.33549",
+      "name": "Item-01",
+      "type": "udm"
+    },
+    {
+      "model": "U7PRO",
+      "mac": "aa:00:00:00:02:00",
+      "version": "8.6.11.18870",
+      "type": "uap",
+      "radio_table": [
+        {
+          "radio": "ng"
+        },
+        {
+          "radio": "na"
+        },
+        {
+          "radio": "6e"
+        }
+      ]
+    }
+  ],
+  "wlanconf": [
+    {
+      "enabled": true,
+      "name": "Item-02",
+      "security": "wpapsk",
+      "x_passphrase": {
+        "length": 16,
+        "fingerprint": "63669a370583",
+        "hasSymbols": true,
+        "hasDigits": false,
+        "hasMixedCase": false
+      },
+      "wpa_mode": "wpa2"
+    },
+    {
+      "enabled": true,
+      "name": "Item-03",
+      "security": "wpapsk",
+      "x_passphrase": {
+        "length": 16,
+        "fingerprint": "63669a370583",
+        "hasSymbols": true,
+        "hasDigits": false,
+        "hasMixedCase": false
+      },
+      "wpa_mode": "wpa2",
+      "pmf_mode": "optional"
+    }
+  ],
+  "networkconf": [
+    {
+      "purpose": "wan",
+      "name": "Item-04"
+    },
+    {
+      "purpose": "wan",
+      "name": "Item-05"
+    },
+    {
+      "purpose": "corporate",
+      "name": "Item-06"
+    },
+    {
+      "purpose": "corporate",
+      "name": "Item-07"
+    }
+  ],
+  "user": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ],
+  "setting": [
+    {
+      "key": "super_identity",
+      "name": "Item-01"
+    },
+    {
+      "key": "connectivity",
+      "enabled": false
+    },
+    {
+      "key": "mgmt",
+      "advanced_feature_enabled": true
+    },
+    {
+      "key": "dpi",
+      "enabled": true
+    }
+  ]
+}
