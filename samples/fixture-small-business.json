@@ -70,6 +70,12 @@
           "name": "OfficeController", "model": "UCK-G2", "state": "ONLINE", "supported": true,
           "firmwareVersion": "7.0.10", "firmwareUpdatable": false, "sshEnabled": false,
           "features": ["controller"], "interfaces": []
+        },
+        {
+          "id": "device-id-s006", "macAddress": "aa:20:00:00:00:06", "ipAddress": "10.10.0.6",
+          "name": "FailoverGateway", "model": "UCG-Fiber", "state": "ONLINE", "supported": true,
+          "firmwareVersion": "5.0.10", "firmwareUpdatable": true, "sshEnabled": false,
+          "features": ["routing"], "interfaces": ["ports"]
         }
       ]
     },
