@@ -1,0 +1,10 @@
+# Declare the intended visibility and purpose of this repo.
+# The github-security-audit skill checks this against actual GitHub settings
+# and flags any mismatch as a finding.
+#
+# visibility: public | private
+# purpose: free-text description of what this repo is for
+
+visibility: private
+purpose: >
+  Security advisory / monitoring tool for UniFi network equipment.
