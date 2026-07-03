@@ -1,4 +1,5 @@
 import { createDecipheriv } from 'node:crypto';
+import { BSON } from 'bson';
 
 export type Collections = Record<string, Record<string, unknown>[]>;
 
@@ -42,4 +43,44 @@ export function extractTarEntry(tarBuf: Buffer, entryName: string): Buffer | nul
     pos += 512 + Math.ceil(size / 512) * 512;
   }
   return null;
+}
+
+/**
+ * Parses the marker-based BSON stream used by backup/network/db.gz in
+ * the console backup format. Unlike the classic .unf format (where every
+ * document carries its own `collection` field), most documents here are
+ * untagged — a `{ collection, __cmd }` marker document precedes a run of
+ * data documents belonging to that collection, until the next marker.
+ * Documents before the first marker are dropped (logged), not
+ * miscategorized. Stops cleanly at the first unparseable document,
+ * matching the classic parser's existing behavior.
+ */
+export function parseMarkerStreamBson(bsonData: Buffer): Collections {
+  const collections: Collections = {};
+  let currentCollection: string | null = null;
+  let pos = 0;
+
+  while (pos + 4 <= bsonData.length) {
+    const len = bsonData.readInt32LE(pos);
+    if (len < 5 || pos + len > bsonData.length) break;
+
+    let doc: Record<string, unknown>;
+    try {
+      doc = BSON.deserialize(bsonData.subarray(pos, pos + len)) as Record<string, unknown>;
+    } catch {
+      break;
+    }
+
+    if (typeof doc['collection'] === 'string' && '__cmd' in doc) {
+      currentCollection = doc['collection'] as string;
+    } else if (currentCollection !== null) {
+      if (!collections[currentCollection]) collections[currentCollection] = [];
+      collections[currentCollection]!.push(doc);
+    }
+    // else: document appeared before any marker — dropped, not miscategorized.
+
+    pos += len;
+  }
+
+  return collections;
 }
