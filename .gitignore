@@ -25,6 +25,11 @@ src-tauri/target/
 # Audit output — contains real network data (device names, site IDs)
 audit_output/
 
+# Raw UniFi backup files — real, unsanitized network data. Never commit
+# these directly; anonymize into a samples/fixture-*.json first.
+*.unf
+*.unifi
+
 # Claude Code superpowers scratch state
 .superpowers/
 
