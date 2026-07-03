@@ -38,6 +38,45 @@ describe('findFirewallThreats', () => {
   it('FW-CONTENT-001 unknown when no settings', () => {
     expect(findFirewallThreats(site(), 'home_office').find(f => f.id.startsWith('FW-CONTENT-001'))?.status).toBe('unknown');
   });
+
+  it('SEG-MGMT-WAN unknown (no visibility) when firewall/port-forward data is unavailable', () => {
+    const s = site({ apiGaps: ['firewall_policies', 'port_forwards'] });
+    const f = findFirewallThreats(s, 'home_office').find(x => x.id.startsWith('SEG-MGMT-WAN'));
+    expect(f).toMatchObject({ status: 'unknown', severity: 'info' });
+  });
+
+  it('SEG-MGMT-WAN unknown (no rule found) when firewall data is visible but empty', () => {
+    const s = site({ firewallPolicies: [], portForwards: [], apiGaps: [] });
+    const f = findFirewallThreats(s, 'home_office').find(x => x.id.startsWith('SEG-MGMT-WAN'));
+    expect(f).toMatchObject({ status: 'unknown', severity: 'info' });
+  });
+
+  it('SEG-MGMT-WAN gap when a WAN_LOCAL accept rule targets a management port', () => {
+    const s = site({
+      apiGaps: [],
+      firewallPolicies: [{ enabled: true, action: 'accept', ruleset: 'WAN_LOCAL', source: { type: 'any' }, dst_port: 443 }],
+    });
+    const f = findFirewallThreats(s, 'home_office').find(x => x.id.startsWith('SEG-MGMT-WAN'));
+    expect(f).toMatchObject({ status: 'gap', severity: 'critical' });
+  });
+
+  it('SEG-MGMT-WAN gap when a port forward targets a management port on the gateway', () => {
+    const s = site({
+      apiGaps: [],
+      portForwards: [{ enabled: true, dst_port: 22 }],
+    });
+    const f = findFirewallThreats(s, 'home_office').find(x => x.id.startsWith('SEG-MGMT-WAN'));
+    expect(f).toMatchObject({ status: 'gap', severity: 'critical' });
+  });
+
+  it('SEG-MGMT-WAN unknown when a WAN_LOCAL rule exists but is disabled', () => {
+    const s = site({
+      apiGaps: [],
+      firewallPolicies: [{ enabled: false, action: 'accept', ruleset: 'WAN_LOCAL', source: { type: 'any' }, dst_port: 443 }],
+    });
+    const f = findFirewallThreats(s, 'home_office').find(x => x.id.startsWith('SEG-MGMT-WAN'));
+    expect(f).toMatchObject({ status: 'unknown', severity: 'info' });
+  });
 });
 
 describe('findFirmware', () => {
