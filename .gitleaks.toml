@@ -1,0 +1,24 @@
+# Gitleaks configuration.
+#
+# Extends the default ruleset (so genuine secrets are still caught) and
+# allowlists the UniFi backup DECRYPTION CONSTANTS. These are NOT secrets:
+# they are fixed, publicly reverse-engineered static keys baked into UniFi
+# firmware — the exact mechanism by which any user decrypts their own backup
+# file offline. They are the same class of value as the classic .unf AES-128
+# key/IV that has long been documented in docs/04-backup-file-strategy.md and
+# used by every open-source tool in this space. Gitleaks' generic-api-key
+# rule flags them only because 64-hex strings are high-entropy.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public, static UniFi backup decryption constants (not credentials)"
+regexes = [
+  # UniFi OS console .unifi format — AES-256-CBC static key
+  '''e383b7c53698b36d4baea4ed22181ef73676bfd5d5b90005d9845ffd5dce985f''',
+  # Classic .unf format — AES-128-CBC static key (ASCII: bcyangkmluohmars)
+  '''626379616e676b6d6c756f686d617273''',
+  # Classic .unf format — AES-128-CBC static IV (ASCII: ubntenterpriseap)
+  '''75626e74656e74657270726973656170''',
+]
