@@ -21,3 +21,25 @@ export function decryptConsoleBackup(raw: Buffer): Buffer {
   }
   return decrypted;
 }
+
+/**
+ * Walks a TAR archive's 512-byte header blocks looking for an exact
+ * filename match. Only needs to handle plain USTAR-style headers — no
+ * long-filename extensions, since UniFi backups don't use them (verified
+ * against a real capture).
+ */
+export function extractTarEntry(tarBuf: Buffer, entryName: string): Buffer | null {
+  let pos = 0;
+  while (pos + 512 <= tarBuf.length) {
+    const header = tarBuf.subarray(pos, pos + 512);
+    const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
+    if (!name) break; // end-of-archive marker (all-zero block)
+    const sizeOctal = header.subarray(124, 136).toString('utf8').replace(/\0.*$/, '').trim();
+    const size = parseInt(sizeOctal, 8) || 0;
+    if (name === entryName) {
+      return tarBuf.subarray(pos + 512, pos + 512 + size);
+    }
+    pos += 512 + Math.ceil(size / 512) * 512;
+  }
+  return null;
+}
