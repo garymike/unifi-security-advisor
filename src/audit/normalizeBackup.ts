@@ -1,6 +1,6 @@
 import type { NormalizedSite } from './types.js';
-
-type Collections = Record<string, Record<string, unknown>[]>;
+import type { Collections } from './parseUnifiOsConsoleBackup.js';
+import { decryptConsoleBackup, extractTarEntry, parseMarkerStreamBson } from './parseUnifiOsConsoleBackup.js';
 
 export function findSetting(
   collections: Collections,
@@ -58,24 +58,38 @@ export async function parseBackupNodejs(
   filePath: string,
 ): Promise<Collections> {
   const { readFile } = await import('node:fs/promises');
-  const { createDecipheriv } = await import('node:crypto');
   const { resolve } = await import('node:path');
+
+  const raw = await readFile(resolve(filePath));
+
+  try {
+    return await parseClassicUnfFormat(raw);
+  } catch {
+    try {
+      return await parseConsoleUnifiFormat(raw);
+    } catch {
+      throw new Error(
+        'Unrecognized backup format — neither the classic .unf scheme nor the UniFi OS console scheme decoded a valid archive.',
+      );
+    }
+  }
+}
+
+async function parseClassicUnfFormat(raw: Buffer): Promise<Collections> {
+  const { createDecipheriv } = await import('node:crypto');
   const { gunzipSync } = await import('node:zlib');
 
   const KEY = Buffer.from('bcyangkmluohmars');
-  const IV  = Buffer.from('ubntenterpriseap');
+  const IV = Buffer.from('ubntenterpriseap');
 
-  const ciphertext = await readFile(resolve(filePath));
   const decipher = createDecipheriv('aes-128-cbc', KEY, IV);
   decipher.setAutoPadding(false);
-  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  const decrypted = Buffer.concat([decipher.update(raw), decipher.final()]);
 
   if (decrypted.slice(0, 4).toString('binary') !== 'PK\x03\x04') {
     throw new Error('Not a valid .unf backup file (wrong ZIP signature)');
   }
 
-  // adm-zip is a Node.js-only dependency; dynamically imported so it is never
-  // bundled for the Tauri webview (where Rust handles the same work).
   const AdmZip = (await import('adm-zip')).default;
   const zip = new AdmZip(decrypted);
   const entries = zip.getEntries();
@@ -108,6 +122,19 @@ export async function parseBackupNodejs(
   }
 
   return collections;
+}
+
+async function parseConsoleUnifiFormat(raw: Buffer): Promise<Collections> {
+  const { gunzipSync } = await import('node:zlib');
+
+  const decryptedGz = decryptConsoleBackup(raw);
+  const tarBuf = gunzipSync(decryptedGz);
+  const dbGz = extractTarEntry(tarBuf, 'backup/network/db.gz');
+  if (!dbGz) {
+    throw new Error('backup/network/db.gz not found in decrypted console backup archive');
+  }
+  const bsonData = gunzipSync(dbGz);
+  return parseMarkerStreamBson(bsonData);
 }
 
 function parseBsonStream(
