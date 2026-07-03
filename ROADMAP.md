@@ -62,6 +62,12 @@ Flag devices running firmware with known published security advisories (e.g. the
 
 **Status: complete** — merged via PR #4.
 
+**Phase 4.3: Advisory data freshness (complete — TypeScript)**
+
+Keep the hand-maintained advisory data from silently going stale: a weekly scheduled drift-check (`tools/check-advisory-drift.ts` + `.github/workflows/advisory-drift.yml`) compares the Ubiquiti CISA-KEV set against `knownAdvisoriesData.ts` and opens/auto-closes a tracking GitHub issue when a new KEV CVE isn't covered; a `ADVISORIES_LAST_REVIEWED` date is surfaced in the report; and `docs/09-advisory-data-maintenance.md` documents the refresh runbook.
+
+**Status: complete.**
+
 ### Phase 5: MCP integration (optional add-on)
 
 Skills/prompts that teach Claude how to use `sirkirby/unifi-mcp` tools to remediate our findings. We do NOT build our own MCP server.
