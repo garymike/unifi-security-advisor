@@ -1,11 +1,11 @@
 import type { UniFiClient } from './client.js';
 
-const LOCAL_GLOBAL = [
+export const LOCAL_GLOBAL = [
   ['info',  '/proxy/network/integration/v1/info'],
   ['sites', '/proxy/network/integration/v1/sites'],
 ] as const;
 
-const SITE_SCOPED = [
+export const SITE_SCOPED = [
   ['devices',            '/proxy/network/integration/v1/sites/{id}/devices'],
   ['clients',            '/proxy/network/integration/v1/sites/{id}/clients'],
   ['wlans',              '/proxy/network/integration/v1/sites/{id}/wlans'],
