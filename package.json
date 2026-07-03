@@ -9,7 +9,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "fetch-advisories": "tsx tools/fetch-advisories.ts"
+    "typecheck": "tsc --noEmit",
+    "fetch-advisories": "tsx tools/fetch-advisories.ts",
+    "anonymize-backup": "tsx tools/anonymize-backup.ts"
   },
   "dependencies": {
     "@noble/hashes": "^2.2.0",
