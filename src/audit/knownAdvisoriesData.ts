@@ -35,6 +35,16 @@ export interface Advisory {
  * reporting a `device.model` string the same way; add it once its
  * reporting convention is confirmed.
  */
+/**
+ * The date this advisory data was last reviewed against upstream sources
+ * (CISA KEV + the linked Ubiquiti bulletins). Surfaced in the report so
+ * recency is visible, and bumped whenever the data below is reviewed or
+ * updated. The weekly drift-check (tools/check-advisory-drift.ts) opens an
+ * issue if a new Ubiquiti KEV CVE appears that isn't covered here; see
+ * docs/09-advisory-data-maintenance.md.
+ */
+export const ADVISORIES_LAST_REVIEWED = '2026-07-03';
+
 export const KNOWN_ADVISORIES: Advisory[] = [
   {
     id: 'CVE-2026-34908-9-10',
