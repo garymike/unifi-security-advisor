@@ -1,0 +1,100 @@
+{
+  "_endpointsProbed": [
+    { "name": "info", "path": "/proxy/network/integration/v1/info", "status": 200 },
+    { "name": "sites", "path": "/proxy/network/integration/v1/sites", "status": 200 },
+    { "name": "devices@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/devices", "status": 200 },
+    { "name": "clients@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/clients", "status": 200 },
+    { "name": "wlans@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/wlans", "status": 404 },
+    { "name": "firewall_policies@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/firewall-policies", "status": 404 },
+    { "name": "firewall_zones@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/firewall-zones", "status": 404 },
+    { "name": "port_forwards@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/port-forwards", "status": 404 },
+    { "name": "vpn_configs@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/vpn-configs", "status": 404 },
+    { "name": "networks@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/networks", "status": 200 },
+    { "name": "traffic_routes@c1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/c1000000-0000-0000-0000-000000000001/traffic-routes", "status": 404 }
+  ],
+  "_errors": [],
+  "_siteCount": 1,
+  "info": { "applicationVersion": "10.3.60" },
+  "sites": {
+    "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+    "data": [
+      { "id": "c1000000-0000-0000-0000-000000000001", "internalReference": "default", "name": "Default" }
+    ]
+  },
+  "site_c1000000-0000-0000-0000-000000000001": {
+    "_meta": {
+      "id": "c1000000-0000-0000-0000-000000000001",
+      "internalReference": "default",
+      "name": "Default"
+    },
+    "devices": {
+      "data": [
+        {
+          "id": "device-id-h001",
+          "macAddress": "aa:10:00:00:00:01",
+          "ipAddress": "192.168.1.1",
+          "name": "HomeGateway",
+          "model": "UXG Lite",
+          "state": "ONLINE",
+          "supported": true,
+          "firmwareVersion": "7.2.95",
+          "firmwareUpdatable": true,
+          "sshEnabled": false,
+          "features": ["routing"],
+          "interfaces": ["ports"]
+        },
+        {
+          "id": "device-id-h002",
+          "macAddress": "aa:10:00:00:00:02",
+          "ipAddress": "192.168.1.2",
+          "name": "LivingRoomAP",
+          "model": "U6+",
+          "type": "uap",
+          "state": "ONLINE",
+          "supported": true,
+          "firmwareVersion": "7.1.66",
+          "firmwareUpdatable": false,
+          "sshEnabled": false,
+          "features": ["accessPoint"],
+          "interfaces": ["radios"],
+          "radio_table": [
+            { "radio": "ng", "disabled": false, "tx_power_mode": "auto" },
+            { "radio": "na", "disabled": false, "tx_power_mode": "auto" }
+          ]
+        }
+      ]
+    },
+    "clients": {
+      "data": [
+        {
+          "type": "WIRELESS", "id": "client-id-h001", "name": "Phone",
+          "connectedAt": "2026-05-01T08:00:00Z", "ipAddress": "192.168.1.50",
+          "macAddress": "bb:10:00:00:00:01", "uplinkDeviceId": "device-id-h002",
+          "radio": "na", "access": { "type": "DEFAULT" }
+        },
+        {
+          "type": "WIRELESS", "id": "client-id-h002", "name": "Laptop",
+          "connectedAt": "2026-05-01T08:05:00Z", "ipAddress": "192.168.1.51",
+          "macAddress": "bb:10:00:00:00:02", "uplinkDeviceId": "device-id-h002",
+          "radio": "na", "access": { "type": "DEFAULT" }
+        },
+        {
+          "type": "WIRED", "id": "client-id-h003", "name": "SmartTV",
+          "connectedAt": "2026-05-01T08:10:00Z", "ipAddress": "192.168.1.52",
+          "macAddress": "bb:10:00:00:00:03", "uplinkDeviceId": "device-id-h001",
+          "access": { "type": "DEFAULT" }
+        }
+      ]
+    },
+    "networks": {
+      "data": [
+        {
+          "management": "GATEWAY", "id": "net-h-default", "name": "Default",
+          "enabled": true, "vlanId": 1, "purpose": "corporate",
+          "metadata": { "origin": "SYSTEM_DEFINED", "configurable": true },
+          "default": true
+        }
+      ]
+    }
+  }
+}

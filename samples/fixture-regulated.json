@@ -1,0 +1,77 @@
+{
+  "_endpointsProbed": [
+    { "name": "info", "path": "/proxy/network/integration/v1/info", "status": 200 },
+    { "name": "sites", "path": "/proxy/network/integration/v1/sites", "status": 200 },
+    { "name": "devices@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/devices", "status": 200 },
+    { "name": "clients@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/clients", "status": 200 },
+    { "name": "wlans@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/wlans", "status": 404 },
+    { "name": "firewall_policies@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/firewall-policies", "status": 404 },
+    { "name": "firewall_zones@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/firewall-zones", "status": 404 },
+    { "name": "port_forwards@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/port-forwards", "status": 404 },
+    { "name": "vpn_configs@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/vpn-configs", "status": 404 },
+    { "name": "networks@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/networks", "status": 200 },
+    { "name": "traffic_routes@e1000000-0000-0000-0000-000000000001", "path": "/proxy/network/integration/v1/sites/e1000000-0000-0000-0000-000000000001/traffic-routes", "status": 404 }
+  ],
+  "_errors": [],
+  "_siteCount": 1,
+  "info": { "applicationVersion": "10.3.60" },
+  "sites": {
+    "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+    "data": [
+      { "id": "e1000000-0000-0000-0000-000000000001", "internalReference": "default", "name": "Default" }
+    ]
+  },
+  "site_e1000000-0000-0000-0000-000000000001": {
+    "_meta": {
+      "id": "e1000000-0000-0000-0000-000000000001",
+      "internalReference": "default",
+      "name": "Default"
+    },
+    "devices": {
+      "data": [
+        {
+          "id": "device-id-r001", "macAddress": "aa:30:00:00:00:01", "ipAddress": "10.20.0.1",
+          "name": "ClinicGateway", "model": "UDM-Pro", "state": "ONLINE", "supported": true,
+          "firmwareVersion": "7.4.12", "firmwareUpdatable": true, "sshEnabled": false,
+          "features": ["routing"], "interfaces": ["ports"]
+        },
+        {
+          "id": "device-id-r002", "macAddress": "aa:30:00:00:00:02", "ipAddress": "10.20.0.2",
+          "name": "AP-Reception", "model": "U6-Pro", "type": "uap", "state": "ONLINE", "supported": true,
+          "firmwareVersion": "7.1.66", "firmwareUpdatable": false, "sshEnabled": false,
+          "features": ["accessPoint"], "interfaces": ["radios"],
+          "radio_table": [
+            { "radio": "ng", "disabled": false, "tx_power_mode": "auto" },
+            { "radio": "na", "disabled": false, "tx_power_mode": "auto" }
+          ]
+        },
+        {
+          "id": "device-id-r003", "macAddress": "aa:30:00:00:00:03", "ipAddress": "10.20.0.3",
+          "name": "AP-Records", "model": "U6-Pro", "type": "uap", "state": "ONLINE", "supported": true,
+          "firmwareVersion": "7.1.66", "firmwareUpdatable": false, "sshEnabled": false,
+          "features": ["accessPoint"], "interfaces": ["radios"],
+          "radio_table": [
+            { "radio": "ng", "disabled": false, "tx_power_mode": "auto" },
+            { "radio": "na", "disabled": false, "tx_power_mode": "auto" }
+          ]
+        }
+      ]
+    },
+    "clients": {
+      "data": [
+        { "type": "WIRED", "id": "client-id-r001", "name": "Records-Workstation-1", "connectedAt": "2026-05-01T07:00:00Z", "ipAddress": "10.20.10.10", "macAddress": "bb:30:00:00:00:01", "uplinkDeviceId": "device-id-r001", "access": { "type": "DEFAULT" } },
+        { "type": "WIRED", "id": "client-id-r002", "name": "Records-Workstation-2", "connectedAt": "2026-05-01T07:01:00Z", "ipAddress": "10.20.10.11", "macAddress": "bb:30:00:00:00:02", "uplinkDeviceId": "device-id-r001", "access": { "type": "DEFAULT" } },
+        { "type": "WIRELESS", "id": "client-id-r003", "name": "Staff-Tablet-1", "connectedAt": "2026-05-01T07:02:00Z", "ipAddress": "10.20.10.20", "macAddress": "bb:30:00:00:00:03", "uplinkDeviceId": "device-id-r002", "radio": "na", "access": { "type": "DEFAULT" } },
+        { "type": "WIRELESS", "id": "client-id-r004", "name": "Guest-Phone-1", "connectedAt": "2026-05-01T07:03:00Z", "ipAddress": "10.20.20.10", "macAddress": "bb:30:00:00:00:04", "uplinkDeviceId": "device-id-r003", "radio": "na", "access": { "type": "GUEST" } },
+        { "type": "WIRED", "id": "client-id-r005", "name": "Badge-Reader-1", "connectedAt": "2026-05-01T07:04:00Z", "ipAddress": "10.20.30.10", "macAddress": "bb:30:00:00:00:05", "uplinkDeviceId": "device-id-r001", "access": { "type": "DEFAULT" } }
+      ]
+    },
+    "networks": {
+      "data": [
+        { "management": "GATEWAY", "id": "net-r-staff", "name": "Staff", "enabled": true, "vlanId": 10, "purpose": "corporate", "metadata": { "origin": "SYSTEM_DEFINED", "configurable": true }, "default": true },
+        { "management": "GATEWAY", "id": "net-r-guest", "name": "Guest", "enabled": true, "vlanId": 20, "purpose": "guest", "metadata": { "origin": "USER_DEFINED" }, "default": false },
+        { "management": "GATEWAY", "id": "net-r-devices", "name": "Facility Devices", "enabled": true, "vlanId": 30, "purpose": "vlan-only", "metadata": { "origin": "USER_DEFINED" }, "default": false }
+      ]
+    }
+  }
+}
