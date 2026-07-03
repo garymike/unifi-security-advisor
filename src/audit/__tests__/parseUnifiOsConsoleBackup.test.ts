@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createCipheriv, randomBytes } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
-import { decryptConsoleBackup, extractTarEntry } from '../parseUnifiOsConsoleBackup.js';
+import { BSON } from 'bson';
+import { decryptConsoleBackup, extractTarEntry, parseMarkerStreamBson } from '../parseUnifiOsConsoleBackup.js';
 
 const KEY_HEX = 'e383b7c53698b36d4baea4ed22181ef73676bfd5d5b90005d9845ffd5dce985f';
 
@@ -63,5 +64,62 @@ describe('extractTarEntry', () => {
     const entry2 = buildTarEntry('backup/network/db.gz', Buffer.from('target-data'));
     const tar = Buffer.concat([entry1, entry2, Buffer.alloc(1024)]);
     expect(extractTarEntry(tar, 'backup/network/db.gz')?.toString('utf8')).toBe('target-data');
+  });
+});
+
+function bsonDoc(obj: Record<string, unknown>): Buffer {
+  return Buffer.from(BSON.serialize(obj));
+}
+
+describe('parseMarkerStreamBson', () => {
+  it('attributes documents to the collection named in the preceding marker', () => {
+    const stream = Buffer.concat([
+      bsonDoc({ _id: '1', collection: 'device', __cmd: 'insert' }),
+      bsonDoc({ mac: 'aa:bb:cc', model: 'UDM-Pro' }),
+      bsonDoc({ mac: 'dd:ee:ff', model: 'U6-LR' }),
+      bsonDoc({ _id: '2', collection: 'networkconf', __cmd: 'insert' }),
+      bsonDoc({ name: 'LAN', purpose: 'corporate' }),
+    ]);
+    const result = parseMarkerStreamBson(stream);
+    expect(result['device']).toHaveLength(2);
+    expect(result['device']![0]).toMatchObject({ mac: 'aa:bb:cc' });
+    expect(result['networkconf']).toHaveLength(1);
+    expect(result['networkconf']![0]).toMatchObject({ name: 'LAN' });
+  });
+
+  it('drops documents that appear before any marker', () => {
+    const stream = Buffer.concat([
+      bsonDoc({ orphan: true }),
+      bsonDoc({ _id: '1', collection: 'device', __cmd: 'insert' }),
+      bsonDoc({ mac: 'aa:bb:cc' }),
+    ]);
+    const result = parseMarkerStreamBson(stream);
+    expect(result['device']).toHaveLength(1);
+    expect(Object.values(result).flat()).not.toContainEqual(expect.objectContaining({ orphan: true }));
+  });
+
+  it('returns an empty object for empty input', () => {
+    expect(parseMarkerStreamBson(Buffer.alloc(0))).toEqual({});
+  });
+
+  it('accumulates documents across multiple markers for the same collection', () => {
+    const stream = Buffer.concat([
+      bsonDoc({ collection: 'device', __cmd: 'insert' }),
+      bsonDoc({ mac: 'aa:bb:cc' }),
+      bsonDoc({ collection: 'device', __cmd: 'insert' }),
+      bsonDoc({ mac: 'dd:ee:ff' }),
+    ]);
+    const result = parseMarkerStreamBson(stream);
+    expect(result['device']).toHaveLength(2);
+  });
+
+  it('stops cleanly on an unparseable document rather than throwing', () => {
+    const stream = Buffer.concat([
+      bsonDoc({ collection: 'device', __cmd: 'insert' }),
+      bsonDoc({ mac: 'aa:bb:cc' }),
+      Buffer.from([0xff, 0xff, 0xff, 0xff]), // garbage length prefix
+    ]);
+    expect(() => parseMarkerStreamBson(stream)).not.toThrow();
+    expect(parseMarkerStreamBson(stream)['device']).toHaveLength(1);
   });
 });
