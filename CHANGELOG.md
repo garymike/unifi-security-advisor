@@ -10,6 +10,10 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### API currency & drift resilience
+- Runtime version self-check: the audit reads `/v1/info`, compares the controller's UniFi Network version to a tested range (`src/audit/apiVersion.ts`), and surfaces it as an `API-VERSION` meta-finding (informational in range; a low-severity recommendation when newer/older than tested).
+- Schema-drift CI: `tools/check-api-drift.ts` + `.github/workflows/api-drift.yml` weekly-diff the app's endpoint set against the latest published UniFi Network OpenAPI (community mirror) and open/auto-close a tracking issue on drift. It currently flags 6 v9-era endpoint paths (`wlans`, `firewall-policies`, `firewall-zones`, `port-forwards`, `vpn-configs`, `traffic-routes`) that Ubiquiti renamed/restructured in v10 — tracked for a follow-up (Component C), pending validation against a live v10 controller. See `docs/superpowers/specs/2026-07-03-api-currency-design.md`.
+
 ### Known advisories
 - Advisory-data freshness: a weekly scheduled drift-check (`tools/check-advisory-drift.ts` + `advisory-drift.yml`) opens/auto-closes a tracking GitHub issue when a Ubiquiti CISA-KEV CVE isn't covered by `knownAdvisoriesData.ts`; an `ACKNOWLEDGED_CVES` list suppresses out-of-scope (non-UniFi) CVEs; an `ADVISORIES_LAST_REVIEWED` date is surfaced in the report; and `docs/09-advisory-data-maintenance.md` documents the refresh runbook.
 

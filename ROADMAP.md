@@ -68,6 +68,12 @@ Keep the hand-maintained advisory data from silently going stale: a weekly sched
 
 **Status: complete.**
 
+**Phase 4.4: API currency & drift resilience (A+B complete — TypeScript)**
+
+Keep the app resilient to UniFi API/schema changes. (A) Runtime version self-check: reads `/v1/info`, compares the controller's Network version to a tested range (`apiVersion.ts`, `TESTED_MIN`/`TESTED_MAX`), and surfaces it as an `API-VERSION` meta-finding. (B) Maintainer schema-drift CI: `tools/check-api-drift.ts` + `.github/workflows/api-drift.yml` weekly-diff the app's endpoint set against the latest published UniFi Network OpenAPI and open/auto-close a tracking issue on drift. (C — deferred) update the stale v9-era endpoint paths (`wlans`→`wifi/broadcasts`, `firewall-policies`→`firewall/policies`, etc.) to their v10 names in `collect.ts`; mapped in the design spec but pending validation against a live v10 controller. Research + design: `docs/superpowers/specs/2026-07-03-api-currency-design.md`.
+
+**Status: A + B complete; C tracked (the drift check flags the 6 stale endpoints until C lands).**
+
 ### Phase 5: MCP integration (optional add-on)
 
 Skills/prompts that teach Claude how to use `sirkirby/unifi-mcp` tools to remediate our findings. We do NOT build our own MCP server.
