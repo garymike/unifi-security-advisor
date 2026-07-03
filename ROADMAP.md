@@ -44,7 +44,23 @@ Parse `.unf` backups entirely offline to unlock all findings that the live API v
 
 **Deliverable:** `src/audit/normalizeBackup.ts` (normalizeBackup + parseBackupNodejs), `src/routes/backup/+page.svelte` (Backup tab UI), `src-tauri/src/lib.rs` (`parse_backup` Rust command), `--backup` CLI flag. Python `src/parser.py` skeleton preserved for reference.
 
-**Status: complete (TypeScript)** — 114 tests passing. New Backup tab in app (Analyze | Backup | Report | History). Requires Tauri restart after install. `.unifi` console-level format remains out of scope.
+**Status: complete (TypeScript)** — 114 tests passing. New Backup tab in app (Analyze | Backup | Report | History). Requires Tauri restart after install.
+
+**Phase 4.1: UniFi OS console `.unifi` backup decryption (complete — TypeScript CLI)**
+
+Decrypt and parse the newer console-level `.unifi` System Backup format (Cloud Gateway Fiber and other UniFi OS consoles), previously undocumented. AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream in `backup/network/db.gz`. Reverse-engineered live against a real backup file and implemented as a fallback alongside the classic `.unf` path (which is unchanged).
+
+**Deliverable:** `src/audit/parseUnifiOsConsoleBackup.ts` (decrypt / TAR-extract / marker-stream BSON parse), fallback chain in `src/audit/normalizeBackup.ts`'s `parseBackupNodejs`, `tools/anonymize-backup.ts` (maintainer tool: field-level-projection anonymizer), `samples/fixture-cgf-backup.json` (anonymized real-data fixture), end-to-end regression + safety tests.
+
+**Status: complete (Node CLI path)** — 183 tests passing. Rust/Tauri desktop path and UCore PostgreSQL data deferred (no consumer yet). See `docs/04-backup-file-strategy.md`.
+
+**Phase 4.2: Known-advisory (CVE) tracking (complete — TypeScript)**
+
+Flag devices running firmware with known published security advisories (e.g. the actively-exploited UniFi OS RCE chain), satisfying the "firmware behind with known advisories" always-float-to-top criterion. Also fixed `SEG-MGMT-WAN` (management-plane-reachable-from-WAN) detection.
+
+**Deliverable:** `findKnownAdvisories` finding module + advisory data, `tools/fetch-advisories.ts` (maintainer script sourcing live NVD data), wired into `analyze()`.
+
+**Status: complete** — merged via PR #4.
 
 ### Phase 5: MCP integration (optional add-on)
 
@@ -219,7 +235,7 @@ These are explicitly out of scope for Phase 1 but tracked here so they don't get
 - **MFA on cloud admin account.** Not in any API or backup. Must be a gap question for the wizard (Phase 2).
 - **CyberSecure subscription state.** Lives in cloud, not exposed via current local API.
 - **Real-time traffic patterns.** Not in backup; live API has limited visibility.
-- **CVE database for known-vulnerable firmware.** Need to maintain or source a feed.
+- ~~**CVE database for known-vulnerable firmware.**~~ **Done (Phase 4.2)** — `findKnownAdvisories` module + `tools/fetch-advisories.ts` (sources live NVD data).
 - **Protect/Access app audits.** Out of scope for Phase 1; Network only.
 - **Multi-site MSP workflows.** Phase 3 territory.
-- **`.unifi` console-format decryption.** Phase 4 territory; community keys exist but not yet integrated.
+- ~~**`.unifi` console-format decryption.**~~ **Done (Phase 4.1)** — AES-256-CBC + embedded IV + TAR + marker-based BSON, implemented in the TypeScript CLI. Rust/Tauri desktop path still pending.
