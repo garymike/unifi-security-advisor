@@ -38,7 +38,7 @@ Reverse-engineered live against a real Cloud Gateway Fiber backup and implemente
 2. Decrypts to a **gzip'd TAR archive** (not a ZIP), containing `backup/network/`, `backup/ucore/` (UCore PostgreSQL data), `backup/uos/`, `backup/users/`.
 3. `backup/network/db.gz`, once extracted and gunzipped, is a **marker-based BSON stream**: a `{ collection, __cmd, ... }` marker document precedes a run of untagged data documents belonging to that collection until the next marker — unlike the classic format's per-document collection tagging.
 
-Both formats produce the same `Collections` shape, so `normalizeBackup()` and every finding module consume them identically. Scope this round is the Network app data in `db.gz`; UCore PostgreSQL (`pg_dump` custom format) and the Rust/Tauri desktop path are deferred until a consumer needs them.
+Both formats produce the same `Collections` shape, so `normalizeBackup()` and every finding module consume them identically. The same decode is implemented in the desktop app's Rust `parse_backup` command (`src-tauri/src/lib.rs`), so the Backup tab accepts console backups directly. Scope is the Network app data in `db.gz`; UCore PostgreSQL (`pg_dump` custom format) is deferred until a consumer needs it.
 
 ---
 
