@@ -70,6 +70,13 @@ export function projectDoc(collName: string, doc: Record<string, unknown>): Reco
       });
       continue;
     }
+    // NOTE: every non-radio_table field is copied verbatim. This is safe only
+    // because the projected fields are all scalars (or the x_passphrase
+    // fingerprint object, which sanitize() has already reduced). If you ever
+    // add a field whose value is a nested object/array to a projection list,
+    // add a sub-projection here (like radio_table above) — a raw nested object
+    // would otherwise pass through un-projected, and the structural safety
+    // test in fixtureCgfBackupSafety.test.ts only validates top-level keys.
     out[field] = doc[field];
   }
   return out;
