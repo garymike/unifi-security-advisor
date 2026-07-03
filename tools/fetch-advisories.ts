@@ -89,7 +89,7 @@ async function main(): Promise<void> {
       }
       for (const product of affectedData) {
         const floor = product.versions.find(v => v.status === 'affected')?.lessThan;
-        console.log(`//   '${product.product.toUpperCase()}': { vulnerableThrough: '${floor ?? 'UNKNOWN — check NVD manually'}' },`);
+        console.log(`//   '${product.product.toUpperCase()}': fixed in ${floor ?? 'UNKNOWN — check NVD manually'} (NVD lessThan, exclusive) — vulnerableThrough is the last release BELOW this; confirm exact value against the bulletin before transcribing`);
       }
     }
     console.log('// Review the above against the source bulletin, then hand-add an Advisory entry to src/audit/knownAdvisoriesData.ts');
