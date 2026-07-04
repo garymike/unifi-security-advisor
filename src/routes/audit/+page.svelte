@@ -1,10 +1,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { runAudit } from '../../lib/AuditRunner.js';
 
   let host = $state('');
   let apiKey = $state('');
-  let useCloud = $state(false);
+  // The Home screen's "Through the cloud" card links here with ?cloud=1.
+  let useCloud = $state($page.url.searchParams.get('cloud') === '1');
   let running = $state(false);
   let progressLog: string[] = $state([]);
   let error = $state('');

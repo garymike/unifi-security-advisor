@@ -11,6 +11,7 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 ## [Unreleased]
 
 ### Desktop app
+- First-run front door: the app now opens on a real landing screen (`/`) instead of redirecting to an empty History graph. It leads with the value proposition and the privacy trust strip (runs on your device · credentials never leave · read-only), offers the three entry modes as cards (analyze locally / through the cloud / from a backup file) with a "help me choose" decision guide, and lists recent audits with score chips. Adds a Home tab; the cloud card pre-selects Site Manager mode via `?cloud=1`.
 - The report now applies the wizard's intent answers and recomputes cross-answer tensions on the answered set (`src/wizard/reportAssembly.ts`), so compound findings reflect what the user told us — an answer that clears a contributor dissolves the compound. This also fixed a gap where the report previously ignored wizard answers entirely.
 
 ### Findings
