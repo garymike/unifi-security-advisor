@@ -13,8 +13,17 @@
 
   onMount(async () => {
     if (!runId) return;
-    const { openDb, getFindings } = await import('../../db/queries.js');
-    findings = await getFindings(await openDb(), runId);
+    const { openDb, getFindings, getAnswers, getSiteIds } = await import('../../db/queries.js');
+    const { applyAnswersAndTensions } = await import('../../wizard/reportAssembly.js');
+    const db = await openDb();
+    const [raw, answers, siteIds] = await Promise.all([
+      getFindings(db, runId),
+      getAnswers(db, runId),
+      getSiteIds(db, runId),
+    ]);
+    // Apply the wizard's intent answers and recompute cross-answer tensions so
+    // the report reflects what the user told us, not just the raw config scan.
+    findings = applyAnswersAndTensions(raw, answers, siteIds);
   });
 
   const posture = $derived(findings.length > 0 ? computeScore(findings) : null);
