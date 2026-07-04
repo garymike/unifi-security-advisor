@@ -52,7 +52,7 @@ Decrypt and parse the newer console-level `.unifi` System Backup format (Cloud G
 
 **Deliverable:** `src/audit/parseUnifiOsConsoleBackup.ts` (decrypt / TAR-extract / marker-stream BSON parse), fallback chain in `src/audit/normalizeBackup.ts`'s `parseBackupNodejs`, `tools/anonymize-backup.ts` (maintainer tool: field-level-projection anonymizer), `samples/fixture-cgf-backup.json` (anonymized real-data fixture), end-to-end regression + safety tests.
 
-**Status: complete (Node CLI path)** — 183 tests passing. Rust/Tauri desktop path and UCore PostgreSQL data deferred (no consumer yet). See `docs/04-backup-file-strategy.md`.
+**Status: complete (Node CLI + Rust/Tauri desktop)** — 183 JS tests + 9 Rust tests passing. The console format is now parsed by both the Node CLI (`parseUnifiOsConsoleBackup.ts`) and the desktop app's Rust `parse_backup` command (`src-tauri/src/lib.rs`); the Backup tab accepts console backups directly. UCore PostgreSQL data still deferred (no consumer yet). See `docs/04-backup-file-strategy.md`.
 
 **Phase 4.2: Known-advisory (CVE) tracking (complete — TypeScript)**
 
@@ -238,4 +238,4 @@ These are explicitly out of scope for Phase 1 but tracked here so they don't get
 - ~~**CVE database for known-vulnerable firmware.**~~ **Done (Phase 4.2)** — `findKnownAdvisories` module + `tools/fetch-advisories.ts` (sources live NVD data).
 - **Protect/Access app audits.** Out of scope for Phase 1; Network only.
 - **Multi-site MSP workflows.** Phase 3 territory.
-- ~~**`.unifi` console-format decryption.**~~ **Done (Phase 4.1)** — AES-256-CBC + embedded IV + TAR + marker-based BSON, implemented in the TypeScript CLI. Rust/Tauri desktop path still pending.
+- ~~**`.unifi` console-format decryption.**~~ **Done (Phase 4.1)** — AES-256-CBC + embedded IV + TAR + marker-based BSON, implemented in both the TypeScript CLI and the Rust/Tauri desktop app.
