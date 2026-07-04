@@ -98,7 +98,7 @@
         {/if}
       </div>
       <p class="text-xs text-gray-400 mt-1">
-        Supports .unf and .unifi formats. Older controllers (USG, UDM) work well. Cloud Gateway Fiber console backups use device-specific encryption not yet publicly documented — use the Analyze tab (live API) for CGF devices instead.
+        Supports .unf and .unifi formats. Older controllers (USG, UDM) and UniFi OS console backups (Cloud Gateway Fiber and similar) are both parsed entirely offline.
       </p>
     </div>
 
