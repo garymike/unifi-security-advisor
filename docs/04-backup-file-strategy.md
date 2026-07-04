@@ -28,7 +28,17 @@ Public decryption keys (hex):
 
 These keys are reverse-engineered from the UniFi source and used by every existing open-source tool in this space. We're not breaking anything; users have legitimate access to their own backups.
 
-Newer console-level `.unifi` backups exist (multi-site, includes PostgreSQL for UCore). Out of scope for phase 1; add in phase 1.5 if demand is there.
+Newer console-level `.unifi` backups exist (UniFi OS consoles such as Cloud Gateway Fiber; the full System Backup includes PostgreSQL for UCore alongside the Network app data). **Now supported** in the TypeScript CLI path — see "Console-level `.unifi` format" below.
+
+### Console-level `.unifi` format (UniFi OS consoles)
+
+Reverse-engineered live against a real Cloud Gateway Fiber backup and implemented in `src/audit/parseUnifiOsConsoleBackup.ts`, wired as a fallback in `parseBackupNodejs` (the classic `.unf` path is tried first, unchanged). It differs from the classic format in every layer:
+
+1. **AES-256-CBC** (not AES-128), static key `e383b7c53698b36d4baea4ed22181ef73676bfd5d5b90005d9845ffd5dce985f` (hex), with the **IV embedded in the first 16 bytes of the file** (not a static IV). Ciphertext is the remainder.
+2. Decrypts to a **gzip'd TAR archive** (not a ZIP), containing `backup/network/`, `backup/ucore/` (UCore PostgreSQL data), `backup/uos/`, `backup/users/`.
+3. `backup/network/db.gz`, once extracted and gunzipped, is a **marker-based BSON stream**: a `{ collection, __cmd, ... }` marker document precedes a run of untagged data documents belonging to that collection until the next marker — unlike the classic format's per-document collection tagging.
+
+Both formats produce the same `Collections` shape, so `normalizeBackup()` and every finding module consume them identically. Scope this round is the Network app data in `db.gz`; UCore PostgreSQL (`pg_dump` custom format) and the Rust/Tauri desktop path are deferred until a consumer needs them.
 
 ---
 
@@ -225,7 +235,7 @@ Three artifacts per run:
 - **No apply mode.** Read-only analysis only.
 - **No drift monitoring.** Single-snapshot analysis. Diff-over-time is phase 2+.
 - **No UI.** CLI only for phase 1. Web UI is a phase 2 story.
-- **No .unifi console backup.** Single-site .unf only. Multi-site in phase 1.5.
+- ~~**No .unifi console backup.** Single-site .unf only.~~ **Done** — UniFi OS console `.unifi` backups are now decrypted and parsed by the TypeScript CLI (see "Console-level `.unifi` format" above).
 - **No auto-apply of findings.** User reads report, acts manually.
 
 ---
