@@ -74,6 +74,12 @@ Keep the app resilient to UniFi API/schema changes. (A) Runtime version self-che
 
 **Status: A + B + C complete.** (Endpoints match the current v10 spec; the drift check reports clean. WLAN/firewall/VPN *finding coverage* on live data awaits per-field adapters validated against a real v10 controller — until then those findings still come from backup mode.)
 
+**Phase 4.5: Runtime endpoint discovery (complete — TypeScript)**
+
+The local API version equals the installed Network app version, so different consoles expose different endpoint paths. Rather than hardcode one version's paths, live mode now fetches the console's own OpenAPI spec (`/proxy/network/api-docs/integration.json`) and requests only what that version advertises, resolving the right path alias per concept. Adapts across v9/v10/future versions, never 404s on renamed/absent endpoints, auto-adopts newly-exposed endpoints, and falls back to the default set on older consoles without the spec. Source of truth: `src/audit/endpoints.ts`; discovery: `src/audit/discover.ts`. Design: `docs/superpowers/specs/2026-07-03-api-endpoint-discovery-design.md`.
+
+**Status: complete.**
+
 ### Phase 5: MCP integration (optional add-on)
 
 Skills/prompts that teach Claude how to use `sirkirby/unifi-mcp` tools to remediate our findings. We do NOT build our own MCP server.
