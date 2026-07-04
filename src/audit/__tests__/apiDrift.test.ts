@@ -1,40 +1,35 @@
 import { describe, it, expect } from 'vitest';
-import {
-  toSpecPath,
-  findMissingEndpoints,
-  EXPECTED_ENDPOINTS,
-} from '../../../tools/check-api-drift.js';
+import { findDriftedConcepts } from '../../../tools/check-api-drift.js';
+import { SITE_ENDPOINT_CONCEPTS, specSitePath } from '../endpoints.js';
 
-describe('toSpecPath', () => {
-  it('strips the local proxy prefix and rewrites the site placeholder', () => {
-    expect(toSpecPath('/proxy/network/integration/v1/sites/{id}/devices')).toBe(
-      '/v1/sites/{siteId}/devices',
+/** A spec path set where every concept's preferred candidate is advertised. */
+function fullSpec(): string[] {
+  const paths = ['/v1/info', '/v1/sites'];
+  for (const c of Object.values(SITE_ENDPOINT_CONCEPTS)) paths.push(specSitePath(c.candidates[0]!));
+  return paths;
+}
+
+describe('findDriftedConcepts', () => {
+  it('reports no drift when every relied-on concept has a candidate present', () => {
+    expect(findDriftedConcepts(fullSpec())).toEqual([]);
+  });
+
+  it('flags a concept whose aliases have all vanished from the spec', () => {
+    const spec = fullSpec().filter(
+      p => p !== specSitePath('wifi/broadcasts') && p !== specSitePath('wlans'),
     );
-    expect(toSpecPath('/proxy/network/integration/v1/info')).toBe('/v1/info');
-  });
-});
-
-describe('EXPECTED_ENDPOINTS', () => {
-  it('is derived from the app collect inventory in spec form', () => {
-    expect(EXPECTED_ENDPOINTS).toContain('/v1/info');
-    expect(EXPECTED_ENDPOINTS).toContain('/v1/sites');
-    expect(EXPECTED_ENDPOINTS).toContain('/v1/sites/{siteId}/devices');
-    // No leftover proxy prefix or {id} placeholder should survive.
-    expect(EXPECTED_ENDPOINTS.every(p => p.startsWith('/v1/'))).toBe(true);
-    expect(EXPECTED_ENDPOINTS.some(p => p.includes('{id}'))).toBe(false);
-  });
-});
-
-describe('findMissingEndpoints', () => {
-  it('returns empty when every app endpoint is present in the spec', () => {
-    const spec = ['/v1/info', '/v1/sites', '/v1/sites/{siteId}/devices'];
-    const expected = ['/v1/info', '/v1/sites/{siteId}/devices'];
-    expect(findMissingEndpoints(expected, spec)).toEqual([]);
+    expect(findDriftedConcepts(spec)).toContain('wlans');
   });
 
-  it('flags an app endpoint that is absent from the spec', () => {
-    const spec = ['/v1/sites/{siteId}/wifi/broadcasts'];
-    const expected = ['/v1/sites/{siteId}/wlans', '/v1/sites/{siteId}/wifi/broadcasts'];
-    expect(findMissingEndpoints(expected, spec)).toEqual(['/v1/sites/{siteId}/wlans']);
+  it('does not flag backup-only concepts (port_forwards / traffic_routes)', () => {
+    const spec = fullSpec().filter(p => !p.includes('port-forward') && !p.includes('traffic'));
+    const drifted = findDriftedConcepts(spec);
+    expect(drifted).not.toContain('port_forwards');
+    expect(drifted).not.toContain('traffic_routes');
+  });
+
+  it('flags a missing global endpoint', () => {
+    const spec = fullSpec().filter(p => p !== '/v1/info');
+    expect(findDriftedConcepts(spec)).toContain('/v1/info');
   });
 });

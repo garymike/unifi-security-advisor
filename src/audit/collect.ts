@@ -1,26 +1,11 @@
 import type { UniFiClient } from './client.js';
-
-export const LOCAL_GLOBAL = [
-  ['info',  '/proxy/network/integration/v1/info'],
-  ['sites', '/proxy/network/integration/v1/sites'],
-] as const;
-
-// Endpoint paths track the current UniFi Network Integration API (v10). The
-// internal result key (first element) is kept stable so normalize.ts and the
-// finding modules are unaffected by Ubiquiti's path renames — only the URL
-// changes. port-forwards and traffic-routes have no v1 equivalent (still
-// backup-only), so they are not collected live. The schema-drift check
-// (tools/check-api-drift.ts) derives its expected set from this list and
-// flags any future rename.
-export const SITE_SCOPED = [
-  ['devices',            '/proxy/network/integration/v1/sites/{id}/devices'],
-  ['clients',            '/proxy/network/integration/v1/sites/{id}/clients'],
-  ['wlans',              '/proxy/network/integration/v1/sites/{id}/wifi/broadcasts'],
-  ['firewall_policies',  '/proxy/network/integration/v1/sites/{id}/firewall/policies'],
-  ['firewall_zones',     '/proxy/network/integration/v1/sites/{id}/firewall/zones'],
-  ['vpn_configs',        '/proxy/network/integration/v1/sites/{id}/vpn/servers'],
-  ['networks',           '/proxy/network/integration/v1/sites/{id}/networks'],
-] as const;
+import {
+  GLOBAL_ENDPOINTS,
+  INTEGRATION_SPEC_PATH,
+  localSitePath,
+  defaultSiteEndpoints,
+} from './endpoints.js';
+import { parseSpecPaths, resolveSiteEndpoints } from './discover.js';
 
 const CLOUD_ENDPOINTS = [
   ['hosts',         'https://api.ui.com/v1/hosts'],
@@ -63,11 +48,15 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
       else if (status === 403) result._errors.push({ endpoint: name, status, hint: 'insufficient scope' });
     }
 
-    // Step 2: Enumerate consoles and collect per-site data via Cloud Connector
+    // Step 2: Enumerate consoles and collect per-site data via Cloud Connector.
+    // Cloud mode doesn't discover (Site Manager serves one version), so it uses
+    // the default endpoint set — the full suffix is passed as the connector
+    // resource so multi-segment paths (e.g. wifi/broadcasts) proxy correctly.
     const hosts = extractSites(result['hosts']);
     if (hosts.length === 0) {
       result._errors.push({ endpoint: 'hosts', status: 0, hint: 'no consoles returned; check API key scope or Cloud Connector availability' });
     }
+    const cloudEndpoints = defaultSiteEndpoints();
     for (const host of hosts) {
       const consoleId = String(host['id'] ?? host['hostId'] ?? '');
       if (!consoleId) continue;
@@ -99,9 +88,8 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
         const siteKey = `site_${consoleId}_${siteId}`;
         result[siteKey] = { _meta: { ...site, _consoleId: consoleId } };
 
-        for (const [name, pathTpl] of SITE_SCOPED) {
-          const resource = pathTpl.split('/').at(-1)!;
-          const url = buildConnectorUrl(consoleId, siteId, resource);
+        for (const [name, suffix] of cloudEndpoints) {
+          const url = buildConnectorUrl(consoleId, siteId, suffix);
           log(`GET ${url}`);
           const { status, data } = await client.get(url);
           result._endpointsProbed.push({ name: `${name}@${consoleId}_${siteId}`, path: url, status });
@@ -112,12 +100,28 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
       }
     }
   } else {
-    for (const [name, path] of LOCAL_GLOBAL) {
+    for (const [name, path] of GLOBAL_ENDPOINTS) {
       log(`GET ${path}`);
       const { status, data } = await client.get(path);
       result._endpointsProbed.push({ name, path, status });
       if (status === 200) result[name] = data;
       else if (status === 403) result._errors.push({ endpoint: name, status, hint: 'key lacks scope' });
+    }
+
+    // Discover which endpoints this console's Network version advertises, so we
+    // request the right paths regardless of version and never 404 on a renamed
+    // or not-yet-existing endpoint. Falls back to the default set if the console
+    // doesn't serve its OpenAPI spec (older releases).
+    let siteEndpoints: Array<[string, string]>;
+    log(`GET ${INTEGRATION_SPEC_PATH}`);
+    const spec = await client.get(INTEGRATION_SPEC_PATH);
+    result._endpointsProbed.push({ name: 'api-docs', path: INTEGRATION_SPEC_PATH, status: spec.status });
+    if (spec.status === 200) {
+      siteEndpoints = resolveSiteEndpoints(parseSpecPaths(spec.data));
+      log(`Discovered ${siteEndpoints.length} site endpoint(s) from the console's OpenAPI spec.`);
+    } else {
+      siteEndpoints = defaultSiteEndpoints();
+      log(`Console OpenAPI spec unavailable (status ${spec.status}); using default endpoint set.`);
     }
 
     const siteList = extractSites(result['sites']);
@@ -128,8 +132,8 @@ export async function collectAll(client: UniFiClient, log: (msg: string) => void
       if (!siteId) continue;
       const siteKey = `site_${siteId}`;
       result[siteKey] = { _meta: site };
-      for (const [name, pathTpl] of SITE_SCOPED) {
-        const path = pathTpl.replace('{id}', siteId);
+      for (const [name, suffix] of siteEndpoints) {
+        const path = localSitePath(suffix).replace('{id}', siteId);
         log(`GET ${path}`);
         const { status, data } = await client.get(path);
         result._endpointsProbed.push({ name: `${name}@${siteId}`, path, status });
