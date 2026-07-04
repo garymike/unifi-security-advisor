@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Known advisories
+- Advisory-data freshness: a weekly scheduled drift-check (`tools/check-advisory-drift.ts` + `advisory-drift.yml`) opens/auto-closes a tracking GitHub issue when a Ubiquiti CISA-KEV CVE isn't covered by `knownAdvisoriesData.ts`; an `ACKNOWLEDGED_CVES` list suppresses out-of-scope (non-UniFi) CVEs; an `ADVISORIES_LAST_REVIEWED` date is surfaced in the report; and `docs/09-advisory-data-maintenance.md` documents the refresh runbook.
+
 ### Backup-file mode
 - UniFi OS console `.unifi` decryption ported to the desktop app's Rust `parse_backup` command (`src-tauri/src/lib.rs`) — AES-256-CBC + embedded IV → gzip'd TAR → marker-based BSON, mirroring the Node CLI implementation. The Backup tab now parses Cloud Gateway Fiber / UniFi OS console backups directly instead of directing users to the live API. Adds the crate's first Rust unit tests (9).
 
