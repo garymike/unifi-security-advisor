@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Desktop app
+- The report now applies the wizard's intent answers and recomputes cross-answer tensions on the answered set (`src/wizard/reportAssembly.ts`), so compound findings reflect what the user told us — an answer that clears a contributor dissolves the compound. This also fixed a gap where the report previously ignored wizard answers entirely.
+
 ### Findings
 - Cross-answer tension detection: a correlation pass (`src/audit/tensions.ts`) runs after the per-site finding modules and emits compound findings (section "Compound risks") for dangerous combinations no single module sees — e.g. an internet-reachable management plane running known-vulnerable firmware, a flat network with an exposed entry point, or backups that are neither redundant nor verified. Rules key off finding status, which the wizard rewrites from user answers, so compounds fire from config and refine as the user answers (DECISIONS D-003). Six initial rules; adding more is a one-entry change. See `docs/superpowers/specs/2026-07-03-tension-detection-design.md`.
 
