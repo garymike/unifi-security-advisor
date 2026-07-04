@@ -1,0 +1,49 @@
+name: API drift
+
+on:
+  schedule:
+    - cron: '0 10 * * 1' # Mondays 10:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Check API drift
+        id: drift
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run check-api-drift -- api-drift-report.md
+
+      - name: Sync drift issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRIFT: ${{ steps.drift.outputs.drift }}
+        run: |
+          set -euo pipefail
+          TITLE="UniFi API drift: endpoints or version out of date"
+          existing=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number // empty')
+
+          if [ "${DRIFT:-false}" = "true" ]; then
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body-file api-drift-report.md
+            else
+              gh issue create --title "$TITLE" --body-file api-drift-report.md
+            fi
+          else
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body "Resolved as of $(date -u +%F): the app's endpoint set matches the latest UniFi Network OpenAPI spec. Closing automatically."
+              gh issue close "$existing"
+            fi
+          fi
