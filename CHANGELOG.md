@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Findings
+- Cross-answer tension detection: a correlation pass (`src/audit/tensions.ts`) runs after the per-site finding modules and emits compound findings (section "Compound risks") for dangerous combinations no single module sees — e.g. an internet-reachable management plane running known-vulnerable firmware, a flat network with an exposed entry point, or backups that are neither redundant nor verified. Rules key off finding status, which the wizard rewrites from user answers, so compounds fire from config and refine as the user answers (DECISIONS D-003). Six initial rules; adding more is a one-entry change. See `docs/superpowers/specs/2026-07-03-tension-detection-design.md`.
+
 ### API currency & drift resilience
 - Runtime endpoint discovery (local mode): the audit fetches the console's own OpenAPI spec (`/proxy/network/api-docs/integration.json`) and requests only the endpoints that version advertises, picking the right path alias per concept (`src/audit/endpoints.ts` + `discover.ts`). This adapts across Network versions (v9's `wlans` vs v10's `wifi/broadcasts` both resolve to the same internal key), never 404s on renamed/absent endpoints, and auto-adopts a concept if a future version starts exposing it. Falls back to the default set when the spec is unavailable (older consoles). The schema-drift check is now concept-aware (flags a relied-on concept only when all its known aliases vanish). Also fixed a cloud-connector URL truncation bug for multi-segment v10 paths. See `docs/superpowers/specs/2026-07-03-api-endpoint-discovery-design.md`.
 - Runtime version self-check: the audit reads `/v1/info`, compares the controller's UniFi Network version to a tested range (`src/audit/apiVersion.ts`), and surfaces it as an `API-VERSION` meta-finding (informational in range; a low-severity recommendation when newer/older than tested).
