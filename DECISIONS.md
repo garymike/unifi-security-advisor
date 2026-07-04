@@ -142,7 +142,7 @@ Format per entry:
 - Compound findings explain WHY a stack of small issues is more dangerous than the sum of parts
 - Maps to biomimetic principle (mycelial redundancy: weak signals combining into confident detection)
 
-**Status:** Active. Implementation deferred to Phase 1 finalization.
+**Status:** Implemented (2026-07-03). `src/audit/tensions.ts` runs a correlation pass after the per-site finding modules and emits compound findings (section "Compound risks"). Rules key off finding `status`, which the wizard's `mergeAnswer` rewrites from user answers, so compounds fire from config and refine as the user answers. Six initial rules ship; adding more is a one-entry change.
 
 ---
 

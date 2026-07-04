@@ -13,6 +13,7 @@ import { findBackup } from './findings/backup.js';
 import { findApiCoverage } from './findings/apiCoverage.js';
 import { findApiVersion } from './findings/apiVersion.js';
 import { findKnownAdvisories } from './findings/knownAdvisories.js';
+import { detectTensions } from './tensions.js';
 
 const MODULES: Array<[string, FindingModule]> = [
   ['segmentation',    findSegmentation],
@@ -59,13 +60,17 @@ export function analyze(
 ): Finding[] {
   const findings: Finding[] = [];
   for (const site of sites) {
+    const siteFindings: Finding[] = [];
     for (const [name, fn] of MODULES) {
       try {
-        findings.push(...fn(site, profile));
+        siteFindings.push(...fn(site, profile));
       } catch (err) {
         onError?.(name, site.siteId, err);
       }
     }
+    // Correlation pass: compound findings from this site's own results.
+    siteFindings.push(...detectTensions(siteFindings, site.siteId));
+    findings.push(...siteFindings);
   }
   findings.push(...findApiCoverage(clean));
   findings.push(...findApiVersion(clean));
