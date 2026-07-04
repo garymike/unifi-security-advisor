@@ -1,0 +1,47 @@
+{
+  "info": { "applicationVersion": "10.3.58" },
+  "_siteCount": 1,
+  "_endpointsProbed": [
+    { "name": "info", "path": "/proxy/network/integration/v1/info", "status": 200 },
+    { "name": "devices", "path": "/proxy/network/integration/v1/sites/default/devices", "status": 200 },
+    { "name": "wlans", "path": "/proxy/network/integration/v1/sites/default/wifi/broadcasts", "status": 200 }
+  ],
+  "_errors": [],
+  "site_default": {
+    "_meta": { "id": "default", "name": "Default" },
+    "devices": {
+      "offset": 0, "limit": 25, "count": 2, "totalCount": 2,
+      "data": [
+        { "id": "d1", "macAddress": "aa:00:00:00:00:01", "ipAddress": "198.51.100.1", "name": "Gateway", "model": "UDM-PRO", "state": "ONLINE", "firmwareVersion": "5.1.11", "firmwareUpdatable": true },
+        { "id": "d2", "macAddress": "aa:00:00:00:00:02", "ipAddress": "198.51.100.2", "name": "AP-Living", "model": "U7-PRO", "state": "ONLINE", "firmwareVersion": "7.0.0", "firmwareUpdatable": false }
+      ]
+    },
+    "clients": {
+      "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+      "data": [ { "id": "c1", "macAddress": "aa:00:00:00:00:10", "name": "laptop", "ipAddress": "198.51.100.50" } ]
+    },
+    "wlans": {
+      "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+      "data": [ { "type": "WIFI", "id": "w1", "name": "HomeNet", "enabled": true, "securityConfiguration": { "type": "WPA2" }, "network": { "id": "n1" } } ]
+    },
+    "firewall_policies": {
+      "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+      "data": [ { "id": "fp1", "enabled": true, "name": "Allow LAN to WAN", "index": 2000, "action": { "type": "ALLOW" }, "source": { "zoneId": "z-lan" }, "destination": { "zoneId": "z-wan" } } ]
+    },
+    "firewall_zones": {
+      "offset": 0, "limit": 25, "count": 2, "totalCount": 2,
+      "data": [
+        { "id": "z-lan", "name": "Internal", "networkIds": ["n1"] },
+        { "id": "z-wan", "name": "External", "networkIds": [] }
+      ]
+    },
+    "vpn_configs": {
+      "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+      "data": [ { "type": "WIREGUARD", "id": "v1", "name": "Road Warrior", "enabled": true } ]
+    },
+    "networks": {
+      "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
+      "data": [ { "management": "ROUTED", "id": "n1", "name": "LAN", "enabled": true, "vlanId": 1, "default": true } ]
+    }
+  }
+}

@@ -5,16 +5,21 @@ export const LOCAL_GLOBAL = [
   ['sites', '/proxy/network/integration/v1/sites'],
 ] as const;
 
+// Endpoint paths track the current UniFi Network Integration API (v10). The
+// internal result key (first element) is kept stable so normalize.ts and the
+// finding modules are unaffected by Ubiquiti's path renames — only the URL
+// changes. port-forwards and traffic-routes have no v1 equivalent (still
+// backup-only), so they are not collected live. The schema-drift check
+// (tools/check-api-drift.ts) derives its expected set from this list and
+// flags any future rename.
 export const SITE_SCOPED = [
   ['devices',            '/proxy/network/integration/v1/sites/{id}/devices'],
   ['clients',            '/proxy/network/integration/v1/sites/{id}/clients'],
-  ['wlans',              '/proxy/network/integration/v1/sites/{id}/wlans'],
-  ['firewall_policies',  '/proxy/network/integration/v1/sites/{id}/firewall-policies'],
-  ['firewall_zones',     '/proxy/network/integration/v1/sites/{id}/firewall-zones'],
-  ['port_forwards',      '/proxy/network/integration/v1/sites/{id}/port-forwards'],
-  ['vpn_configs',        '/proxy/network/integration/v1/sites/{id}/vpn-configs'],
+  ['wlans',              '/proxy/network/integration/v1/sites/{id}/wifi/broadcasts'],
+  ['firewall_policies',  '/proxy/network/integration/v1/sites/{id}/firewall/policies'],
+  ['firewall_zones',     '/proxy/network/integration/v1/sites/{id}/firewall/zones'],
+  ['vpn_configs',        '/proxy/network/integration/v1/sites/{id}/vpn/servers'],
   ['networks',           '/proxy/network/integration/v1/sites/{id}/networks'],
-  ['traffic_routes',     '/proxy/network/integration/v1/sites/{id}/traffic-routes'],
 ] as const;
 
 const CLOUD_ENDPOINTS = [
