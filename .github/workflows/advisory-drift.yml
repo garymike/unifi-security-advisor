@@ -1,0 +1,53 @@
+name: Advisory drift
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Mondays 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Check advisory drift
+        id: drift
+        run: npm run check-advisory-drift -- advisory-drift-report.md
+
+      # Keep a single tracking issue in sync with the current drift state.
+      - name: Sync drift issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRIFT: ${{ steps.drift.outputs.drift }}
+        run: |
+          set -euo pipefail
+          TITLE="Advisory data drift: uncovered Ubiquiti KEV CVEs"
+          existing=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number // empty')
+
+          if [ "${DRIFT:-false}" = "true" ]; then
+            if [ -n "$existing" ]; then
+              echo "Drift persists — commenting on issue #$existing"
+              gh issue comment "$existing" --body-file advisory-drift-report.md
+            else
+              echo "Drift found — opening a new issue"
+              gh issue create --title "$TITLE" --body-file advisory-drift-report.md
+            fi
+          else
+            if [ -n "$existing" ]; then
+              echo "Drift resolved — closing issue #$existing"
+              gh issue comment "$existing" --body "Resolved as of $(date -u +%F): every Ubiquiti CISA KEV CVE is now covered in \`src/audit/knownAdvisoriesData.ts\`. Closing automatically."
+              gh issue close "$existing"
+            else
+              echo "No drift, no open issue — nothing to do."
+            fi
+          fi

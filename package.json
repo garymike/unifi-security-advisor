@@ -11,6 +11,7 @@
     "tauri": "tauri",
     "typecheck": "svelte-kit sync && tsc --noEmit",
     "fetch-advisories": "tsx tools/fetch-advisories.ts",
+    "check-advisory-drift": "tsx tools/check-advisory-drift.ts",
     "anonymize-backup": "tsx tools/anonymize-backup.ts"
   },
   "dependencies": {

@@ -1,4 +1,5 @@
 import type { Finding } from './types.js';
+import { ADVISORIES_LAST_REVIEWED } from './knownAdvisoriesData.js';
 
 export function renderReport(
   findings: Finding[],
@@ -17,6 +18,8 @@ export function renderReport(
     '',
     `**Endpoints probed:** ${endpointsProbed}  `,
     `**Endpoint errors:** ${endpointErrors}`,
+    '',
+    `**Advisory data reviewed:** ${ADVISORIES_LAST_REVIEWED}`,
     '', '---', '',
   ];
 
