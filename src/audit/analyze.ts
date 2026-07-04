@@ -11,6 +11,7 @@ import { findFirmware } from './findings/firmware.js';
 import { findLogging } from './findings/logging.js';
 import { findBackup } from './findings/backup.js';
 import { findApiCoverage } from './findings/apiCoverage.js';
+import { findApiVersion } from './findings/apiVersion.js';
 import { findKnownAdvisories } from './findings/knownAdvisories.js';
 
 const MODULES: Array<[string, FindingModule]> = [
@@ -67,6 +68,7 @@ export function analyze(
     }
   }
   findings.push(...findApiCoverage(clean));
+  findings.push(...findApiVersion(clean));
   applyProfileOverrides(findings, profile);
   for (const f of findings) {
     if (isFloatTop(f)) f.floatTop = true;
