@@ -137,7 +137,7 @@ Visualise security posture over time and compare any two runs to see what change
 - [x] All enhanced modules wired into `analyze()` pipeline
 - [x] Always-float-to-top finding override logic
 - [x] Profile-aware severity overrides (home, HIPAA, PCI)
-- [ ] Cross-answer tension detection (compound findings) — **deferred to later phase**
+- [x] Cross-answer tension detection (compound findings) — `src/audit/tensions.ts`, wired into `analyze()`'s per-site pass; 6 initial rules (see `docs/superpowers/specs/2026-07-03-tension-detection-design.md`)
 
 #### Tests — Python
 
