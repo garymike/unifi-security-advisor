@@ -43,7 +43,10 @@ Adding a rule is one entry in `TENSION_RULES`.
 
 `tensions.test.ts`: each rule fires on its combination; `WAN-RCE` does not fire on unknown exposure; an answered-away contributor (`ok`) suppresses the compound; site-scoping; no-op on empty/no-match; rule-list integrity. Full suite + `tsc` clean.
 
+## Post-wizard re-run (implemented 2026-07-03)
+
+`src/wizard/reportAssembly.ts`'s `applyAnswersAndTensions(findings, answers, siteIds)` rebuilds the report set after the wizard: it applies each stored intent answer (via `mergeAnswer`), drops the config-time `TENSION-*` findings, and recomputes tensions on the answered set (per site). The report page calls it, so compounds reflect the user's answers — an answer that clears a contributor dissolves the compound. This also fixed a pre-existing gap where the report ignored wizard answers entirely (`getFindings` returns raw rows; answers live in a separate table).
+
 ## Out of scope
 
-- Re-running tensions on the post-wizard answered set in the desktop app (small follow-up; the engine already supports it).
 - Cross-*site* compounds (each rule is single-site by design).
