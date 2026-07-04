@@ -1,5 +1,6 @@
 import type { Finding } from '../audit/types.js';
 import type { AnswerValue, Tier } from './schema.js';
+import type { StoredAnswer } from '../wizard/reportAssembly.js';
 import { CREATE_TABLES } from './schema.js';
 
 // Database instance type — imported lazily to avoid breaking Vitest (which has no Tauri context)
@@ -106,6 +107,26 @@ export async function getFindings(db: DbInstance, runId: string): Promise<Findin
     impact: r['impact'] as Finding['impact'],
     floatTop: r['float_top'] === 1,
   }));
+}
+
+export async function getAnswers(db: DbInstance, runId: string): Promise<StoredAnswer[]> {
+  const rows = await db.select<Record<string, unknown>[]>(
+    'SELECT finding_id, answer, free_text FROM answers WHERE run_id = ?',
+    [runId],
+  );
+  return rows.map(r => ({
+    findingId: String(r['finding_id']),
+    answer: r['answer'] as AnswerValue,
+    freeText: r['free_text'] != null ? String(r['free_text']) : '',
+  }));
+}
+
+export async function getSiteIds(db: DbInstance, runId: string): Promise<string[]> {
+  const rows = await db.select<Record<string, unknown>[]>(
+    'SELECT site_id FROM sites WHERE run_id = ?',
+    [runId],
+  );
+  return rows.map(r => String(r['site_id']));
 }
 
 export async function listRuns(db: DbInstance): Promise<RunRow[]> {
