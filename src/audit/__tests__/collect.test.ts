@@ -18,8 +18,11 @@ describe('buildConnectorUrl', () => {
       .toBe('https://api.ui.com/v1/connector/consoles/abc123/proxy/network/integration/v1/sites/default/firewall-policies');
   });
 
-  it('resource segment extracted from SITE_SCOPED path template', () => {
-    const pathTpl = '/proxy/network/integration/v1/sites/{id}/vpn-configs';
-    expect(pathTpl.split('/').at(-1)).toBe('vpn-configs');
+  it('builds a correct URL for a multi-segment suffix (e.g. wifi/broadcasts)', () => {
+    // Cloud mode passes the full endpoint suffix as the connector resource, so
+    // multi-segment v10 paths proxy correctly (a prior bug truncated to the
+    // last segment).
+    expect(buildConnectorUrl('abc123', 'default', 'wifi/broadcasts'))
+      .toBe('https://api.ui.com/v1/connector/consoles/abc123/proxy/network/integration/v1/sites/default/wifi/broadcasts');
   });
 });
