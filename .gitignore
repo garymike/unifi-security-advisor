@@ -47,3 +47,6 @@ api-drift-report.md
 *.key
 *.key.pub
 .tauri/
+
+# Local-only PII regression list for fixtureCgfBackupSafety (never commit real leaked values)
+known-leaks.local.json

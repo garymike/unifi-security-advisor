@@ -22,10 +22,23 @@ was fine in a private repo; it must not go public.
       `git grep -iE "mdgary@gmail\.com|<your name>|<your device MAC>"` returns
       only the (now local) file.
 
-Note on git history: commits are authored as `Michael <garymike@users.noreply.github.com>`.
-The no-reply email is privacy-preserving; the first name in commit metadata is
-low-risk and typical for OSS. Rewriting all history to change it is optional and
-usually not worth it.
+- [ ] **Git history still contains the old plaintext values.** The
+      `KNOWN_LEAKS` array was committed in earlier PRs, so the real email / name
+      / MACs remain greppable in old commits even after the current file is
+      cleaned. Removing them from the tip is necessary but not sufficient for a
+      fully-clean public history. Options, in order of thoroughness:
+      1. Rewrite history to redact those specific strings across all commits
+         (`git filter-repo --replace-text`), then force-push. Best done **now**,
+         before the repo is public and before there are external clones/forks.
+         Rewrites commit SHAs.
+      2. Accept it: the values are the maintainer's own email/name/device MACs,
+         the repo was private until launch, and severity is low. Simpler.
+      *(The maintainer's assistant can do option 1 on request.)*
+
+Note on git author metadata: commits are authored as
+`Michael <garymike@users.noreply.github.com>`. The no-reply email is
+privacy-preserving; the first name in commit metadata is low-risk and typical
+for OSS — rewriting it is optional.
 
 ## 2. Legal / licensing
 
