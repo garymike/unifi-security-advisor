@@ -10,6 +10,8 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-05
+
 ### Release / distribution
 - In-app auto-update (stage B): the desktop app checks GitHub Releases on launch and, if a newer signed version exists, shows a notify-then-consent banner (`src/lib/components/UpdateBanner.svelte`) with the changelog and an "Update now" button — never silent. Wires `tauri-plugin-updater` + `tauri-plugin-process`, `bundle.createUpdaterArtifacts`, and the committed signing public key. Updates are verified against the public key before install; a failed/offline check is silent. See `docs/superpowers/specs/2026-07-03-auto-update-design.md`.
 - Release pipeline (stage A of desktop auto-update): `.github/workflows/release.yml` builds the desktop app via `tauri-apps/tauri-action` on a `v*` tag and publishes a draft GitHub Release, ready to sign updater artifacts once the signing secrets are set. Adds `npm run bump -- <X.Y.Z>` to sync the version across `package.json`, `tauri.conf.json`, `Cargo.toml`, and `Cargo.lock`, plus a `RELEASING.md` runbook. The in-app updater (config + notify-then-consent UI) follows in stage B. See `docs/superpowers/specs/2026-07-03-auto-update-design.md`.
@@ -48,5 +50,6 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 - UniFi OS console `.unifi` backup decryption (Node CLI): decrypts and parses the previously-undocumented console-level System Backup format (Cloud Gateway Fiber and other UniFi OS consoles). AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream (`backup/network/db.gz`). Implemented as a fallback in `parseBackupNodejs` alongside the unchanged classic `.unf` path; both produce the same `Collections` shape. New module `src/audit/parseUnifiOsConsoleBackup.ts`.
 - `tools/anonymize-backup.ts` maintainer tool: turns a real backup into a safe committed test fixture via a field-level projection (positive per-collection allowlist — any field not explicitly kept is dropped), guarded by a permanent structural safety test. Raw backups are gitignored (`*.unf`, `*.unifi`).
 
-[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.2.0
