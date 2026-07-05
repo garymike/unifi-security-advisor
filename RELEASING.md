@@ -15,9 +15,9 @@ npm run tauri signer generate -- -w ~/.tauri/unifi-advisor.key
 
 This prints a **public key** and writes a password-protected **private key**.
 
-- Add the **public key** to `src-tauri/tauri.conf.json` under
-  `plugins.updater.pubkey` (committed — it's public). *(Added in the in-app
-  updater stage, alongside `bundle.createUpdaterArtifacts: true`.)*
+- The **public key** is already committed in `src-tauri/tauri.conf.json` under
+  `plugins.updater.pubkey`, alongside `bundle.createUpdaterArtifacts: true`. If
+  you ever rotate the signing key, replace it there.
 - Add the **private key** and its **password** as GitHub Actions secrets
   (Settings → Secrets and variables → Actions):
   - `TAURI_SIGNING_PRIVATE_KEY` — the contents of the generated `.key` file.
