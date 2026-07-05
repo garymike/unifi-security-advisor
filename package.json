@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
+    "bump": "node tools/bump-version.mjs",
     "typecheck": "svelte-kit sync && tsc --noEmit",
     "fetch-advisories": "tsx tools/fetch-advisories.ts",
     "check-advisory-drift": "tsx tools/check-advisory-drift.ts",
