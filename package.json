@@ -2,6 +2,7 @@
   "name": "unifi-security-advisor",
   "version": "0.2.0",
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "build": "vite build",
     "build:audit": "tsc -p tsconfig.cli.json",
