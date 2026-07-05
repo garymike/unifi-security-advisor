@@ -9,6 +9,7 @@
   const showTabs = $derived(!$page.url.pathname.startsWith('/wizard'));
 
   const tabs = [
+    { label: 'Home',    href: '/' },
     { label: 'Analyze', href: '/audit' },
     { label: 'Backup',  href: '/backup' },
     { label: 'Report',  href: '/report' },
@@ -17,7 +18,7 @@
 
   function isActive(href: string): boolean {
     const p = $page.url.pathname;
-    if (href === '/audit') return p === '/audit' || p === '/';
+    if (href === '/') return p === '/';
     return p === href || p.startsWith(href + '/');
   }
 </script>
