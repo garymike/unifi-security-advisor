@@ -26,6 +26,8 @@ tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-http = { version = "2" }
 tauri-plugin-dialog = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 reqwest = { version = "0.12", features = ["json"] }
 aes = "0.8"
 cbc = { version = "0.1", features = ["alloc"] }

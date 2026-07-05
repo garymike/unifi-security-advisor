@@ -2,6 +2,7 @@
   import '../app.css';
   import { page } from '$app/stores';
   import type { Snippet } from 'svelte';
+  import UpdateBanner from '../lib/components/UpdateBanner.svelte';
 
   let { children }: { children: Snippet } = $props();
 
@@ -22,6 +23,8 @@
     return p === href || p.startsWith(href + '/');
   }
 </script>
+
+<UpdateBanner />
 
 {#if showTabs}
   <nav class="flex border-b border-gray-200 bg-white sticky top-0 z-10">
