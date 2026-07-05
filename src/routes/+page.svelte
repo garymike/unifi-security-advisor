@@ -17,12 +17,12 @@
 
   onMount(async () => {
     try {
-      const { openDb, listRuns, getFindings } = await import('../db/queries.js');
+      const { openDb, listRuns, getAnsweredFindings } = await import('../db/queries.js');
       const db = await openDb();
       const runs = await listRuns(db);
       const out: RecentRun[] = [];
       for (const run of runs.slice(0, 3)) {
-        const s = computeScore(await getFindings(db, run.id));
+        const s = computeScore(await getAnsweredFindings(db, run.id));
         out.push({ id: run.id, profile: run.profile, timestamp: run.timestamp, score: s.score, grade: s.grade });
       }
       recent = out;
