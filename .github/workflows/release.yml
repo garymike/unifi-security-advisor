@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+# The updater signing key is provided via secrets; see RELEASING.md. The build
+# succeeds without them (producing an unsigned installer), but the in-app
+# updater requires the signed artifacts, so set the secrets before relying on it.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows first (the maintainer's platform). Add macos-latest /
+          # ubuntu-22.04 entries here later — ubuntu needs the same WebKitGTK
+          # deps the test workflow's `rust` job installs.
+          - platform: windows-latest
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install Rust
+        run: rustup update stable --no-self-update
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: UniFi Security Advisor ${{ github.ref_name }}
+          releaseBody: See CHANGELOG.md for what changed in this release.
+          # Publish as a draft: review the built artifacts, then publish the
+          # release manually. Installed apps only see it once it's published
+          # (a draft is never "latest").
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
