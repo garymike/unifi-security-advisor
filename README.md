@@ -1,75 +1,80 @@
 # UniFi Security Advisor
 
-A security posture advisor for Ubiquiti UniFi networks. Works with tech-illiterate novices through seasoned professionals as a QA tool for network setup.
+[![Test](https://github.com/garymike/unifi-security-advisor/actions/workflows/test.yml/badge.svg)](https://github.com/garymike/unifi-security-advisor/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## What this project is
+A security posture advisor for Ubiquiti UniFi networks — from tech-illiterate novices to seasoned professionals — that audits your setup and tells you not just *how* it's configured, but *whether that configuration is good*.
 
-An opinionated audit engine and guided wizard that evaluates a UniFi deployment against industry security best practices (NIST CSF 2.0, CIS Controls v8, Zero Trust principles) and Ubiquiti's own recommendations, then produces prioritized, actionable findings.
+It reads your network (via the official API or an offline backup file), audits it against industry best practices, interviews you for the intent that isn't in the config, and produces a prioritized, plain-English findings report. Everything runs on your machine; credentials never leave it.
 
-**Design principles:**
+## Design principles
 
-- **Discovery-first.** Don't ask users to remember config; detect the current state and ask them to confirm intent.
-- **Progressive disclosure.** Same underlying questions, three voices: Guided (novice), Standard (prosumer), Pro (engineer).
-- **Credentials in, never out.** Tool reads credentials locally, produces sanitized output safe to share.
-- **Officially-supported paths first.** Primary integration via Ubiquiti's Network Integration API with X-API-KEY. Backup-file parsing exists as a specialist mode for airgap/forensic/MSP use.
-- **Biomimetic framing.** Layered compartments (segmentation), graduated immune response (scoring), mycelial redundancy (alert correlation) as organizing metaphors.
+- **Discovery-first.** Detect the current state and ask you to confirm intent, rather than making you remember your config.
+- **Progressive disclosure.** The same findings in three voices — Guided (novice), Standard (prosumer), Pro (engineer).
+- **Credentials in, never out.** Read locally; all output is sanitized (secrets become length + fingerprint) and safe to share.
+- **Officially-supported paths first.** Primary integration is Ubiquiti's Network Integration API (X-API-KEY); backup-file parsing is a specialist mode for airgap / forensic / MSP use.
+- **Findings map to frameworks.** NIST CSF, CIS Controls v8, Zero Trust tenets.
 
-## Project status
+## What it does
 
-**Phase 1 (in progress):** Live API audit script via Network Integration API.
+- **Live audit** against a controller via the local Network Integration API or the cloud Site Manager API. Adapts to the controller's Network version by discovering the endpoints it actually exposes.
+- **Backup-file mode** — parses classic `.unf` and the newer UniFi OS console `.unifi` backups (Cloud Gateway Fiber etc.) entirely offline.
+- **Findings** across segmentation, Wi-Fi, firewall, remote access, firmware, logging, backups, and more — including **known-CVE advisory** matching and **cross-answer compound risks** that no single check sees.
+- **Guided wizard + report** in a desktop app (Tauri + Svelte), with a posture score, an intent interview, and drift history across runs.
+- **Self-updating** desktop app via signed GitHub Releases (notify-then-consent).
 
-See `ROADMAP.md` for the full phase plan and current working checklist.
+## Running it
 
-## Repository structure
-
-```
-unifi-security-advisor/
-├── README.md                    # This file
-├── CLAUDE.md                    # Context for Claude Code
-├── ROADMAP.md                   # Phase plan + working checklist
-├── DECISIONS.md                 # Key design decisions with rationale
-├── QUESTIONNAIRE.md             # Full consolidated questionnaire
-│
-├── docs/
-│   ├── 01-design-philosophy.md
-│   ├── 02-api-strategy.md
-│   ├── 03-site-manager-vs-network-integration.md
-│   ├── 04-backup-file-strategy.md
-│   ├── 05-credential-handling.md
-│   ├── 06-mcp-strategy.md
-│   ├── 07-coverage-analysis.md
-│   └── 08-questionnaire-addendum.md
-│
-├── src/
-│   ├── unifi_audit.py           # Phase 1: live API audit
-│   ├── parser.py                # Phase 4: backup-file parser skeleton
-│   ├── findings_enhanced.py     # Enhanced findings modules
-│   └── inspect_backup.py        # Safe backup inspector
-│
-├── samples/
-│   ├── walkthrough-responses.md
-│   ├── sample-report.md
-│   └── sample-gap-questions.md
-│
-└── AUDIT_QUICKSTART.md          # User-facing quickstart
+**Desktop app (audit + wizard + report):**
+```bash
+npm install
+npm run tauri dev
 ```
 
-## Quick starts
+**CLI (headless audit):**
+```bash
+npm install
+npm run build:audit
+# live mode:
+UNIFI_NETWORK_API_KEY=... UNIFI_HOST=192.168.1.1 node dist/cli.js
+# backup mode:
+node dist/cli.js --backup path/to/backup.unifi
+```
 
-- **To run an audit against your network:** see `AUDIT_QUICKSTART.md`
-- **To understand the design:** read `docs/01-design-philosophy.md`, then `DECISIONS.md`
-- **To continue development:** read `CLAUDE.md`, then `ROADMAP.md`
-- **To see the full questionnaire:** `QUESTIONNAIRE.md`
+Credentials are only ever read from environment variables or interactive prompts — never from CLI args. See `docs/05-credential-handling.md`.
 
-## Why this exists
+## Repository layout
 
-UniFi's built-in UI tells users *how* to configure things but not *whether their configuration is good*. Existing community audit tools are either (a) raw rule-dumpers without prioritization, or (b) general-purpose network scanners that don't understand UniFi's specific patterns (ZBF vs legacy, Teleport vs VPN, PPSK, etc.).
+```
+src/audit/        Framework-agnostic audit core (normalize, findings, analyze, report)
+src/routes/       SvelteKit desktop UI (home, connect, backup, wizard, report, history)
+src/wizard/       Profile inference, tier routing, intent-answer merge
+src/db/           Local SQLite persistence (runs, findings, answers)
+src-tauri/        Rust shell (backup decryption, TLS fetch, updater)
+tools/            Maintainer scripts (advisory + API drift checks, fixture anonymizer, version bump)
+docs/             Design docs, API strategy, credential handling, maintenance runbooks
+```
 
-This tool aims to close that gap: domain-aware, opinionated, tier-appropriate, and focused on measurable risk reduction over feature toggling.
+## Documentation
+
+- **Design & rationale:** `docs/01-design-philosophy.md`, then `DECISIONS.md`
+- **API strategy:** `docs/02-api-strategy.md`
+- **Backup format internals:** `docs/04-backup-file-strategy.md`
+- **Credential handling (absolute rules):** `docs/05-credential-handling.md`
+- **Roadmap & status:** `ROADMAP.md`
+- **Releasing / auto-update:** `RELEASING.md`
+
+## Contributing
+
+See `CONTRIBUTING.md`. In short: `npm test` and `npm run typecheck` must pass; findings map to a control framework; secrets never appear in output.
+
+## License
+
+[MIT](LICENSE).
 
 ## Non-goals
 
-- Not a replacement for professional penetration testing
-- Not a runtime IDS/IPS (UniFi has its own)
-- Not a config-management tool (not Terraform/Pulumi for UniFi)
-- Not a substitute for Ubiquiti's own Update Manager or security advisories
+- Not a penetration-testing tool (no exploitation, no active probing).
+- Not a runtime IDS/IPS (UniFi has its own).
+- Not a config-management tool.
+- Not a substitute for Ubiquiti's own update manager or advisories.
