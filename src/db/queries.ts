@@ -1,6 +1,6 @@
 import type { Finding } from '../audit/types.js';
 import type { AnswerValue, Tier } from './schema.js';
-import type { StoredAnswer } from '../wizard/reportAssembly.js';
+import { applyAnswersAndTensions, type StoredAnswer } from '../wizard/reportAssembly.js';
 import { CREATE_TABLES } from './schema.js';
 
 // Database instance type — imported lazily to avoid breaking Vitest (which has no Tauri context)
@@ -127,6 +127,21 @@ export async function getSiteIds(db: DbInstance, runId: string): Promise<string[
     [runId],
   );
   return rows.map(r => String(r['site_id']));
+}
+
+/**
+ * A run's findings with the wizard's answers applied and cross-answer tensions
+ * recomputed — the canonical view used everywhere a score or finding list is
+ * shown (report, history, home), so they never disagree. Raw `getFindings` is
+ * only for internals that must not reflect answers.
+ */
+export async function getAnsweredFindings(db: DbInstance, runId: string): Promise<Finding[]> {
+  const [raw, answers, siteIds] = await Promise.all([
+    getFindings(db, runId),
+    getAnswers(db, runId),
+    getSiteIds(db, runId),
+  ]);
+  return applyAnswersAndTensions(raw, answers, siteIds);
 }
 
 export async function listRuns(db: DbInstance): Promise<RunRow[]> {
