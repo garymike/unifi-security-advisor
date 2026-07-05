@@ -10,20 +10,25 @@
   let findings: Finding[] = $state([]);
   let filter = $state('issues');
   let showGood = $state(false);
+  let noRuns = $state(false);
+  let resolvedFromLatest = $state(false);
 
   onMount(async () => {
-    if (!runId) return;
-    const { openDb, getFindings, getAnswers, getSiteIds } = await import('../../db/queries.js');
-    const { applyAnswersAndTensions } = await import('../../wizard/reportAssembly.js');
+    const { openDb, listRuns, getAnsweredFindings } = await import('../../db/queries.js');
     const db = await openDb();
-    const [raw, answers, siteIds] = await Promise.all([
-      getFindings(db, runId),
-      getAnswers(db, runId),
-      getSiteIds(db, runId),
-    ]);
-    // Apply the wizard's intent answers and recompute cross-answer tensions so
-    // the report reflects what the user told us, not just the raw config scan.
-    findings = applyAnswersAndTensions(raw, answers, siteIds);
+
+    // No run selected? Fall back to the most recent audit instead of a dead end.
+    let id = runId;
+    if (!id) {
+      const runs = await listRuns(db); // ordered newest first
+      if (runs.length === 0) { noRuns = true; return; }
+      id = runs[0]!.id;
+      resolvedFromLatest = true;
+      const { goto } = await import('$app/navigation');
+      goto(`/report?runId=${id}`, { replaceState: true, keepFocus: true, noScroll: true });
+    }
+
+    findings = await getAnsweredFindings(db, id);
   });
 
   const posture = $derived(findings.length > 0 ? computeScore(findings) : null);
@@ -62,6 +67,9 @@
     <div>
       <a href="/" class="text-blue-600 text-sm">← Home</a>
       <h1 class="text-2xl font-bold mt-1">Security Report</h1>
+      {#if resolvedFromLatest}
+        <p class="text-xs text-gray-400 mt-1">Showing your most recent audit · <a href="/history" class="text-blue-600">pick another</a></p>
+      {/if}
     </div>
     <div class="flex items-center gap-3">
       {#if posture}
@@ -130,10 +138,14 @@
     {/if}
   </div>
 
-  {#if !runId}
-    <p class="text-gray-400 text-center py-8">
-      No report selected. <a href="/" class="text-blue-600">Return home</a>.
-    </p>
+  {#if noRuns}
+    <div class="text-center py-12">
+      <p class="text-gray-500 mb-4">No audits yet — run one to see your report.</p>
+      <div class="flex gap-3 justify-center">
+        <a href="/audit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Analyze my network</a>
+        <a href="/backup" class="border px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Use a backup file</a>
+      </div>
+    </div>
   {/if}
 
   <div class="mt-10 text-xs text-gray-400 border-t pt-4">
