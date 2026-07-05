@@ -21,12 +21,13 @@
   let diff: DiffResult | null = $state(null);
 
   onMount(async () => {
-    const { openDb, listRuns, getFindings } = await import('../../db/queries.js');
+    const { openDb, listRuns, getAnsweredFindings } = await import('../../db/queries.js');
     const db = await openDb();
     const runs = await listRuns(db);
     const result: RunSummary[] = [];
     for (const run of [...runs].reverse()) {
-      const findings = await getFindings(db, run.id);
+      // Answered findings so the score/diff match the report for the same run.
+      const findings = await getAnsweredFindings(db, run.id);
       const posture = computeScore(findings);
       result.push({ id: run.id, timestamp: run.timestamp, host: run.host, score: posture.score, grade: posture.grade, findings });
     }
