@@ -11,6 +11,7 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 ## [Unreleased]
 
 ### Release / distribution
+- In-app auto-update (stage B): the desktop app checks GitHub Releases on launch and, if a newer signed version exists, shows a notify-then-consent banner (`src/lib/components/UpdateBanner.svelte`) with the changelog and an "Update now" button — never silent. Wires `tauri-plugin-updater` + `tauri-plugin-process`, `bundle.createUpdaterArtifacts`, and the committed signing public key. Updates are verified against the public key before install; a failed/offline check is silent. See `docs/superpowers/specs/2026-07-03-auto-update-design.md`.
 - Release pipeline (stage A of desktop auto-update): `.github/workflows/release.yml` builds the desktop app via `tauri-apps/tauri-action` on a `v*` tag and publishes a draft GitHub Release, ready to sign updater artifacts once the signing secrets are set. Adds `npm run bump -- <X.Y.Z>` to sync the version across `package.json`, `tauri.conf.json`, `Cargo.toml`, and `Cargo.lock`, plus a `RELEASING.md` runbook. The in-app updater (config + notify-then-consent UI) follows in stage B. See `docs/superpowers/specs/2026-07-03-auto-update-design.md`.
 
 ### Desktop app
