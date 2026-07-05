@@ -5,19 +5,17 @@ import { FIELD_PROJECTIONS, SETTING_KEYS, RADIO_TABLE_FIELDS } from '../../../to
 
 const FIXTURE_PATH = resolve('samples/fixture-cgf-backup.json');
 
-// Known-leaked values from prior incidents on this branch, kept here so a
-// regression trips this test immediately rather than requiring someone to
-// remember the manual grep. Case-insensitive substring checks.
-const KNOWN_LEAKS = [
-  '***REMOVED***',
-  '***REMOVED***',
-  '***REMOVED***',
-  '***REMOVED***',
-  '***REMOVED***',
-  '***REMOVED***',
-  '***REMOVED***',
-  '***REMOVED***',
-];
+// Specific values leaked during prior incidents (real MACs, the maintainer's
+// email/name, device hostnames) are themselves PII, so they are NOT committed —
+// they live in a local, gitignored file. The check below loads them when
+// present (maintainer machines) and skips when absent (public CI / fresh
+// clones). The load-bearing guarantees are the structural field-projection test
+// and the PII-pattern invariants above; this list is extra, maintainer-local
+// insurance. See docs/GOING-PUBLIC.md.
+const KNOWN_LEAKS_FILE = resolve('src/audit/__tests__/known-leaks.local.json');
+const KNOWN_LEAKS: string[] = existsSync(KNOWN_LEAKS_FILE)
+  ? (JSON.parse(readFileSync(KNOWN_LEAKS_FILE, 'utf-8')) as string[])
+  : [];
 
 describe('fixture-cgf-backup.json safety', () => {
   let raw: string;
@@ -147,6 +145,7 @@ describe('fixture-cgf-backup.json safety', () => {
     });
 
     it('contains none of the historically-leaked values (case-insensitive)', () => {
+      if (KNOWN_LEAKS.length === 0) return; // no local leak list — structural + pattern checks still apply
       const lower = raw.toLowerCase();
       const found = KNOWN_LEAKS.filter(leak => lower.includes(leak.toLowerCase()));
       expect(found, `found known-leaked values: ${found.join(', ')}`).toEqual([]);
