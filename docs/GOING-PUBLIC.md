@@ -3,37 +3,27 @@
 Steps to flip `garymike/unifi-security-advisor` from private to public and set up
 free code signing. Do them in order — the first item is a hard blocker.
 
-## 1. Scrub real PII (BLOCKER — do before making the repo public)
+## 1. Scrub real PII (DONE)
 
-The repo is clean except for one deliberate artifact: the `KNOWN_LEAKS` array in
-`src/audit/__tests__/fixtureCgfBackupSafety.test.ts`. It hardcodes the
-maintainer's **real email, name, and device MAC addresses** in plaintext, as the
-negative-test guard that proves the committed fixture doesn't contain them. That
-was fine in a private repo; it must not go public.
+The one PII artifact was the `KNOWN_LEAKS` array in
+`src/audit/__tests__/fixtureCgfBackupSafety.test.ts` (the maintainer's real
+email, name, and device MACs, used as negative-test guards).
 
-- [ ] Move the leak values out of the committed test into a local, gitignored
-      file (e.g. `src/audit/__tests__/known-leaks.local.json`) that the test
-      loads *if present* and skips that specific check when absent. Add the file
-      to `.gitignore`. The load-bearing guarantee — the structural field-level
-      projection test plus the PII-pattern invariants (email/MAC/IPv4/`ff:fe`) —
-      stays in the committed test and still protects the fixture. *(Ask the
-      maintainer's assistant to do this; it's a ~15-line test change.)*
-- [ ] Confirm nothing else PII-bearing is tracked:
-      `git grep -iE "mdgary@gmail\.com|<your name>|<your device MAC>"` returns
-      only the (now local) file.
+- [x] Moved out of the committed test into a local, gitignored
+      `src/audit/__tests__/known-leaks.local.json` that the test loads when
+      present and skips when absent (public CI / fresh clones). The structural
+      field-projection test and the PII-pattern invariants still protect the
+      fixture. (#26)
+- [x] Confirmed no PII string remains in any tracked file.
+- [x] **Git history purged.** Rewrote history with
+      `git filter-repo --replace-text` to redact all eight values across every
+      commit, and force-pushed `main`, `archive/phase1-python`, and the `v0.2.0`
+      tag. Verified 0 occurrences remain in the remote history.
 
-- [ ] **Git history still contains the old plaintext values.** The
-      `KNOWN_LEAKS` array was committed in earlier PRs, so the real email / name
-      / MACs remain greppable in old commits even after the current file is
-      cleaned. Removing them from the tip is necessary but not sufficient for a
-      fully-clean public history. Options, in order of thoroughness:
-      1. Rewrite history to redact those specific strings across all commits
-         (`git filter-repo --replace-text`), then force-push. Best done **now**,
-         before the repo is public and before there are external clones/forks.
-         Rewrites commit SHAs.
-      2. Accept it: the values are the maintainer's own email/name/device MACs,
-         the repo was private until launch, and severity is low. Simpler.
-      *(The maintainer's assistant can do option 1 on request.)*
+Residual note: old (now-unreachable) commits may linger in GitHub's storage
+until it garbage-collects, but they are not included in clones and are not
+reachable from any branch/tag. Author metadata (`Michael <…@users.noreply>`)
+was left as-is — low risk, no-reply email.
 
 Note on git author metadata: commits are authored as
 `Michael <garymike@users.noreply.github.com>`. The no-reply email is
