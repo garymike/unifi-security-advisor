@@ -51,6 +51,5 @@ api-drift-report.md
 # Local-only PII regression list for fixtureCgfBackupSafety (never commit real leaked values)
 known-leaks.local.json
 
-# Personal Claude Code settings (keep shared config like launch.json, ignore local overrides)
-.claude/settings.local.json
-.claude/*.local.json
+# Local Claude Code config (dev-only, not part of the project)
+.claude/
