@@ -1,19 +1,69 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import ModeStep from '../../lib/onboarding/ModeStep.svelte';
   import KeyInstructions from '../../lib/onboarding/KeyInstructions.svelte';
   import ValidateStep from '../../lib/onboarding/ValidateStep.svelte';
+  import SavedKeys from '../../lib/onboarding/SavedKeys.svelte';
+  import { loadIndex, keychain, forgetKey } from '../../lib/onboarding/keychain.js';
+  import { validateConnection } from '../../lib/onboarding/validateConnection.js';
+  import { UniFiClient } from '../../audit/client.js';
+  import type { KeyIdentity } from '../../lib/onboarding/keyIndex.js';
   import { runAudit } from '../../lib/AuditRunner.js';
   import { goto } from '$app/navigation';
   import { get } from 'svelte/store';
   import { connectTier } from '../../lib/stores/connectTier.js';
 
   type Step = 'check' | 'mode' | 'getkey' | 'validate';
-  let step = $state<Step>('mode'); // Task 9 sets initial 'check'
+  let step = $state<Step>('check');
   let mode = $state<'local' | 'cloud'>('local');
   let host = $state('');
 
+  let saved = $state<KeyIdentity[]>([]);
+  let orphans = $state<string[]>([]);
+  let checkError = $state('');
+
   let running = $state(false);
   let runError = $state('');
+
+  // Task 9: load the saved-key index once on mount. onMount (not $effect) is used
+  // deliberately here — the body reads no reactive state, so an $effect would only
+  // ever fire once anyway, but onMount makes the "runs once, mount-only" intent
+  // explicit and avoids any dependency-tracking ambiguity.
+  onMount(() => {
+    void refreshSaved();
+  });
+
+  async function refreshSaved() {
+    try { saved = await loadIndex(); } catch { saved = []; }
+  }
+
+  async function onscan() {
+    try {
+      const known = new Set(saved.map(s => s.identity));
+      orphans = (await keychain.scan()).filter(id => !known.has(id));
+    } catch { orphans = []; }
+  }
+
+  async function onforget(identity: string) {
+    await forgetKey(identity);
+    await refreshSaved();
+    orphans = orphans.filter(id => id !== identity);
+  }
+
+  async function onuse(entry: KeyIdentity) {
+    checkError = '';
+    const secret = await keychain.load(entry.identity);
+    if (!secret) { checkError = 'That saved key could not be read; it may have been removed.'; return; }
+    const client = new UniFiClient({
+      key: secret, host: entry.host ?? '', useCloud: entry.mode === 'cloud',
+      verifySSL: entry.mode === 'cloud', profile: 'home_office',
+    });
+    const res = await validateConnection(client);
+    if (!res.ok) { checkError = res.error?.message ?? 'The saved key no longer validates.'; return; }
+    // Re-validated: hand straight to the run path.
+    mode = entry.mode; host = entry.host ?? '';
+    await onrun({ apiKey: secret });
+  }
 
   function toGetKey() {
     if (mode === 'local' && !host.trim()) return;
@@ -41,7 +91,10 @@
   <a href="/" class="text-blue-600 text-sm mb-6 block">← Back</a>
   <h1 class="text-2xl font-bold mb-6">Connect to your UniFi console</h1>
 
-  {#if step === 'mode'}
+  {#if step === 'check'}
+    <SavedKeys {saved} {orphans} {onuse} {onforget} {onscan} onskip={() => (step = 'mode')} />
+    {#if checkError}<p class="text-red-600 text-sm mt-3">{checkError}</p>{/if}
+  {:else if step === 'mode'}
     <ModeStep bind:mode bind:host />
     <button class="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
       onclick={toGetKey} disabled={mode === 'local' && !host.trim()}>Next</button>
