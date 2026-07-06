@@ -2,13 +2,14 @@ import type { UniFiClient } from './client.js';
 import {
   GLOBAL_ENDPOINTS,
   INTEGRATION_SPEC_PATH,
+  CLOUD_HOSTS_URL,
   localSitePath,
   defaultSiteEndpoints,
 } from './endpoints.js';
 import { parseSpecPaths, resolveSiteEndpoints } from './discover.js';
 
 const CLOUD_ENDPOINTS = [
-  ['hosts',         'https://api.ui.com/v1/hosts'],
+  ['hosts',         CLOUD_HOSTS_URL],
   ['cloud_sites',   'https://api.ui.com/v1/sites'],
   ['cloud_devices', 'https://api.ui.com/v1/devices'],
 ] as const;

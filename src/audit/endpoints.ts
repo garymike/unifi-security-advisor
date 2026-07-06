@@ -44,6 +44,9 @@ export const SITE_ENDPOINT_CONCEPTS: Record<string, EndpointConcept> = {
 /** Path to the console's own OpenAPI spec (its version's endpoint catalogue). */
 export const INTEGRATION_SPEC_PATH = '/proxy/network/api-docs/integration.json';
 
+/** Site Manager (cloud) hosts endpoint — the API host, not the unifi.ui.com portal. */
+export const CLOUD_HOSTS_URL = 'https://api.ui.com/v1/hosts';
+
 /** Spec-form path (`/v1/sites/{siteId}/<suffix>`) used to match against a spec. */
 export function specSitePath(suffix: string): string {
   return `/v1/sites/{siteId}/${suffix}`;
