@@ -157,12 +157,17 @@ mod tests {
         // Skip the assertions there rather than failing spuriously — the
         // scan test's guard follows the same convention.
         if keychain_set(acct.into(), "secret-123".into()).is_err() {
+            eprintln!("SKIP set_get_delete_round_trip: no usable OS keychain backend in this environment");
             return;
         }
-        assert_eq!(keychain_get(acct.into()).unwrap(), Some("secret-123".to_string()));
+        // Capture results and delete unconditionally before asserting, so a
+        // failed assertion below can't leave a stale credential behind.
+        let got = keychain_get(acct.into()).unwrap();
         keychain_delete(acct.into()).unwrap();
+        let after = keychain_get(acct.into()).unwrap();
+        assert_eq!(got, Some("secret-123".to_string()));
         // after delete -> Ok(None)
-        assert_eq!(keychain_get(acct.into()).unwrap(), None);
+        assert_eq!(after, None);
     }
 
     #[test]
@@ -178,6 +183,7 @@ mod tests {
         let acct = "local:__scan_probe__";
         let entry = Entry::new(SERVICE, acct).unwrap();
         if entry.set_password("probe").is_err() {
+            eprintln!("SKIP scan_lists_a_real_stored_account: no usable OS keychain backend in this environment");
             return; // no usable store in this environment; nothing to assert
         }
         let listed = keychain_scan().unwrap();
