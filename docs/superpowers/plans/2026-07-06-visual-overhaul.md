@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Pure visual change. Do NOT edit `src/audit/**`, `src/wizard/*.ts`, `src/db/**`, or `src-tauri/**` behavior. Only styling/markup in Svelte components + `app.css` + `app.html` + the theme store.
-- Dark is the default theme; light is a toggle. Every color must come from a token so both themes work. The test: "if the background flipped, would this still be readable?"
+- Theme has three modes: system (default, follows the OS live), light, dark. Every color must come from a token so both themes work. The test: "if the background flipped, would this still be readable?"
 - Exact token values are in `docs/superpowers/specs/2026-07-06-visual-overhaul-design.md` and reproduced in Task 1. The reference look is `src/routes/design-preview/+page.svelte`.
 - No unit tests for components. Gate every task on `npm run typecheck` and `npm run build` (both must pass) plus a visual check in `npm run dev` in BOTH themes. The existing Vitest suite (`npm test`) covers audit-core logic, is unaffected, and must stay green.
 - Accent is UniFi blue: `#3b82f6` (dark) / `#1d6fe0` (light).
@@ -57,8 +57,8 @@ grep -noE "(bg|text|border|hover:bg|hover:border)-(gray|blue|red|green|amber|sla
 
 **Interfaces:**
 - Produces: semantic Tailwind utilities (`bg-surface-{0,1,2}`, `border-line`, `border-line-strong`, `text-fg`, `text-fg-muted`, `text-fg-subtle`, `bg-accent`, `hover:bg-accent-hover`, `text-accent`, `bg-accent-tint`, `text-on-accent`, `border-accent`, `bg-sev-{high,warn,ok,info}-tint`, `text-sev-{high,warn,ok,info}`), the `--font-sans` (Inter) family, and:
-  - `theme` — a `Writable<'dark' | 'light'>` store (from `src/lib/stores/theme.ts`)
-  - `toggleTheme(): void`, `setTheme(t: 'dark' | 'light'): void`
+  - `themeMode` — a `Writable<'system' | 'light' | 'dark'>` store (from `src/lib/stores/theme.ts`), default `'system'`
+  - `cycleTheme(): void` (steps system → light → dark → system), `setThemeMode(m: 'system' | 'light' | 'dark'): void`
 
 - [ ] **Step 1: Add the Inter font package**
 
@@ -124,15 +124,17 @@ body { background: var(--surface-0); color: var(--fg); font-family: var(--font-s
 
 - [ ] **Step 3: Add the no-flash theme snippet to `src/app.html`**
 
-Insert this in `<head>`, immediately before `%sveltekit.head%`:
+Insert this in `<head>`, immediately before `%sveltekit.head%`. It reads the stored mode, resolves `system` via the OS setting, and applies a concrete `data-theme` before first paint:
 
 ```html
     <script>
       try {
-        var t = localStorage.getItem("theme");
-        if (t !== "light" && t !== "dark")
-          t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", t);
+        var m = localStorage.getItem("theme");
+        if (m !== "light" && m !== "dark" && m !== "system") m = "system";
+        var resolved = m === "system"
+          ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : m;
+        document.documentElement.setAttribute("data-theme", resolved);
       } catch (e) {
         document.documentElement.setAttribute("data-theme", "dark");
       }
@@ -144,31 +146,55 @@ Insert this in `<head>`, immediately before `%sveltekit.head%`:
 ```ts
 import { writable } from 'svelte/store';
 
-export type Theme = 'dark' | 'light';
+export type ThemeMode = 'system' | 'light' | 'dark';
 
-function initial(): Theme {
-  if (typeof document !== 'undefined') {
-    const attr = document.documentElement.getAttribute('data-theme');
-    if (attr === 'light' || attr === 'dark') return attr;
-  }
-  return 'dark';
+const KEY = 'theme';
+
+function storedMode(): ThemeMode {
+  if (typeof localStorage === 'undefined') return 'system';
+  const v = localStorage.getItem(KEY);
+  return v === 'light' || v === 'dark' || v === 'system' ? v : 'system';
 }
 
-export const theme = writable<Theme>(initial());
-
-export function setTheme(t: Theme): void {
-  theme.set(t);
+function prefersDark(): boolean {
+  return typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-export function toggleTheme(): void {
-  theme.update((t) => (t === 'dark' ? 'light' : 'dark'));
+function resolve(mode: ThemeMode): 'light' | 'dark' {
+  if (mode === 'system') return prefersDark() ? 'dark' : 'light';
+  return mode;
 }
 
-theme.subscribe((t) => {
+function apply(mode: ThemeMode): void {
   if (typeof document === 'undefined') return;
-  document.documentElement.setAttribute('data-theme', t);
-  try { localStorage.setItem('theme', t); } catch { /* ignore */ }
+  document.documentElement.setAttribute('data-theme', resolve(mode));
+}
+
+let current: ThemeMode = storedMode();
+export const themeMode = writable<ThemeMode>(current);
+
+themeMode.subscribe((mode) => {
+  current = mode;
+  apply(mode);
+  if (typeof localStorage !== 'undefined') {
+    try { localStorage.setItem(KEY, mode); } catch { /* ignore */ }
+  }
 });
+
+// While in system mode, follow live OS changes.
+if (typeof matchMedia !== 'undefined') {
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (current === 'system') apply('system');
+  });
+}
+
+export function setThemeMode(m: ThemeMode): void {
+  themeMode.set(m);
+}
+
+export function cycleTheme(): void {
+  themeMode.update((m) => (m === 'system' ? 'light' : m === 'light' ? 'dark' : 'system'));
+}
 ```
 
 - [ ] **Step 5: Restyle `src/routes/+layout.svelte` (nav + footer + theme toggle)**
@@ -176,14 +202,14 @@ theme.subscribe((t) => {
 Apply the mapping table to the nav, and add the toggle to the footer. Key changes: the nav wrapper uses `bg-surface-0 border-line`; active tab uses `border-accent text-accent`, inactive `text-fg-subtle`. The footer gains a theme toggle button next to the version and "Check for updates". Add to the `<script>`:
 
 ```ts
-  import { theme, toggleTheme } from '../lib/stores/theme.js';
+  import { themeMode, cycleTheme } from '../lib/stores/theme.js';
 ```
 
-Footer toggle markup (place inside the existing `<footer>`, after the "Check for updates" button):
+Footer control markup (place inside the existing `<footer>`, after the "Check for updates" button). It shows the current mode and cycles system → light → dark on click:
 
 ```svelte
-    <button class="text-fg-subtle hover:text-fg" onclick={toggleTheme} aria-label="Toggle light and dark theme">
-      {$theme === 'dark' ? '☾ Dark' : '☀ Light'}
+    <button class="text-fg-subtle hover:text-fg" onclick={cycleTheme} aria-label="Theme: {$themeMode}">
+      {$themeMode === 'system' ? '◐ System' : $themeMode === 'light' ? '☀ Light' : '☾ Dark'}
     </button>
 ```
 
@@ -193,7 +219,7 @@ Replace the nav's hardcoded classes per the mapping table (e.g. `border-gray-200
 
 Run: `npm run typecheck && npm run build`
 Expected: both pass.
-Then: `npm run dev`, open `http://localhost:5173/`, confirm the page is dark, the nav/footer are styled, and the footer toggle switches the whole app to light and back (persisted across reload).
+Then: `npm run dev`, open `http://localhost:5173/`. With no stored preference it should match your OS (system default); flipping the OS light/dark should flip the app live. The footer control cycles System → Light → Dark and persists across reload.
 
 - [ ] **Step 7: Commit**
 

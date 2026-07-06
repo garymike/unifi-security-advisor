@@ -52,10 +52,12 @@ All colors go through CSS custom properties so both themes and future tweaks liv
 
 ## Theme system
 
-- `src/app.css`: `@theme` maps the CSS variables into Tailwind so components use semantic utilities (`bg-surface-1`, `text-secondary`, `border-default`, `bg-accent`, etc.), plus the `:root` / `:root[data-theme="light"]` variable blocks and the Inter `@font-face`.
-- `src/lib/stores/theme.ts`: a persisted `theme` store (`'dark' | 'light'`). On load it reads `localStorage`, falling back to `prefers-color-scheme` (defaulting to dark). It sets `data-theme` on `document.documentElement` and writes changes back to `localStorage`.
-- Toggle control: a sun/moon button in the layout footer, next to the version and "Check for updates". Instant, no reload.
-- No flash: the initial `data-theme` is applied as early as possible (an inline snippet in `app.html` reads `localStorage`/`prefers-color-scheme` before first paint).
+Three modes: **system (default), light, dark.** "System" follows the OS `prefers-color-scheme` and updates live if the OS switches. Light and dark are explicit overrides. The `data-theme` attribute on `<html>` is always a concrete `light` or `dark` (the resolved value); "system" is the stored *preference* that resolves to one of them.
+
+- `src/app.css`: `@theme` maps the CSS variables into Tailwind so components use semantic utilities (`bg-surface-1`, `text-fg`, `border-line`, `bg-accent`, etc.), plus the `:root` (dark) / `:root[data-theme="light"]` variable blocks and the Inter font import.
+- `src/lib/stores/theme.ts`: a persisted `themeMode` store (`'system' | 'light' | 'dark'`), defaulting to `'system'`. It resolves the mode to `light`/`dark` (via `prefers-color-scheme` when `system`), sets `data-theme` on `document.documentElement`, and writes the mode to `localStorage`. A `matchMedia('(prefers-color-scheme: dark)')` change listener re-resolves live while the mode is `system`. `cycleTheme()` steps system → light → dark → system.
+- Control: a small button in the layout footer (next to the version and "Check for updates") showing the current mode (System / Light / Dark), cycling on click.
+- No flash: an inline snippet in `app.html` reads the stored mode before first paint, resolves `system` via `prefers-color-scheme`, and sets `data-theme`, so the first render already matches.
 
 ## Component patterns
 
