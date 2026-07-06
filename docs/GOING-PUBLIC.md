@@ -84,3 +84,34 @@ SmartScreen warning.
 - [ ] `npm run bump -- <version>`, update `CHANGELOG.md`, tag, push (see `RELEASING.md`).
 - [ ] Confirm the published release's installer is signed by SignPath and that the
       updater's `latest.json` is present.
+
+## 7. winget distribution (optional, post-public)
+
+Publish to the Windows Package Manager so users can `winget install
+garymike.UniFiSecurityAdvisor` and `winget upgrade`. This is complementary to
+the in-app auto-updater (which stays the automatic path) — winget is the
+install/discovery channel.
+
+Note: **no MSIX needed.** winget installs from a YAML manifest that points at
+the existing **NSIS** installer (`.exe`) + its SHA256; the manifest is submitted
+to the public `microsoft/winget-pkgs` repo. (MSIX was considered and rejected:
+it has a hard code-signing requirement to install at all, and Tauri doesn't
+build it natively — no benefit here over NSIS + winget.)
+
+Prerequisites — this belongs *after* the repo is public and ideally after
+SignPath signing:
+- Depends on **§4 (public)**: `winget-pkgs` and the manifest's asset URLs are
+  public; the repo/releases must be public first.
+- Best paired with **§5 (signing)**: winget validation accepts unsigned
+  installers but flags them, and SmartScreen still warns on first run.
+
+- [ ] Reserve a package identifier (`Publisher.Package`, e.g.
+      `garymike.UniFiSecurityAdvisor`).
+- [ ] Add an automated submission step to `.github/workflows/release.yml` after
+      the release publishes, using **[Komac](https://github.com/russellbanks/Komac)**
+      (or Microsoft's `wingetcreate`) to open the `winget-pkgs` PR per release —
+      it computes the installer hash and fills the manifest from the GitHub
+      Release. *(Assistant can wire this once the package id is chosen and the
+      repo is public.)*
+- [ ] First submission is manually reviewed by the winget-pkgs maintainers;
+      later version bumps auto-validate. *(Assistant can wire this.)*
