@@ -3,32 +3,36 @@ export type ConnectTier = 'guided' | 'standard' | 'pro';
 export interface InstructionBlock { steps: string[]; note: string }
 
 const REVOKE_NOTE = 'Pick the shortest expiration offered, and revoke the key after this audit.';
+const LOCAL_NOTE =
+  'Pick the shortest expiration and revoke the key after this audit. ' +
+  'No Integrations section? Sign in as the console Owner (not a limited admin) — ' +
+  'or use a cloud key instead: go Back and choose "Through the cloud".';
 
 const LOCAL: Record<ConnectTier, InstructionBlock> = {
   guided: {
     steps: [
-      'Open your UniFi console in a browser and sign in as an admin.',
-      'Go to Settings (the gear), then Control Plane, then Integrations.',
-      'Give the key a name, choose the shortest expiration, and create it.',
+      'Open your UniFi console in a browser and sign in with the Owner account.',
+      'Open the Integrations section — it has its own button in the console (it is not under Settings).',
+      'Create an API key: give it a name, choose the shortest expiration, and create it.',
       'Copy the key it shows you — it is only shown once — and paste it below.',
     ],
-    note: REVOKE_NOTE,
+    note: LOCAL_NOTE,
   },
   standard: {
     steps: [
-      'In the UniFi Network application: Settings → Control Plane → Integrations.',
+      'In your UniFi console, open the Integrations section — a dedicated button, not under Settings → Control Plane.',
       'Create API Key → name it → set the shortest expiration → Create.',
       'Copy the key (shown once) and paste it below.',
     ],
-    note: REVOKE_NOTE,
+    note: LOCAL_NOTE,
   },
   pro: {
     steps: [
-      'Settings → Control Plane → Integrations → Create API Key.',
-      'This mints a Network Integration (local) X-API-KEY, sent as the X-API-KEY header to /proxy/network/integration/v1.',
-      'Menu path varies by Network 8/9/10; the key is displayed once — copy it immediately.',
+      'Open the console Integrations section (its own top-level area — not Settings → Control Plane → Integrations, which moved in Network 10.x) → Create API Key.',
+      'Mints a Network Integration (local) X-API-KEY, sent as the X-API-KEY header to /proxy/network/integration/v1; requires the console Owner account.',
+      'Shown once — copy it immediately. If Integrations is missing, use a Site Manager (cloud) key instead.',
     ],
-    note: REVOKE_NOTE,
+    note: LOCAL_NOTE,
   },
 };
 
