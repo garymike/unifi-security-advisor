@@ -147,3 +147,17 @@ export async function getAnsweredFindings(db: DbInstance, runId: string): Promis
 export async function listRuns(db: DbInstance): Promise<RunRow[]> {
   return db.select<RunRow[]>('SELECT * FROM runs ORDER BY timestamp DESC');
 }
+
+export async function getKv(key: string): Promise<string | null> {
+  const db = await openDb();
+  const rows = await db.select<{ value: string }[]>('SELECT value FROM app_kv WHERE key = ?', [key]);
+  return rows.length ? rows[0]!.value : null;
+}
+
+export async function setKv(key: string, value: string): Promise<void> {
+  const db = await openDb();
+  await db.execute(
+    'INSERT INTO app_kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+    [key, value],
+  );
+}
