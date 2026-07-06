@@ -48,4 +48,9 @@ jobs:
           # (a draft is never "latest").
           releaseDraft: true
           prerelease: false
+          # Point the updater's generic windows-x86_64 entry at the NSIS
+          # installer instead of the MSI (tauri defaults to MSI "for legacy
+          # reasons"). NSIS does smooth per-user background updates; MSI
+          # auto-updates are clunky and can trigger UAC / a full reinstall.
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
