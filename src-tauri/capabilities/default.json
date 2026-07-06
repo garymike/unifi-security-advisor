@@ -11,13 +11,6 @@
     "sql:allow-execute",
     "sql:allow-select",
     "sql:allow-close",
-    {
-      "identifier": "http:default",
-      "allow": [
-        { "url": "https://**/**" },
-        { "url": "https://**" }
-      ]
-    },
     "dialog:allow-open",
     "updater:default",
     "process:allow-restart"
