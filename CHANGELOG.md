@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Release / distribution
+- The Windows updater now prefers the NSIS installer over the MSI (`updaterJsonPreferNsis`). NSIS does smooth per-user background self-updates; MSI auto-updates can trigger UAC or a full reinstall. Both installers are still published; only which one the updater fetches changed. Takes effect for the next release's `latest.json`.
+
 ## [0.3.0] - 2026-07-05
 
 ### Build / dependencies
