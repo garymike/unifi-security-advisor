@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Build / dependencies
+- Removed dead dependencies to slim the build and the shipped binary: `tauri-plugin-log` + the `log` crate (declared but never registered/used), and `tauri-plugin-http` / `@tauri-apps/plugin-http` (the frontend never imported it — controller requests go through the custom `unifi_fetch` reqwest command). Also dropped the now-unused `http:default` capability. No behavior change.
+
 ## [0.3.0] - 2026-07-05
 
 ### Release / distribution
