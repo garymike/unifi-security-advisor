@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::io::Read;
 use tauri::command;
 
+mod keychain;
+
 // Public AES-128-CBC keys (from UniFi source, used by all open-source tools in this space)
 const UNF_KEY: &[u8; 16] = b"bcyangkmluohmars";
 const UNF_IV: &[u8; 16] = b"ubntenterpriseap";
@@ -452,7 +454,15 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![unifi_fetch, parse_backup])
+        .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![
+            unifi_fetch,
+            parse_backup,
+            keychain::keychain_set,
+            keychain::keychain_get,
+            keychain::keychain_delete,
+            keychain::keychain_scan
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
