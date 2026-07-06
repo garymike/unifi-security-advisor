@@ -1,91 +1,35 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { runAudit } from '../../lib/AuditRunner.js';
+  import ModeStep from '../../lib/onboarding/ModeStep.svelte';
+  import KeyInstructions from '../../lib/onboarding/KeyInstructions.svelte';
 
+  type Step = 'check' | 'mode' | 'getkey' | 'validate';
+  let step = $state<Step>('mode'); // Task 9 sets initial 'check'
+  let mode = $state<'local' | 'cloud'>('local');
   let host = $state('');
-  let apiKey = $state('');
-  // The Home screen's "Through the cloud" card links here with ?cloud=1.
-  let useCloud = $state($page.url.searchParams.get('cloud') === '1');
-  let running = $state(false);
-  let progressLog: string[] = $state([]);
-  let error = $state('');
 
-  async function startAudit() {
-    if (!apiKey.trim()) { error = 'API key is required.'; return; }
-    if (!useCloud && !host.trim()) { error = 'Controller host is required for local mode.'; return; }
-    running = true; error = ''; progressLog = [];
-
-    try {
-      const { openDb, insertRun, insertFindings, insertSites } = await import('../../db/queries.js');
-      const result = await runAudit(apiKey, host, useCloud, msg => {
-        progressLog = [...progressLog, msg];
-      });
-      const db = await openDb();
-      const runId = await insertRun(db, host || 'cloud', result.inferredProfile, result.sites.length);
-      await insertFindings(db, runId, result.findings);
-      await insertSites(db, runId, result.sites.map(s => ({
-        siteId: s.siteId, siteName: s.siteName, apiGaps: s.apiGaps,
-      })));
-      goto(`/wizard?runId=${runId}&profile=${result.inferredProfile}`);
-    } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
-      running = false;
-    }
+  function toGetKey() {
+    if (mode === 'local' && !host.trim()) return;
+    step = 'getkey';
   }
 </script>
 
 <main class="p-8 max-w-xl mx-auto">
   <a href="/" class="text-blue-600 text-sm mb-6 block">← Back</a>
-  <h1 class="text-2xl font-bold mb-6">Connect to Controller</h1>
+  <h1 class="text-2xl font-bold mb-6">Connect to your UniFi console</h1>
 
-  <div class="space-y-4 mb-6">
-    <label class="block">
-      <span class="text-sm font-medium text-gray-700">API Key</span>
-      <input
-        type="password"
-        bind:value={apiKey}
-        placeholder="Paste your X-API-KEY here"
-        class="mt-1 block w-full border rounded-lg px-3 py-2 font-mono text-sm"
-      />
-      <p class="text-xs text-gray-400 mt-1">Generated in Site Manager → API Keys. Revoke after use.</p>
-    </label>
-
-    <label class="flex items-center gap-2">
-      <input type="checkbox" bind:checked={useCloud} />
-      <span class="text-sm">Use Site Manager API (cloud/CGNAT mode)</span>
-    </label>
-
-    {#if !useCloud}
-      <label class="block">
-        <span class="text-sm font-medium text-gray-700">Controller Host</span>
-        <input
-          type="text"
-          bind:value={host}
-          placeholder="192.168.1.1"
-          class="mt-1 block w-full border rounded-lg px-3 py-2"
-        />
-      </label>
-    {/if}
-  </div>
-
-  {#if error}
-    <p class="text-red-600 text-sm mb-4">{error}</p>
-  {/if}
-
-  <button
-    class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
-    onclick={startAudit}
-    disabled={running}
-  >
-    {running ? 'Running audit…' : 'Run Audit'}
-  </button>
-
-  {#if progressLog.length > 0}
-    <div class="mt-6 bg-gray-50 rounded-lg p-4 font-mono text-xs space-y-1 max-h-48 overflow-y-auto">
-      {#each progressLog as line}
-        <div>{line}</div>
-      {/each}
+  {#if step === 'mode'}
+    <ModeStep bind:mode bind:host />
+    <button class="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+      onclick={toGetKey} disabled={mode === 'local' && !host.trim()}>Next</button>
+  {:else if step === 'getkey'}
+    <KeyInstructions {mode} {host} />
+    <div class="mt-6 flex gap-3">
+      <button class="px-4 py-2 rounded-lg border" onclick={() => (step = 'mode')}>Back</button>
+      <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
+        onclick={() => (step = 'validate')}>I have my key →</button>
     </div>
+  {:else if step === 'validate'}
+    <p class="text-gray-500">Validation step — added in Task 8.</p>
+    <button class="mt-4 px-4 py-2 rounded-lg border" onclick={() => (step = 'getkey')}>Back</button>
   {/if}
 </main>
