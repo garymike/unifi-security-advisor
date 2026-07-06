@@ -42,6 +42,13 @@ describe('validateConnection (local)', () => {
     const r = await validateConnection(client);
     expect(r.error?.kind).toBe('unknown');
   });
+
+  it('maps a status:0 response (client-caught network error) to unreachable', async () => {
+    const client = fakeClient(false, '10.0.0.9', () => ({ status: 0, data: {} }));
+    const r = await validateConnection(client);
+    expect(r.ok).toBe(false);
+    expect(r.error?.kind).toBe('unreachable');
+  });
 });
 
 describe('validateConnection (cloud)', () => {
@@ -55,5 +62,12 @@ describe('validateConnection (cloud)', () => {
     const client = fakeClient(true, '', () => ({ status: 403, data: {} }));
     const r = await validateConnection(client);
     expect(r.error?.kind).toBe('auth');
+  });
+
+  it('maps a status:0 response (client-caught network error) to unreachable', async () => {
+    const client = fakeClient(true, '', () => ({ status: 0, data: {} }));
+    const r = await validateConnection(client);
+    expect(r.ok).toBe(false);
+    expect(r.error?.kind).toBe('unreachable');
   });
 });
