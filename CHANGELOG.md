@@ -10,8 +10,17 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-06
+
+### Desktop app
+- Guided API-key onboarding: the connect screen is now a stepper that helps the user obtain and use a UniFi API key instead of a bare form. It opens on a keychain check for previously-saved keys (with an on-demand native scan for keys left by prior installs), then walks through choosing local (Network Integration) vs cloud (Site Manager) mode, tiered `Guided | Standard | Pro` instructions for minting a key with a deep-link to the right portal page, and a paste-and-validate step that does a lightweight read-only round-trip and shows what the key can see (console · Network version · site count) before running the full audit. The chosen instruction tier pre-seeds the post-audit wizard. See `docs/superpowers/specs/2026-07-05-api-key-onboarding-design.md`.
+- Optional OS keychain storage for API keys (Windows Credential Manager, macOS Keychain, Linux Secret Service), opt-in per key via an unchecked-by-default "Remember this key" checkbox. Saved keys are re-validated before reuse; a "Forget" control removes them. The secret is never logged, never written to the app database or config, and never leaves the machine — only a non-secret index of key identities (e.g. `cloud`, `local:<host>`) is persisted. New Rust commands `keychain_set/get/delete/scan` (identifiers only; scan never returns secret values) and the `tauri-plugin-opener` plugin for the portal deep-links.
+
 ### Release / distribution
-- The Windows updater now prefers the NSIS installer over the MSI (`updaterJsonPreferNsis`). NSIS does smooth per-user background self-updates; MSI auto-updates can trigger UAC or a full reinstall. Both installers are still published; only which one the updater fetches changed. Takes effect for the next release's `latest.json`.
+- The Windows updater now prefers the NSIS installer over the MSI (`updaterJsonPreferNsis`). NSIS does smooth per-user background self-updates; MSI auto-updates can trigger UAC or a full reinstall. Both installers are still published; only which one the updater fetches changed.
+
+### Notes
+- Folds in the changes previously staged for the never-published 0.3.0 draft (below); 0.4.0 is the first public release since 0.2.0.
 
 ## [0.3.0] - 2026-07-05
 
@@ -56,6 +65,7 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 - UniFi OS console `.unifi` backup decryption (Node CLI): decrypts and parses the previously-undocumented console-level System Backup format (Cloud Gateway Fiber and other UniFi OS consoles). AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream (`backup/network/db.gz`). Implemented as a fallback in `parseBackupNodejs` alongside the unchanged classic `.unf` path; both produce the same `Collections` shape. New module `src/audit/parseUnifiOsConsoleBackup.ts`.
 - `tools/anonymize-backup.ts` maintainer tool: turns a real backup into a safe committed test fixture via a field-level projection (positive per-collection allowlist — any field not explicitly kept is dropped), guarded by a permanent structural safety test. Raw backups are gitignored (`*.unf`, `*.unifi`).
 
-[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.0
 [0.3.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.2.0
