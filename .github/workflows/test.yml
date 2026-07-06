@@ -10,8 +10,41 @@ permissions:
   contents: read
 
 jobs:
+  # Detect which parts of the tree changed so we only run the test suites that
+  # can actually be affected. Docs / .gitignore / .claude-only changes skip both
+  # test jobs; a JS-only change skips the (~6 min) Rust job, and vice versa.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      js: ${{ steps.filter.outputs.js }}
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
+        id: filter
+        with:
+          filters: |
+            js:
+              - 'src/**'
+              - 'tests/**'
+              - 'samples/**'
+              - 'tools/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - 'vite.config.*'
+              - 'vitest.config.*'
+              - 'svelte.config.*'
+              - '.github/workflows/test.yml'
+            rust:
+              - 'src-tauri/**'
+              - '.github/workflows/test.yml'
+
   test:
     name: JS (typecheck + vitest)
+    needs: changes
+    if: ${{ needs.changes.outputs.js == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -27,6 +60,8 @@ jobs:
 
   rust:
     name: Rust (cargo test)
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
