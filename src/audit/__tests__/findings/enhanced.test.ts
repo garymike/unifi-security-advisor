@@ -86,6 +86,16 @@ describe('findFirmware', () => {
   it('FW-AUTO-001 unknown when no settings', () => {
     expect(findFirmware(site(), 'home_office').find(f => f.id.startsWith('FW-AUTO-001'))?.status).toBe('unknown');
   });
+  it('FW-VER emitted (recommendation) when the controller reports firmwareUpdatable', () => {
+    const fs = findFirmware(site({ devices: [{ model: 'UDM-PRO', name: 'Gateway', firmwareVersion: '5.1.11', firmwareUpdatable: true }] }), 'home_office');
+    const v = fs.find(f => f.id.startsWith('FW-VER'));
+    expect(v?.status).toBe('recommendation');
+    expect(v?.title).toMatch(/update available/i);
+  });
+  it('no FW-VER false positive for an up-to-date 5.x gateway (firmwareUpdatable false)', () => {
+    const fs = findFirmware(site({ devices: [{ model: 'UCG-FIBER', name: 'Cloud Gateway Fiber', firmwareVersion: '5.1.19', firmwareUpdatable: false }] }), 'home_office');
+    expect(fs.some(f => f.id.startsWith('FW-VER'))).toBe(false);
+  });
 });
 
 describe('findLogging', () => {
