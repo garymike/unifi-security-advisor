@@ -52,9 +52,9 @@
 
   <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">How would you like to start?</p>
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-    <a href="/audit" class="block border-2 border-blue-600 rounded-xl p-4 relative hover:bg-blue-50">
-      <span class="absolute top-3 right-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Recommended</span>
-      <p class="font-medium mt-1">Analyze my network</p>
+    <a href="/audit" class="block border-2 border-blue-600 rounded-xl p-4 hover:bg-blue-50">
+      <span class="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded mb-2">Recommended</span>
+      <p class="font-medium">Analyze my network</p>
       <p class="text-xs text-gray-500 mt-1 leading-snug">On the same network. Uses a local API key.</p>
     </a>
     <a href="/audit?cloud=1" class="block border rounded-xl p-4 hover:bg-gray-50">
