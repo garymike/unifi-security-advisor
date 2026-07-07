@@ -13,6 +13,7 @@
     "sql:allow-close",
     "dialog:allow-open",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "opener:default"
   ]
 }

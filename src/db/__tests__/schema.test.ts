@@ -14,7 +14,10 @@ describe('CREATE_TABLES', () => {
   it('contains sites table', () => {
     expect(CREATE_TABLES.some(s => s.includes('CREATE TABLE IF NOT EXISTS sites'))).toBe(true);
   });
-  it('has exactly 4 tables', () => {
-    expect(CREATE_TABLES).toHaveLength(4);
+  it('registers the app_kv key/value table', () => {
+    expect(CREATE_TABLES.some(sql => /CREATE TABLE IF NOT EXISTS app_kv/.test(sql))).toBe(true);
+  });
+  it('has exactly 5 tables', () => {
+    expect(CREATE_TABLES).toHaveLength(5);
   });
 });
