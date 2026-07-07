@@ -10,6 +10,18 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-06
+
+### Desktop app
+- Added a manual **Check for updates** button (in the footer, next to the app version) alongside the existing silent on-launch check. A manual check now reports "You're on the latest version" or an error, while the launch check stays quiet when there's nothing new. The updater logic moved to a shared store (`src/lib/stores/updater.ts`).
+- Fixed the Home landing screen so the **Recommended** badge no longer overlaps the "Analyze my network" card title (it's now an in-flow chip above the title).
+
+### Release / distribution
+- The in-app updater's "What's changed" now shows the real release notes: the release pipeline populates the GitHub Release body (and therefore `latest.json`'s notes) from the matching `CHANGELOG` section via `tools/changelog-section.mjs`, instead of a generic line.
+
+### Build / dependencies
+- Dropped `bzip2` and `zstd` from the `zip` crate (`default-features = false`, `deflate` only). `.unf` parsing only needs Deflate/Stored, so this removes the `bzip2-sys`/`zstd-sys` native-C compilation from the build.
+
 ## [0.4.0] - 2026-07-06
 
 ### Desktop app
@@ -65,7 +77,8 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 - UniFi OS console `.unifi` backup decryption (Node CLI): decrypts and parses the previously-undocumented console-level System Backup format (Cloud Gateway Fiber and other UniFi OS consoles). AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream (`backup/network/db.gz`). Implemented as a fallback in `parseBackupNodejs` alongside the unchanged classic `.unf` path; both produce the same `Collections` shape. New module `src/audit/parseUnifiOsConsoleBackup.ts`.
 - `tools/anonymize-backup.ts` maintainer tool: turns a real backup into a safe committed test fixture via a field-level projection (positive per-collection allowlist — any field not explicitly kept is dropped), guarded by a permanent structural safety test. Raw backups are gitignored (`*.unf`, `*.unifi`).
 
-[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.1
 [0.4.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.0
 [0.3.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.2.0
