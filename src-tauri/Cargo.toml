@@ -29,7 +29,7 @@ reqwest = { version = "0.12", features = ["json"] }
 aes = "0.8"
 cbc = { version = "0.1", features = ["alloc"] }
 flate2 = "1.0"
-zip = "2"
+zip = { version = "2", default-features = false, features = ["deflate"] }
 bson = "2"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 tauri-plugin-opener = "2"
