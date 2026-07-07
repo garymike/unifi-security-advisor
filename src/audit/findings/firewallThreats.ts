@@ -94,23 +94,48 @@ function findMgmtWanExposure(site: NormalizedSite): Finding {
 export function findFirewallThreats(site: NormalizedSite, _profile: string): Finding[] {
   const findings: Finding[] = [];
 
-  if (!hasGeoPolicy(site.firewallPolicies, 'WAN_IN')) findings.push({
-    id: `FW-GEO-IN-${site.siteId}`, section: 'Firewall', severity: 'low', status: 'recommendation',
-    title: 'No Geo-IP blocking on inbound WAN',
-    currentState: 'No policy found blocking inbound traffic from high-risk regions.',
-    recommendation: 'Block inbound from CN, RU, KP, IR.',
-    intentQuestion: 'Do you expect inbound traffic from these regions?',
-    evidence: {}, mapsTo: { cis_v8: '13.4' }, effort: 'quick', impact: 'medium',
-  });
+  // Firewall rules aren't exposed on every API version (they're backup-only on
+  // some live consoles). When the concept is gapped, an empty policy list means
+  // "we couldn't look", not "no policy exists" — so report Geo-IP as unknown
+  // rather than false-alarming a missing rule, the same way SEG-MGMT-WAN does.
+  const firewallVisible = !site.apiGaps.includes('firewall_policies');
 
-  if (!hasGeoPolicy(site.firewallPolicies, 'WAN_OUT')) findings.push({
-    id: `FW-GEO-OUT-${site.siteId}`, section: 'Firewall', severity: 'low', status: 'recommendation',
-    title: 'No Geo-IP blocking on outbound WAN (often overlooked)',
-    currentState: 'No outbound Geo-IP policy. A compromised device could call home to a C2.',
-    recommendation: 'Apply outbound geo-blocking for the same regions you block inbound.',
-    intentQuestion: 'Do any of your services legitimately talk to servers in high-risk regions?',
-    evidence: {}, mapsTo: { cis_v8: '13.4' }, effort: 'quick', impact: 'low',
-  });
+  if (firewallVisible) {
+    if (!hasGeoPolicy(site.firewallPolicies, 'WAN_IN')) findings.push({
+      id: `FW-GEO-IN-${site.siteId}`, section: 'Firewall', severity: 'low', status: 'recommendation',
+      title: 'No Geo-IP blocking on inbound WAN',
+      currentState: 'No policy found blocking inbound traffic from high-risk regions.',
+      recommendation: 'Block inbound from CN, RU, KP, IR.',
+      intentQuestion: 'Do you expect inbound traffic from these regions?',
+      evidence: {}, mapsTo: { cis_v8: '13.4' }, effort: 'quick', impact: 'medium',
+    });
+
+    if (!hasGeoPolicy(site.firewallPolicies, 'WAN_OUT')) findings.push({
+      id: `FW-GEO-OUT-${site.siteId}`, section: 'Firewall', severity: 'low', status: 'recommendation',
+      title: 'No Geo-IP blocking on outbound WAN (often overlooked)',
+      currentState: 'No outbound Geo-IP policy. A compromised device could call home to a C2.',
+      recommendation: 'Apply outbound geo-blocking for the same regions you block inbound.',
+      intentQuestion: 'Do any of your services legitimately talk to servers in high-risk regions?',
+      evidence: {}, mapsTo: { cis_v8: '13.4' }, effort: 'quick', impact: 'low',
+    });
+  } else {
+    findings.push({
+      id: `FW-GEO-IN-${site.siteId}`, section: 'Firewall', severity: 'info', status: 'unknown',
+      title: 'Geo-IP blocking (inbound): cannot check via live API',
+      currentState: 'Firewall rules are not exposed by the Network Integration API on this controller, so inbound Geo-IP blocking cannot be determined automatically.',
+      recommendation: 'If you have no legitimate inbound traffic from high-risk regions (CN, RU, KP, IR), block them at the WAN.',
+      intentQuestion: 'Is inbound Geo-IP blocking currently configured?',
+      evidence: {}, mapsTo: { cis_v8: '13.4' }, effort: 'quick', impact: 'medium',
+    });
+    findings.push({
+      id: `FW-GEO-OUT-${site.siteId}`, section: 'Firewall', severity: 'info', status: 'unknown',
+      title: 'Geo-IP blocking (outbound): cannot check via live API',
+      currentState: 'Firewall rules are not exposed by the Network Integration API on this controller, so outbound Geo-IP blocking cannot be determined automatically.',
+      recommendation: 'Apply outbound geo-blocking for the same high-risk regions you block inbound.',
+      intentQuestion: 'Is outbound Geo-IP blocking currently configured?',
+      evidence: {}, mapsTo: { cis_v8: '13.4' }, effort: 'quick', impact: 'low',
+    });
+  }
 
   const dnsFilter = site.settings['dns_filtering'] as Record<string, unknown> | undefined;
   if (dnsFilter === undefined) {
