@@ -27,6 +27,9 @@
       "internalReference": "default",
       "name": "Default"
     },
+    "firewall_policies": {
+      "data": []
+    },
     "devices": {
       "data": [
         {

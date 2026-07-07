@@ -39,6 +39,20 @@ describe('findFirewallThreats', () => {
     expect(findFirewallThreats(site(), 'home_office').find(f => f.id.startsWith('FW-CONTENT-001'))?.status).toBe('unknown');
   });
 
+  it('FW-GEO-IN/OUT degrade to unknown (not a false "no blocking" recommendation) when firewall_policies is gapped', () => {
+    const fs = findFirewallThreats(site({ apiGaps: ['firewall_policies', 'port_forwards'] }), 'home_office');
+    const geoIn = fs.find(f => f.id.startsWith('FW-GEO-IN'));
+    const geoOut = fs.find(f => f.id.startsWith('FW-GEO-OUT'));
+    expect(geoIn?.status).toBe('unknown');
+    expect(geoOut?.status).toBe('unknown');
+    expect(geoIn?.title).toMatch(/cannot check/i);
+  });
+
+  it('FW-GEO-IN stays a recommendation when firewall data is visible but has no geo rule', () => {
+    const fs = findFirewallThreats(site({ apiGaps: [], firewallPolicies: [] }), 'home_office');
+    expect(fs.find(f => f.id.startsWith('FW-GEO-IN'))?.status).toBe('recommendation');
+  });
+
   it('SEG-MGMT-WAN unknown (no visibility) when firewall/port-forward data is unavailable', () => {
     const s = site({ apiGaps: ['firewall_policies', 'port_forwards'] });
     const f = findFirewallThreats(s, 'home_office').find(x => x.id.startsWith('SEG-MGMT-WAN'));
