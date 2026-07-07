@@ -10,6 +10,17 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-07
+
+Bug-fix release from dogfooding the audit against a real Cloud Gateway Fiber (UniFi Network 10.4.57).
+
+### Findings
+- Firmware currency now trusts the controller's own `firmwareUpdatable` signal instead of a "major version < 7" heuristic. A Cloud Gateway Fiber on UniFi OS 5.x was being wrongly flagged as "multiple major versions behind"; the check now reports a device as needing an update only when the controller says one is available.
+- Geo-IP findings no longer false-alarm when the firewall ruleset isn't readable. On API versions where `firewall/policies` is gapped, an empty policy list meant "we couldn't look", not "no rule exists" — so `FW-GEO-IN`/`FW-GEO-OUT` now degrade to an honest "cannot check via live API" (matching `SEG-MGMT-WAN`) instead of recommending a block that may already be in place. When firewall data is visible and genuinely has no geo rule, the recommendation still fires.
+
+### Desktop app
+- Fixed the report's **Export Markdown** button, which did nothing in the packaged app: it used a browser download that the Tauri webview ignores. It now saves through a native save dialog (with a Rust `write_text_file` command). Added a **Copy** button that puts the report on the clipboard, plus a small status line for both actions.
+
 ## [0.5.0] - 2026-07-06
 
 ### Desktop app
@@ -87,7 +98,8 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 - UniFi OS console `.unifi` backup decryption (Node CLI): decrypts and parses the previously-undocumented console-level System Backup format (Cloud Gateway Fiber and other UniFi OS consoles). AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream (`backup/network/db.gz`). Implemented as a fallback in `parseBackupNodejs` alongside the unchanged classic `.unf` path; both produce the same `Collections` shape. New module `src/audit/parseUnifiOsConsoleBackup.ts`.
 - `tools/anonymize-backup.ts` maintainer tool: turns a real backup into a safe committed test fixture via a field-level projection (positive per-collection allowlist — any field not explicitly kept is dropped), guarded by a permanent structural safety test. Raw backups are gitignored (`*.unf`, `*.unifi`).
 
-[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.5.1
 [0.5.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.5.0
 [0.4.1]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.1
 [0.4.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.0
