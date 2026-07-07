@@ -12,44 +12,44 @@
 </script>
 
 {#if $updater.state === 'available'}
-  <div class="bg-blue-50 border-b border-blue-200 px-6 py-2 text-sm flex items-center gap-3 flex-wrap">
-    <span class="text-blue-800">Version {$updater.version} is available.</span>
+  <div class="bg-accent-tint border-b border-line px-6 py-2 text-sm flex items-center gap-3 flex-wrap">
+    <span class="text-accent">Version {$updater.version} is available.</span>
     {#if $updater.notes}
-      <button class="text-blue-600 hover:underline text-xs" onclick={() => (showNotes = !showNotes)}>
+      <button class="text-accent hover:underline text-xs" onclick={() => (showNotes = !showNotes)}>
         {showNotes ? 'Hide' : "What's changed"}
       </button>
     {/if}
     <div class="ml-auto flex gap-2">
-      <button class="bg-blue-600 text-white px-3 py-1 rounded font-medium hover:bg-blue-700" onclick={installNow}>
+      <button class="bg-accent text-on-accent px-3 py-1 rounded font-medium hover:bg-accent-hover" onclick={installNow}>
         Update now
       </button>
-      <button class="text-gray-500 px-3 py-1 rounded border hover:bg-white" onclick={dismissUpdate}>
+      <button class="text-fg-subtle px-3 py-1 rounded border border-line hover:bg-surface-1" onclick={dismissUpdate}>
         Later
       </button>
     </div>
     {#if showNotes && $updater.notes}
-      <p class="w-full text-xs text-gray-600 mt-1 whitespace-pre-line">{$updater.notes}</p>
+      <p class="w-full text-xs text-fg-muted mt-1 whitespace-pre-line">{$updater.notes}</p>
     {/if}
   </div>
 {:else if $updater.state === 'checking'}
-  <div class="bg-gray-50 border-b border-gray-200 px-6 py-2 text-sm text-gray-600">
+  <div class="bg-surface-2 border-b border-line px-6 py-2 text-sm text-fg-muted">
     Checking for updates…
   </div>
 {:else if $updater.state === 'uptodate'}
-  <div class="bg-green-50 border-b border-green-200 px-6 py-2 text-sm flex items-center gap-3">
-    <span class="text-green-800">You're on the latest version.</span>
-    <button class="ml-auto text-gray-500 px-3 py-1 rounded border hover:bg-white" onclick={dismissUpdate}>
+  <div class="bg-sev-ok-tint border-b border-line px-6 py-2 text-sm flex items-center gap-3">
+    <span class="text-sev-ok">You're on the latest version.</span>
+    <button class="ml-auto text-fg-subtle px-3 py-1 rounded border border-line hover:bg-surface-1" onclick={dismissUpdate}>
       Dismiss
     </button>
   </div>
 {:else if $updater.state === 'downloading'}
-  <div class="bg-blue-50 border-b border-blue-200 px-6 py-2 text-sm text-blue-800">
+  <div class="bg-accent-tint border-b border-line px-6 py-2 text-sm text-accent">
     Downloading update… {$updater.progress}% — the app will restart when it's ready.
   </div>
 {:else if $updater.state === 'error'}
-  <div class="bg-red-50 border-b border-red-200 px-6 py-2 text-sm flex items-center gap-3">
-    <span class="text-red-700">Update check failed: {$updater.error}</span>
-    <button class="ml-auto text-gray-500 px-3 py-1 rounded border hover:bg-white" onclick={dismissUpdate}>
+  <div class="bg-sev-high-tint border-b border-line px-6 py-2 text-sm flex items-center gap-3">
+    <span class="text-sev-high">Update check failed: {$updater.error}</span>
+    <button class="ml-auto text-fg-subtle px-3 py-1 rounded border border-line hover:bg-surface-1" onclick={dismissUpdate}>
       Dismiss
     </button>
   </div>
