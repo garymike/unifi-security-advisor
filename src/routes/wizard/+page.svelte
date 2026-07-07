@@ -32,8 +32,11 @@
   );
 
   onMount(async () => {
-    const { openDb, getFindings } = await import('../../db/queries.js');
+    const { openDb, getFindings, listRuns } = await import('../../db/queries.js');
     const db = await openDb();
+    const runs = await listRuns(db);
+    const run = runs.find(r => r.id === runId);
+    if (run) tier = run.tier;
     findings = await getFindings(db, runId);
     queue = getQuestionQueue(findings);
   });

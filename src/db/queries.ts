@@ -27,11 +27,12 @@ export async function insertRun(
   host: string,
   profile: string,
   siteCount: number,
+  tier: Tier = 'standard',
 ): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute(
     'INSERT INTO runs (id, timestamp, host, profile, tier, site_count) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, new Date().toISOString(), host, profile, 'standard', siteCount],
+    [id, new Date().toISOString(), host, profile, tier, siteCount],
   );
   return id;
 }
