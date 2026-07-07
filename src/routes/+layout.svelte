@@ -1,13 +1,26 @@
 <script lang="ts">
   import '../app.css';
+  import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import type { Snippet } from 'svelte';
   import UpdateBanner from '../lib/components/UpdateBanner.svelte';
+  import { checkForUpdates } from '../lib/stores/updater.js';
 
   let { children }: { children: Snippet } = $props();
 
   // Hide tabs during the wizard — it's a linear flow that must not be interrupted
   const showTabs = $derived(!$page.url.pathname.startsWith('/wizard'));
+
+  // App version for the footer; only resolvable inside the Tauri runtime.
+  let appVersion = $state('');
+  onMount(async () => {
+    try {
+      const { getVersion } = await import('@tauri-apps/api/app');
+      appVersion = await getVersion();
+    } catch {
+      // Not in a Tauri context (dev preview / static build) — leave blank.
+    }
+  });
 
   const tabs = [
     { label: 'Home',    href: '/' },
@@ -43,3 +56,12 @@
 {/if}
 
 {@render children()}
+
+{#if showTabs}
+  <footer class="flex items-center gap-3 px-6 py-3 mt-4 border-t border-gray-100 text-xs text-gray-400">
+    {#if appVersion}<span>v{appVersion}</span>{/if}
+    <button class="text-blue-600 hover:underline" onclick={() => checkForUpdates(true)}>
+      Check for updates
+    </button>
+  </footer>
+{/if}

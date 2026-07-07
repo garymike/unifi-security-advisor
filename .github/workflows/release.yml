@@ -34,6 +34,17 @@ jobs:
         with:
           workspaces: src-tauri
       - run: npm ci
+      # Pull this version's CHANGELOG section into the release body so the
+      # in-app updater's "What's changed" shows real notes (not a generic line).
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<CHANGELOG_EOF'
+            node tools/changelog-section.mjs "${GITHUB_REF_NAME}"
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
       - uses: tauri-apps/tauri-action@fce9c6108b31ea247710505d3aaaa893ee6768d4 # v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +53,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: UniFi Security Advisor ${{ github.ref_name }}
-          releaseBody: See CHANGELOG.md for what changed in this release.
+          releaseBody: ${{ steps.notes.outputs.body }}
           # Publish as a draft: review the built artifacts, then publish the
           # release manually. Installed apps only see it once it's published
           # (a draft is never "latest").
