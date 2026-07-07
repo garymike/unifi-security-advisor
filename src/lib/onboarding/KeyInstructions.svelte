@@ -18,19 +18,19 @@
 <div class="space-y-4">
   <div class="flex gap-1 text-sm">
     {#each tiers as t}
-      <button type="button" class="px-3 py-1 rounded border {$connectTier === t ? 'bg-gray-800 text-white' : ''}"
+      <button type="button" class="px-3 py-1 rounded border border-line {$connectTier === t ? 'bg-accent text-on-accent' : 'bg-surface-2 text-fg-muted'}"
         onclick={() => connectTier.set(t)}>{t[0].toUpperCase() + t.slice(1)}</button>
     {/each}
   </div>
 
-  <ol class="list-decimal ml-5 space-y-1 text-sm text-gray-700">
+  <ol class="list-decimal ml-5 space-y-1 text-sm text-fg-muted">
     {#each block.steps as step}<li>{step}</li>{/each}
   </ol>
-  <p class="text-xs text-amber-700">{block.note}</p>
+  <p class="text-xs text-sev-warn">{block.note}</p>
 
   <button type="button" onclick={open} disabled={!portal}
-    class="px-4 py-2 rounded-lg border font-medium disabled:opacity-40">
+    class="px-4 py-2 rounded-lg border border-line text-fg hover:bg-surface-2 font-medium disabled:opacity-40">
     Open the key page
   </button>
-  {#if !portal}<p class="text-xs text-gray-400">Enter the controller host first.</p>{/if}
+  {#if !portal}<p class="text-xs text-fg-subtle">Enter the controller host first.</p>{/if}
 </div>
