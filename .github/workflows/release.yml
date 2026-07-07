@@ -54,10 +54,10 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: UniFi Security Advisor ${{ github.ref_name }}
           releaseBody: ${{ steps.notes.outputs.body }}
-          # Publish as a draft: review the built artifacts, then publish the
-          # release manually. Installed apps only see it once it's published
-          # (a draft is never "latest").
-          releaseDraft: true
+          # Publish immediately (not a draft): a successful build goes live as
+          # the "latest" release, so installed apps can auto-update to it with
+          # no manual publish step. The tag push is the release gate.
+          releaseDraft: false
           prerelease: false
           # Point the updater's generic windows-x86_64 entry at the NSIS
           # installer instead of the MSI (tauri defaults to MSI "for legacy
