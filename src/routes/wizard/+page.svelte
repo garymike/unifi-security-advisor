@@ -101,7 +101,7 @@
       <!-- Bucket bar -->
       <div class="flex h-2 rounded-full overflow-hidden mb-2 bg-surface-2">
         <div class="bg-sev-high" style="flex:{issueCount}"></div>
-        <div class="bg-fg-subtle" style="flex:{unknownCount}"></div>
+        <div class="bg-sev-info" style="flex:{unknownCount}"></div>
         <div class="bg-sev-ok" style="flex:{goodCount}"></div>
       </div>
       <div class="flex justify-between text-xs mb-6">

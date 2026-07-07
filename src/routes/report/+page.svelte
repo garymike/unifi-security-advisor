@@ -136,9 +136,9 @@
 
   {#if findings.length > 0}
     <!-- Proportional bucket bar -->
-    <div class="flex h-2 rounded-full overflow-hidden mb-4 bg-surface-2" title="Red: issues · Gray: unknown · Green: good">
+    <div class="flex h-2 rounded-full overflow-hidden mb-4 bg-surface-2" title="Red: issues · Blue: unknown · Green: good">
       <div class="bg-sev-high transition-all" style="flex:{issueFindings.length}"></div>
-      <div class="bg-sev-warn transition-all" style="flex:{unknownFindings.length}"></div>
+      <div class="bg-sev-info transition-all" style="flex:{unknownFindings.length}"></div>
       <div class="bg-sev-ok transition-all" style="flex:{goodFindings.length}"></div>
     </div>
   {/if}
