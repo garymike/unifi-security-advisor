@@ -31,9 +31,14 @@ describe('fixture: home (single-AP, flat network)', () => {
     expect(find(findings, 'LOG-FWD-001')).toMatchObject({ severity: 'low', status: 'unknown' });
   });
 
-  it('has no EOL, outdated-firmware, SSH, or high-TX-power findings (clean hardware)', () => {
+  it('flags the update-available device (recommendation), no EOL/SSH/high-TX findings', () => {
+    // Device aa:10:00:00:00:01 reports firmwareUpdatable=true, so a firmware
+    // update-available recommendation fires (the console's own signal, not a
+    // version heuristic). Everything else is clean.
+    const ver = find(findings, 'FW-VER');
+    expect(ver).toMatchObject({ status: 'recommendation', severity: 'medium' });
+    expect(ver!.id).toBe('FW-VER-aa:10:00:00:00:01');
     expect(find(findings, 'FW-EOL')).toBeUndefined();
-    expect(find(findings, 'FW-VER')).toBeUndefined();
     expect(find(findings, 'DEV-SSH')).toBeUndefined();
     expect(findings.some(f => f.id.includes('-TX'))).toBe(false);
   });
@@ -57,11 +62,11 @@ describe('fixture: small-business (multi-AP, segmented, mixed hardware age)', ()
     expect(find(findings, 'FW-EOL-002')).toMatchObject({ severity: 'medium', status: 'recommendation' });
   });
 
-  it('flags the outdated major firmware version by real device MAC (not "undefined")', () => {
+  it('flags a firmware-update-available device by real MAC (not "undefined")', () => {
     const f = find(findings, 'FW-VER-');
     expect(f).toBeDefined();
     expect(f!.id).not.toContain('undefined');
-    expect(f!.id).toBe('FW-VER-aa:20:00:00:00:04');
+    expect(f).toMatchObject({ status: 'recommendation', severity: 'medium' });
   });
 
   it('flags high TX power on both radios by real device MAC (not "undefined")', () => {
@@ -86,13 +91,17 @@ describe('fixture: small-business (multi-AP, segmented, mixed hardware age)', ()
     expect(devices.some(d => d.name === 'FailoverGateway')).toBe(true);
   });
 
-  it('also flags the failover gateways firmware as outdated major version - same field, different version-numbering domain as the advisory check, both correctly fire', () => {
+  it('flags every device the controller reports as updatable, by real MAC', () => {
+    // Three devices carry firmwareUpdatable=true (aa:…01/04/06); the fix keys
+    // off that signal, so all three get an update-available recommendation.
+    // The failover gateway (…06) is also caught by the CVE advisory check
+    // separately (ADV-), which is version-precise; both correctly fire.
     const verFindings = findings.filter(f => f.id.startsWith('FW-VER-'));
-    expect(verFindings).toHaveLength(2);
-    expect(verFindings.some(f => f.id === 'FW-VER-aa:20:00:00:00:06')).toBe(true);
-    // The pre-existing single-match assertion elsewhere in this file still
-    // resolves to the UAP-AC-LITE's finding (FW-VER-aa:20:00:00:00:04) because
-    // it's pushed earlier in device-iteration order and Array.sort is stable.
+    expect(verFindings).toHaveLength(3);
+    expect(verFindings.map(f => f.id)).toEqual(expect.arrayContaining([
+      'FW-VER-aa:20:00:00:00:01', 'FW-VER-aa:20:00:00:00:04', 'FW-VER-aa:20:00:00:00:06',
+    ]));
+    for (const f of verFindings) expect(f.id).not.toContain('undefined');
   });
 });
 

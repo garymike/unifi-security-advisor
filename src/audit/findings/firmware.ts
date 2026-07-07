@@ -57,16 +57,22 @@ export function findFirmware(site: NormalizedSite, _profile: string): Finding[] 
   for (const d of site.devices) {
     const mac = d['mac'] ?? d['macAddress'];
     const ver = String(d['version'] ?? d['firmwareVersion'] ?? '');
-    if (ver.includes('.')) {
-      const major = parseInt(ver.split('.')[0]!, 10);
-      if (!isNaN(major) && major < 7) findings.push({
-        id: `FW-VER-${mac ?? 'x'}`, section: 'Firmware', severity: 'high', status: 'gap',
-        title: `Device '${d['name'] ?? mac}' on outdated major version`,
-        currentState: `Firmware ${ver} is multiple major versions behind current.`,
-        recommendation: 'Update to latest stable firmware in a maintenance window.',
-        intentQuestion: null, evidence: {}, mapsTo: { cis_v8: '7.3' }, effort: 'quick', impact: 'high',
-      });
-    }
+    // Trust the controller's own "update available" signal instead of guessing
+    // from the version number. Gateways and consoles report their UniFi OS
+    // version (e.g. 5.x), which is current — the old `major < 7` heuristic
+    // wrongly flagged every one of them as "multiple majors behind". Real
+    // security-relevant outdated firmware is caught by findKnownAdvisories
+    // (CVE-precise), not a blanket version rule.
+    const updatable = d['firmwareUpdatable'] === true || d['upgradable'] === true;
+    if (updatable) findings.push({
+      id: `FW-VER-${mac ?? 'x'}`, section: 'Firmware', severity: 'medium', status: 'recommendation',
+      title: `Firmware update available for '${d['name'] ?? mac}'`,
+      currentState: `${d['name'] ?? mac} is on ${ver || 'an unknown version'}, and the controller reports a newer firmware is available.`,
+      recommendation: 'Apply the available firmware update in a maintenance window.',
+      intentQuestion: null,
+      evidence: { firmwareVersion: ver },
+      mapsTo: { cis_v8: '7.3', nist_csf: 'PR.IP-12' }, effort: 'quick', impact: 'medium',
+    });
   }
 
   return findings;
