@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "unifi-security-advisor",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "identifier": "com.unifi-security-advisor.app",
   "build": {
     "frontendDist": "../build",

@@ -10,6 +10,16 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-06
+
+### Desktop app
+- Visual overhaul: a new dark-first look with a UniFi-blue accent, calmer severity colors, the Inter font, and every screen restyled (home, connect, report, wizard, history, backup). Theme has three modes: **system** (the default, which follows your OS and updates live), **light**, and **dark**, switched from a control in the footer. Built on a design-token system so both themes stay consistent.
+- Fixed the local API-key instructions after dogfooding a real console: the key is created in a dedicated **Integrations** section (visible to the console Owner account), not under Settings → Control Plane, and the guidance now includes a cloud-key fallback if the local Integrations page isn't available.
+
+### Build / internal
+- CI now runs only the test suites a change can affect (path-filtered), so docs or metadata edits no longer trigger the full Rust build.
+- Stopped tracking local editor/tooling config (`.claude/`) in the repo, and refreshed the README for the current app plus the download/install story.
+
 ## [0.4.1] - 2026-07-06
 
 ### Desktop app
@@ -77,7 +87,8 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 - UniFi OS console `.unifi` backup decryption (Node CLI): decrypts and parses the previously-undocumented console-level System Backup format (Cloud Gateway Fiber and other UniFi OS consoles). AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream (`backup/network/db.gz`). Implemented as a fallback in `parseBackupNodejs` alongside the unchanged classic `.unf` path; both produce the same `Collections` shape. New module `src/audit/parseUnifiOsConsoleBackup.ts`.
 - `tools/anonymize-backup.ts` maintainer tool: turns a real backup into a safe committed test fixture via a field-level projection (positive per-collection allowlist — any field not explicitly kept is dropped), guarded by a permanent structural safety test. Raw backups are gitignored (`*.unf`, `*.unifi`).
 
-[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.5.0
 [0.4.1]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.1
 [0.4.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.0
 [0.3.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.3.0
