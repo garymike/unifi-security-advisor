@@ -5,21 +5,21 @@
 </script>
 
 <div class="space-y-4">
-  <p class="text-sm text-gray-600">How do you want to connect?</p>
+  <p class="text-sm text-fg-muted">How do you want to connect?</p>
   <div class="flex gap-2">
-    <button type="button" class="px-4 py-2 rounded-lg border {mode === 'local' ? 'bg-blue-600 text-white' : ''}"
+    <button type="button" class="px-4 py-2 rounded-lg border {mode === 'local' ? 'bg-accent text-on-accent border-accent' : 'border-line text-fg'}"
       onclick={() => (mode = 'local')}>Local (Network Integration)</button>
-    <button type="button" class="px-4 py-2 rounded-lg border {mode === 'cloud' ? 'bg-blue-600 text-white' : ''}"
+    <button type="button" class="px-4 py-2 rounded-lg border {mode === 'cloud' ? 'bg-accent text-on-accent border-accent' : 'border-line text-fg'}"
       onclick={() => (mode = 'cloud')}>Cloud (Site Manager)</button>
   </div>
-  <p class="text-xs text-gray-500">
+  <p class="text-xs text-fg-subtle">
     Choose Cloud when the console is behind CGNAT, has a dynamic WAN IP, or you manage multiple sites.
   </p>
   {#if mode === 'local'}
     <label class="block">
-      <span class="text-sm font-medium text-gray-700">Controller host</span>
+      <span class="text-sm font-medium text-fg-muted">Controller host</span>
       <input type="text" bind:value={host} placeholder="192.168.1.1"
-        class="mt-1 block w-full border rounded-lg px-3 py-2" />
+        class="mt-1 block w-full bg-surface-1 border border-line focus:border-accent rounded-lg px-3 py-2 text-fg placeholder:text-fg-subtle" />
     </label>
   {/if}
 </div>

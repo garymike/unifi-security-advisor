@@ -5,6 +5,7 @@
   import type { Snippet } from 'svelte';
   import UpdateBanner from '../lib/components/UpdateBanner.svelte';
   import { checkForUpdates } from '../lib/stores/updater.js';
+  import { themeMode, cycleTheme } from '../lib/stores/theme.js';
 
   let { children }: { children: Snippet } = $props();
 
@@ -40,14 +41,14 @@
 <UpdateBanner />
 
 {#if showTabs}
-  <nav class="flex border-b border-gray-200 bg-white sticky top-0 z-10">
+  <nav class="flex border-b border-line bg-surface-0 sticky top-0 z-10">
     {#each tabs as tab}
       <a
         href={tab.href}
         class="px-6 py-3 text-sm font-medium border-b-2 transition-colors
           {isActive(tab.href)
-            ? 'border-blue-600 text-blue-700'
-            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+            ? 'border-accent text-accent'
+            : 'border-transparent text-fg-subtle hover:text-fg hover:border-line-strong'}"
       >
         {tab.label}
       </a>
@@ -58,10 +59,13 @@
 {@render children()}
 
 {#if showTabs}
-  <footer class="flex items-center gap-3 px-6 py-3 mt-4 border-t border-gray-100 text-xs text-gray-400">
+  <footer class="flex items-center gap-3 px-6 py-3 mt-4 border-t border-line text-xs text-fg-subtle">
     {#if appVersion}<span>v{appVersion}</span>{/if}
-    <button class="text-blue-600 hover:underline" onclick={() => checkForUpdates(true)}>
+    <button class="text-accent hover:underline" onclick={() => checkForUpdates(true)}>
       Check for updates
+    </button>
+    <button class="text-fg-subtle hover:text-fg" onclick={cycleTheme} aria-label="Theme: {$themeMode}">
+      {$themeMode === 'system' ? '◐ System' : $themeMode === 'light' ? '☀ Light' : '☾ Dark'}
     </button>
   </footer>
 {/if}

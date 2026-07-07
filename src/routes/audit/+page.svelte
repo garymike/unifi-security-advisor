@@ -93,27 +93,27 @@
 </script>
 
 <main class="p-8 max-w-xl mx-auto">
-  <a href="/" class="text-blue-600 text-sm mb-6 block">← Back</a>
-  <h1 class="text-2xl font-bold mb-6">Connect to your UniFi console</h1>
+  <a href="/" class="text-accent text-sm mb-6 block">← Back</a>
+  <h1 class="text-2xl font-bold mb-6 text-fg">Connect to your UniFi console</h1>
 
   {#if step === 'check'}
     <SavedKeys {saved} {orphans} {onuse} {onforget} {onscan} onskip={() => (step = 'mode')} />
-    {#if checkError}<p class="text-red-600 text-sm mt-3">{checkError}</p>{/if}
+    {#if checkError}<p class="text-sev-high text-sm mt-3">{checkError}</p>{/if}
   {:else if step === 'mode'}
     <ModeStep bind:mode bind:host />
-    <button class="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+    <button class="mt-6 bg-accent text-on-accent hover:bg-accent-hover px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
       onclick={toGetKey} disabled={mode === 'local' && !host.trim()}>Next</button>
   {:else if step === 'getkey'}
     <KeyInstructions {mode} {host} />
     <div class="mt-6 flex gap-3">
-      <button class="px-4 py-2 rounded-lg border" onclick={() => (step = 'mode')}>Back</button>
-      <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
+      <button class="px-4 py-2 rounded-lg border border-line text-fg hover:bg-surface-2" onclick={() => (step = 'mode')}>Back</button>
+      <button class="bg-accent text-on-accent hover:bg-accent-hover px-6 py-2 rounded-lg font-semibold"
         onclick={() => (step = 'validate')}>I have my key →</button>
     </div>
   {:else if step === 'validate'}
     <ValidateStep {mode} {host} {onrun} />
-    {#if runError}<p class="text-red-600 text-sm mt-3">{runError}</p>{/if}
-    {#if running}<p class="text-gray-500 text-sm mt-3">Running audit…</p>{/if}
-    <button class="mt-4 px-4 py-2 rounded-lg border" onclick={() => (step = 'getkey')} disabled={running}>Back</button>
+    {#if runError}<p class="text-sev-high text-sm mt-3">{runError}</p>{/if}
+    {#if running}<p class="text-fg-subtle text-sm mt-3">Running audit…</p>{/if}
+    <button class="mt-4 px-4 py-2 rounded-lg border border-line text-fg hover:bg-surface-2" onclick={() => (step = 'getkey')} disabled={running}>Back</button>
   {/if}
 </main>

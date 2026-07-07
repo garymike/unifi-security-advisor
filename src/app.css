@@ -1,1 +1,52 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+:root {
+  color-scheme: dark;
+  --surface-0: #0e1116; --surface-1: #161b22; --surface-2: #1c222b;
+  --line: #232a34; --line-strong: #2f3742;
+  --fg: #e6eaf0; --fg-muted: #9aa5b4; --fg-subtle: #6b7684;
+  --accent: #3b82f6; --accent-hover: #2f74e6; --accent-tint: #16233b; --on-accent: #ffffff;
+  --sev-high: #f2555a; --sev-high-tint: #241417;
+  --sev-warn: #e0a13a; --sev-warn-tint: #241d10;
+  --sev-ok: #34d399; --sev-ok-tint: #10251d;
+  --sev-info: #5b9bf6; --sev-info-tint: #131f38;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --surface-0: #f6f7f9; --surface-1: #ffffff; --surface-2: #ffffff;
+  --line: #e5e7eb; --line-strong: #d1d5db;
+  --fg: #111827; --fg-muted: #4b5563; --fg-subtle: #9ca3af;
+  --accent: #1d6fe0; --accent-hover: #1a63c9; --accent-tint: #e8f1fe; --on-accent: #ffffff;
+  --sev-high: #dc2626; --sev-high-tint: #fef2f2;
+  --sev-warn: #b45309; --sev-warn-tint: #fffbeb;
+  --sev-ok: #059669; --sev-ok-tint: #ecfdf5;
+  --sev-info: #2563eb; --sev-info-tint: #eff6ff;
+}
+html { background: var(--surface-0); }
+
+@theme {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-tint: var(--accent-tint);
+  --color-on-accent: var(--on-accent);
+  --color-sev-high: var(--sev-high);
+  --color-sev-high-tint: var(--sev-high-tint);
+  --color-sev-warn: var(--sev-warn);
+  --color-sev-warn-tint: var(--sev-warn-tint);
+  --color-sev-ok: var(--sev-ok);
+  --color-sev-ok-tint: var(--sev-ok-tint);
+  --color-sev-info: var(--sev-info);
+  --color-sev-info-tint: var(--sev-info-tint);
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body { background: var(--surface-0); color: var(--fg); font-family: var(--font-sans); }

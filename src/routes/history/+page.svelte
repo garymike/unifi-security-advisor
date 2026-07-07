@@ -85,46 +85,59 @@
     const sB = summaries.find(s => s.id === selectedB)!;
     return new Date(sA.timestamp) <= new Date(sB.timestamp) ? [sA, sB] : [sB, sA];
   });
+
+  const GRADE_BADGE: Record<'ok' | 'warn' | 'high', string> = {
+    ok: 'bg-sev-ok-tint text-sev-ok',
+    warn: 'bg-sev-warn-tint text-sev-warn',
+    high: 'bg-sev-high-tint text-sev-high',
+  };
+
+  function gradeSev(grade: string): 'ok' | 'warn' | 'high' {
+    const letter = grade[0];
+    if (letter === 'A' || letter === 'B') return 'ok';
+    if (letter === 'C') return 'warn';
+    return 'high';
+  }
 </script>
 
 <main class="p-6 max-w-3xl mx-auto">
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-bold">Audit History</h1>
+      <h1 class="text-2xl font-bold text-fg">Audit History</h1>
       {#if !loading}
-        <p class="text-sm text-gray-500 mt-1">{summaries.length} run{summaries.length !== 1 ? 's' : ''}</p>
+        <p class="text-sm text-fg-subtle mt-1">{summaries.length} run{summaries.length !== 1 ? 's' : ''}</p>
       {/if}
     </div>
     {#if summaries.length >= 2}
-      <p class="text-xs text-gray-400 text-right">Click one point to select<br>Click two points to compare</p>
+      <p class="text-xs text-fg-subtle text-right">Click one point to select<br>Click two points to compare</p>
     {/if}
   </div>
 
   {#if loading}
-    <p class="text-gray-400 text-center py-12">Loading history...</p>
+    <p class="text-fg-subtle text-center py-12">Loading history...</p>
 
   {:else if summaries.length === 0}
     <div class="text-center py-16">
-      <p class="text-gray-400 mb-4">No audit runs yet.</p>
-      <a href="/audit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium">Run First Audit</a>
+      <p class="text-fg-subtle mb-4">No audit runs yet.</p>
+      <a href="/audit" class="bg-accent text-on-accent px-5 py-2 rounded-lg text-sm font-medium">Run First Audit</a>
     </div>
 
   {:else}
-    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-6">
+    <div class="bg-surface-1 border border-line rounded-xl p-3 mb-6">
       <svg viewBox="0 0 {W} {H}" class="w-full">
         {#each [100, 75, 50, 25] as v}
-          <line x1={PL} y1={toY(v)} x2={W - PR} y2={toY(v)} stroke="#e2e8f0" stroke-width="0.5"/>
-          <text x={PL - 4} y={toY(v) + 3} font-size="8" fill="#94a3b8" text-anchor="end">{v}</text>
+          <line x1={PL} y1={toY(v)} x2={W - PR} y2={toY(v)} stroke="var(--line)" stroke-width="0.5"/>
+          <text x={PL - 4} y={toY(v) + 3} font-size="8" fill="var(--fg-subtle)" text-anchor="end">{v}</text>
         {/each}
 
         {#if summaries.length > 1}
           <polygon
             points="{polyline} {toX(summaries.length - 1)},{PT + innerH} {toX(0)},{PT + innerH}"
-            fill="#1e40af" opacity="0.06"
+            fill="var(--accent)" opacity="0.12"
           />
           <polyline
             points={polyline}
-            fill="none" stroke="#1e40af" stroke-width="2.5"
+            fill="none" stroke="var(--accent)" stroke-width="2.5"
             stroke-linejoin="round" stroke-linecap="round"
           />
         {/if}
@@ -134,7 +147,7 @@
           {@const x = toX(i)}
           {@const y = toY(s.score)}
           {#if sel}
-            <text x={x} y={y - 10} font-size="9" fill="#1e40af" text-anchor="middle" font-weight="bold">
+            <text x={x} y={y - 10} font-size="9" fill="var(--accent)" text-anchor="middle" font-weight="bold">
               {s.score}/{s.grade}
             </text>
           {/if}
@@ -142,12 +155,12 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <circle
             cx={x} cy={y} r={sel ? 7 : 5}
-            fill={sel ? '#1e40af' : 'white'} stroke="#1e40af" stroke-width="2"
+            fill={sel ? 'var(--accent)' : 'var(--surface-1)'} stroke="var(--accent)" stroke-width="2"
             style="cursor:pointer"
             onclick={() => handleClick(s.id)}
           />
           <text x={x} y={H - 4} font-size="8" text-anchor="middle"
-            fill={sel ? '#374151' : '#94a3b8'} font-weight={sel ? 'bold' : 'normal'}>
+            fill={sel ? 'var(--fg-muted)' : 'var(--fg-subtle)'} font-weight={sel ? 'bold' : 'normal'}>
             {fmt(s.timestamp)}
           </text>
         {/each}
@@ -155,74 +168,74 @@
     </div>
 
     {#if selectedA && !selectedB}
-      <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl mb-4">
-        <div class="text-sm text-gray-600">
+      <div class="flex items-center justify-between p-4 border border-line rounded-xl mb-4">
+        <div class="text-sm text-fg-muted">
           {#if selectedSummaryA}
-            <span class="font-medium">{fmt(selectedSummaryA.timestamp)}</span> — {selectedSummaryA.score}/{selectedSummaryA.grade}
+            <span class="font-medium px-2.5 py-1 rounded-full {GRADE_BADGE[gradeSev(selectedSummaryA.grade)]}">{fmt(selectedSummaryA.timestamp)} — {selectedSummaryA.score}/{selectedSummaryA.grade}</span>
           {/if}
         </div>
         <div class="flex gap-2">
           <button
-            class="text-xs text-gray-400 px-3 py-1 border rounded hover:bg-gray-50"
+            class="text-xs text-fg-subtle px-3 py-1 border border-line rounded hover:bg-surface-2"
             onclick={() => { selectedA = null; }}
           >Deselect</button>
           <a
             href="/report?runId={selectedA}"
-            class="text-xs bg-blue-600 text-white px-3 py-1 rounded font-medium hover:bg-blue-700"
+            class="text-xs bg-accent text-on-accent px-3 py-1 rounded font-medium hover:bg-accent-hover"
           >View Report →</a>
         </div>
       </div>
-      <p class="text-xs text-gray-400 text-center">Select a second point to compare</p>
+      <p class="text-xs text-fg-subtle text-center">Select a second point to compare</p>
     {/if}
 
     {#if diff && diffPair}
       {@const [earlier, later] = diffPair}
-      <div class="border border-gray-200 rounded-xl overflow-hidden">
-        <div class="bg-gray-50 px-4 py-3 flex justify-between items-center">
-          <span class="text-sm font-semibold text-gray-700">
+      <div class="border border-line rounded-xl overflow-hidden">
+        <div class="bg-surface-2 px-4 py-3 flex justify-between items-center">
+          <span class="text-sm font-semibold text-fg-muted">
             {fmt(earlier.timestamp)} → {fmt(later.timestamp)}
           </span>
-          <span class="text-sm font-bold {diff.scoreDelta >= 0 ? 'text-green-600' : 'text-red-600'}">
+          <span class="text-sm font-bold {diff.scoreDelta >= 0 ? 'text-sev-ok' : 'text-sev-high'}">
             {earlier.score}/{earlier.grade} → {later.score}/{later.grade}
             {diff.scoreDelta > 0 ? `↑${diff.scoreDelta}` : diff.scoreDelta < 0 ? `↓${Math.abs(diff.scoreDelta)}` : '—'}
           </span>
         </div>
         <div class="p-4 space-y-2">
           {#each diff.removed as f (f.id)}
-            <div class="flex items-start gap-2 p-2 bg-green-50 rounded-lg text-sm">
-              <span class="text-green-700 font-bold shrink-0 text-xs">✓ RESOLVED</span>
-              <span class="text-gray-700">{f.title} <span class="text-gray-400 text-xs uppercase">({f.severity})</span></span>
+            <div class="flex items-start gap-2 p-2 bg-sev-ok-tint rounded-lg text-sm">
+              <span class="text-sev-ok font-bold shrink-0 text-xs">✓ RESOLVED</span>
+              <span class="text-fg-muted">{f.title} <span class="text-fg-subtle text-xs uppercase">({f.severity})</span></span>
             </div>
           {/each}
           {#each diff.added as f (f.id)}
-            <div class="flex items-start gap-2 p-2 bg-red-50 rounded-lg text-sm">
-              <span class="text-red-700 font-bold shrink-0 text-xs">+ NEW</span>
-              <span class="text-gray-700">{f.title} <span class="text-gray-400 text-xs uppercase">({f.severity})</span></span>
+            <div class="flex items-start gap-2 p-2 bg-sev-high-tint rounded-lg text-sm">
+              <span class="text-sev-high font-bold shrink-0 text-xs">+ NEW</span>
+              <span class="text-fg-muted">{f.title} <span class="text-fg-subtle text-xs uppercase">({f.severity})</span></span>
             </div>
           {/each}
           {#each diff.changed as c (c.after.id)}
-            <div class="flex items-start gap-2 p-2 bg-amber-50 rounded-lg text-sm">
-              <span class="text-amber-700 font-bold shrink-0 text-xs">~ CHANGED</span>
-              <span class="text-gray-700">
+            <div class="flex items-start gap-2 p-2 bg-sev-warn-tint rounded-lg text-sm">
+              <span class="text-sev-warn font-bold shrink-0 text-xs">~ CHANGED</span>
+              <span class="text-fg-muted">
                 {c.after.title}
                 {#if c.before.status !== c.after.status}
-                  <span class="text-gray-400 text-xs">{c.before.status} → {c.after.status}</span>
+                  <span class="text-fg-subtle text-xs">{c.before.status} → {c.after.status}</span>
                 {/if}
                 {#if c.before.severity !== c.after.severity}
-                  <span class="text-gray-400 text-xs">{c.before.severity} → {c.after.severity}</span>
+                  <span class="text-fg-subtle text-xs">{c.before.severity} → {c.after.severity}</span>
                 {/if}
               </span>
             </div>
           {/each}
           {#if diff.added.length === 0 && diff.removed.length === 0 && diff.changed.length === 0}
-            <p class="text-gray-400 text-sm text-center py-2">No finding changes between these runs.</p>
+            <p class="text-fg-subtle text-sm text-center py-2">No finding changes between these runs.</p>
           {/if}
         </div>
         <div class="px-4 pb-4 flex gap-2">
-          <a href="/report?runId={earlier.id}" class="text-xs border rounded px-3 py-1 hover:bg-gray-50 text-gray-600">
+          <a href="/report?runId={earlier.id}" class="text-xs border border-line rounded px-3 py-1 hover:bg-surface-2 text-fg-muted">
             {fmt(earlier.timestamp)} report →
           </a>
-          <a href="/report?runId={later.id}" class="text-xs border rounded px-3 py-1 hover:bg-gray-50 text-gray-600">
+          <a href="/report?runId={later.id}" class="text-xs border border-line rounded px-3 py-1 hover:bg-surface-2 text-fg-muted">
             {fmt(later.timestamp)} report →
           </a>
         </div>
