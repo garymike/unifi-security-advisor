@@ -52,17 +52,22 @@
 
   async function onuse(entry: KeyIdentity) {
     checkError = '';
-    const secret = await keychain.load(entry.identity);
-    if (!secret) { checkError = 'That saved key could not be read; it may have been removed.'; return; }
-    const client = new UniFiClient({
-      key: secret, host: entry.host ?? '', useCloud: entry.mode === 'cloud',
-      verifySSL: entry.mode === 'cloud', profile: 'home_office',
-    });
-    const res = await validateConnection(client);
-    if (!res.ok) { checkError = res.error?.message ?? 'The saved key no longer validates.'; return; }
-    // Re-validated: hand straight to the run path.
-    mode = entry.mode; host = entry.host ?? '';
-    await onrun({ apiKey: secret });
+    try {
+      const secret = await keychain.load(entry.identity);
+      if (!secret) { checkError = 'That saved key could not be read; it may have been removed.'; return; }
+      const client = new UniFiClient({
+        key: secret, host: entry.host ?? '', useCloud: entry.mode === 'cloud',
+        verifySSL: entry.mode === 'cloud', profile: 'home_office',
+      });
+      const res = await validateConnection(client);
+      if (!res.ok) { checkError = res.error?.message ?? 'The saved key no longer validates.'; return; }
+      // Re-validated: hand straight to the run path.
+      mode = entry.mode; host = entry.host ?? '';
+      await onrun({ apiKey: secret });
+    } catch {
+      checkError = 'Could not read the saved key from your keychain. It may be locked, or you can Forget it and re-enter.';
+      return;
+    }
   }
 
   function toGetKey() {
