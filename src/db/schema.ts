@@ -38,6 +38,10 @@ export const CREATE_TABLES = [
     site_name   TEXT,
     api_gaps    TEXT
   )`,
+  `CREATE TABLE IF NOT EXISTS app_kv (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+  )`,
 ];
 
 export type Tier = 'guided' | 'standard' | 'pro';
