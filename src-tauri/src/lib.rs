@@ -46,6 +46,14 @@ async fn unifi_fetch(url: String, api_key: String) -> Result<serde_json::Value, 
     Ok(serde_json::json!({ "status": status, "data": data }))
 }
 
+/// Write UTF-8 text to a path the user picked via the save dialog. A browser
+/// `<a download>` is silently ignored inside the Tauri webview, so the report
+/// export saves through this command instead.
+#[command]
+fn write_text_file(path: String, contents: String) -> Result<(), String> {
+    std::fs::write(&path, contents).map_err(|e| format!("Cannot write '{}': {}", path, e))
+}
+
 /// Parse a UniFi backup file. Returns raw MongoDB collections as JSON.
 /// Handles two formats: the classic `.unf` scheme (AES-128-CBC → ZIP → BSON)
 /// and the newer UniFi OS console `.unifi` scheme (AES-256-CBC with an embedded
@@ -458,6 +466,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             unifi_fetch,
             parse_backup,
+            write_text_file,
             keychain::keychain_set,
             keychain::keychain_get,
             keychain::keychain_delete,

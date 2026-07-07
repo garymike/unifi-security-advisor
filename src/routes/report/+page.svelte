@@ -92,7 +92,9 @@
     findings
   );
 
-  function exportMarkdown() {
+  let exportMsg = $state('');
+
+  function buildMarkdown() {
     const lines = ['# UniFi Security Advisor Report', ''];
     if (posture) lines.push(`**Posture score:** ${posture.score} / ${posture.grade} — ${posture.label}`, '');
     for (const f of findings) {
@@ -102,11 +104,44 @@
       if (f.recommendation) lines.push(`**Recommend:** ${f.recommendation}`, '');
       lines.push('---', '');
     }
-    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `unifi-report-${runId.slice(0, 8)}.md`;
-    a.click();
+    return lines.join('\n');
+  }
+
+  const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+  async function exportMarkdown() {
+    const md = buildMarkdown();
+    const filename = `unifi-report-${runId.slice(0, 8)}.md`;
+    if (IS_TAURI) {
+      // A browser <a download> is ignored inside the Tauri webview, so save
+      // through the native dialog + a Rust write command instead.
+      try {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        const { invoke } = await import('@tauri-apps/api/core');
+        const path = await save({ defaultPath: filename, filters: [{ name: 'Markdown', extensions: ['md'] }] });
+        if (!path) return; // cancelled
+        await invoke('write_text_file', { path, contents: md });
+        exportMsg = 'Report saved.';
+      } catch (e) {
+        exportMsg = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
+      }
+    } else {
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      exportMsg = 'Report downloaded.';
+    }
+  }
+
+  async function copyMarkdown() {
+    try {
+      await navigator.clipboard.writeText(buildMarkdown());
+      exportMsg = 'Report copied to clipboard.';
+    } catch (e) {
+      exportMsg = `Copy failed: ${e instanceof Error ? e.message : String(e)}`;
+    }
   }
 </script>
 
@@ -128,11 +163,18 @@
           <span class="text-fg">{posture.score}</span> / {posture.grade}
         </span>
       {/if}
+      <button class="border border-line rounded-lg px-4 py-2 text-sm font-medium text-fg hover:bg-surface-2" onclick={copyMarkdown}>
+        Copy
+      </button>
       <button class="border border-line rounded-lg px-4 py-2 text-sm font-medium text-fg hover:bg-surface-2" onclick={exportMarkdown}>
         Export Markdown
       </button>
     </div>
   </div>
+
+  {#if exportMsg}
+    <p class="text-xs text-fg-subtle mb-4 -mt-2">{exportMsg}</p>
+  {/if}
 
   {#if findings.length > 0}
     <!-- Proportional bucket bar -->
