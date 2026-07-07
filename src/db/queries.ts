@@ -131,6 +131,26 @@ export async function getSiteIds(db: DbInstance, runId: string): Promise<string[
 }
 
 /**
+ * The union of API-coverage gaps recorded across a run's sites. Empty means the
+ * run came from a backup file (full coverage, no gaps); a live/API run always
+ * gaps at least `port_forwards`/`traffic_routes` (never requested over the API),
+ * so an empty set reliably identifies backup-file mode.
+ */
+export async function getApiGaps(db: DbInstance, runId: string): Promise<string[]> {
+  const rows = await db.select<Record<string, unknown>[]>(
+    'SELECT api_gaps FROM sites WHERE run_id = ?',
+    [runId],
+  );
+  const gaps = new Set<string>();
+  for (const r of rows) {
+    try {
+      for (const g of JSON.parse(String(r['api_gaps'] ?? '[]')) as unknown[]) gaps.add(String(g));
+    } catch { /* ignore malformed api_gaps */ }
+  }
+  return [...gaps];
+}
+
+/**
  * A run's findings with the wizard's answers applied and cross-answer tensions
  * recomputed — the canonical view used everywhere a score or finding list is
  * shown (report, history, home), so they never disagree. Raw `getFindings` is

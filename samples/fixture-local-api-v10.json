@@ -22,7 +22,7 @@
     },
     "wlans": {
       "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
-      "data": [ { "type": "WIFI", "id": "w1", "name": "HomeNet", "enabled": true, "securityConfiguration": { "type": "WPA2" }, "network": { "id": "n1" } } ]
+      "data": [ { "type": "WIFI", "id": "w1", "name": "HomeNet", "enabled": true, "securityConfiguration": { "type": "WPA2_PERSONAL" }, "network": { "id": "n1" } } ]
     },
     "firewall_policies": {
       "offset": 0, "limit": 25, "count": 1, "totalCount": 1,
