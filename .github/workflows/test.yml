@@ -14,8 +14,8 @@ jobs:
     name: JS (typecheck + vitest)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           cache: npm
@@ -29,7 +29,7 @@ jobs:
     name: Rust (cargo test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # The Tauri crate links against WebKitGTK/GTK, so its system dev
       # packages must be present for the lib to compile — even though the
       # unit tests only exercise pure parsing logic (no window/webview).
@@ -46,7 +46,7 @@ jobs:
       # ubuntu-latest ships a stable Rust toolchain, so no toolchain action
       # is needed. Swatinem/rust-cache caches the registry + build artifacts
       # keyed on Cargo.lock so tauri doesn't recompile from scratch each run.
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
         with:
           workspaces: src-tauri
       - name: Run cargo test
