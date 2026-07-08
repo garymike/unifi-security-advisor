@@ -10,6 +10,15 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-07-07
+
+### Findings
+- Wi-Fi security is now assessed on **live audits**, not just backups. The audit reads the v10 API's nested `securityConfiguration` (WPA2 / WPA2-WPA3 mixed / WPA3 / open), so a WPA2-only SSID gets the "consider WPA3" recommendation on a live run instead of being silently skipped.
+- New finding: an **open (unencrypted) SSID** is flagged as a high-severity gap, with an intent question so an intentional captive-portal guest network can be acknowledged rather than nagged about.
+
+### Desktop app
+- The report's guidance line on "unknown" findings is now aware of how the audit was run: a backup-file audit no longer tells you to "use backup-file mode" (you already did) — it points you to verify the setting in your controller instead.
+
 ## [0.5.1] - 2026-07-07
 
 Bug-fix release from dogfooding the audit against a real Cloud Gateway Fiber (UniFi Network 10.4.57).
@@ -98,7 +107,8 @@ Bug-fix release from dogfooding the audit against a real Cloud Gateway Fiber (Un
 - UniFi OS console `.unifi` backup decryption (Node CLI): decrypts and parses the previously-undocumented console-level System Backup format (Cloud Gateway Fiber and other UniFi OS consoles). AES-256-CBC with an embedded per-file IV → gzip'd TAR → marker-based BSON stream (`backup/network/db.gz`). Implemented as a fallback in `parseBackupNodejs` alongside the unchanged classic `.unf` path; both produce the same `Collections` shape. New module `src/audit/parseUnifiOsConsoleBackup.ts`.
 - `tools/anonymize-backup.ts` maintainer tool: turns a real backup into a safe committed test fixture via a field-level projection (positive per-collection allowlist — any field not explicitly kept is dropped), guarded by a permanent structural safety test. Raw backups are gitignored (`*.unf`, `*.unifi`).
 
-[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/garymike/unifi-security-advisor/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.5.2
 [0.5.1]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.5.1
 [0.5.0]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.5.0
 [0.4.1]: https://github.com/garymike/unifi-security-advisor/releases/tag/v0.4.1
