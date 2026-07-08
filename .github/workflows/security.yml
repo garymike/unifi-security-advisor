@@ -8,17 +8,55 @@ on:
     - cron: '0 8 * * 1'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   scan:
     permissions:
       contents: read
-      pull-requests: read
-    uses: garymike/security-workflows/.github/workflows/security-scan.yml@fbd11e574f4bfab4a132228457d33267609c8470 # main @ 2026-07-06
+      packages: read
+    uses: garymike/security-workflows/.github/workflows/security-scan.yml@854f2d650e52253b34fcf8f416198ef8bf82abdc # v0.4.0
     secrets: inherit
+
+  gha-security:
+    permissions:
+      contents: read
+      packages: read
+    uses: garymike/security-workflows/.github/workflows/gha-security.yml@854f2d650e52253b34fcf8f416198ef8bf82abdc # v0.4.0
+    secrets: inherit
+
+  sast:
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    uses: garymike/security-workflows/.github/workflows/sast.yml@854f2d650e52253b34fcf8f416198ef8bf82abdc # v0.4.0
+    secrets: inherit
+
+  iac-security:
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    uses: garymike/security-workflows/.github/workflows/iac-security.yml@854f2d650e52253b34fcf8f416198ef8bf82abdc # v0.4.0
+    secrets: inherit
+
+  codeql:
+    # deep engine — run on PRs, main pushes, and the schedule (skip feature-branch pushes)
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: garymike/security-workflows/.github/workflows/codeql.yml@854f2d650e52253b34fcf8f416198ef8bf82abdc # v0.4.0
+    with:
+      languages: javascript-typescript,python
 
   audit:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
-    uses: garymike/security-workflows/.github/workflows/security-audit.yml@fbd11e574f4bfab4a132228457d33267609c8470 # main @ 2026-07-06
+      administration: read
+    uses: garymike/security-workflows/.github/workflows/security-audit.yml@854f2d650e52253b34fcf8f416198ef8bf82abdc # v0.4.0
     secrets: inherit
