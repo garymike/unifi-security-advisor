@@ -55,12 +55,15 @@ describe('fixture: UniFi Network v10 live-API response (spec-shaped)', () => {
     expect(v!.evidence['version']).toBe('10.3.58');
   });
 
-  it('does not false-alarm on the v10 wifi shape (security nested in securityConfiguration)', () => {
-    // wifi.ts reads w.security / w.x_passphrase, which the v10 shape does not
-    // expose at top level, so it must produce NO Wi-Fi finding rather than a
-    // spurious "open network" / "weak PSK" alarm. WLAN security still comes
-    // from backup mode until a validated v10 adapter exists.
+  it('reads WLAN security from the v10 securityConfiguration shape (WPA2_PERSONAL → WPA2-only)', () => {
+    // wifi.ts resolves security from securityConfiguration.type on live v10.
+    // HomeNet is WPA2_PERSONAL, so it must emit the WPA2-only recommendation
+    // and nothing else — no spurious "open network" (it's encrypted) and no
+    // "weak PSK" (the API never returns the passphrase).
     const wifiFindings = findings.filter(f => f.id.startsWith('WIFI-'));
-    expect(wifiFindings).toEqual([]);
+    expect(wifiFindings).toHaveLength(1);
+    expect(wifiFindings[0]!.id).toMatch(/-WPA$/);
+    expect(wifiFindings[0]!.status).toBe('recommendation');
+    expect(findings.some(f => f.id.endsWith('-OPEN') || f.id.endsWith('-PSK'))).toBe(false);
   });
 });

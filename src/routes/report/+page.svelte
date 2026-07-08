@@ -60,9 +60,10 @@
   let showGood = $state(false);
   let noRuns = $state(false);
   let resolvedFromLatest = $state(false);
+  let isBackupMode = $state(false);
 
   onMount(async () => {
-    const { openDb, listRuns, getAnsweredFindings } = await import('../../db/queries.js');
+    const { openDb, listRuns, getAnsweredFindings, getApiGaps } = await import('../../db/queries.js');
     const db = await openDb();
 
     // No run selected? Fall back to the most recent audit instead of a dead end.
@@ -77,6 +78,8 @@
     }
 
     findings = await getAnsweredFindings(db, id);
+    // A backup run has no API gaps; a live run always gaps port_forwards etc.
+    isBackupMode = (await getApiGaps(db, id)).length === 0;
   });
 
   const posture = $derived(findings.length > 0 ? computeScore(findings) : null);
@@ -239,7 +242,11 @@
           </div>
           {#if finding.status === 'unknown'}
             <p class="text-xs text-fg-subtle italic mt-1 ml-4">
-              Couldn't check via live API — use backup-file mode or verify manually in your controller.
+              {#if isBackupMode}
+                Not found in this backup — verify it manually in your controller.
+              {:else}
+                Couldn't check via live API — use backup-file mode or verify manually in your controller.
+              {/if}
             </p>
           {/if}
         </div>

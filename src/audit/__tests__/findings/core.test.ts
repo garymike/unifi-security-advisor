@@ -32,6 +32,24 @@ describe('findWifi', () => {
   it('emits PSK finding for short passphrase', () => {
     expect(findWifi(site({ wlans: [{ name: 'Net', enabled: true, x_passphrase: { length: 8 } }] }), 'home_office').some(f => f.id.includes('PSK'))).toBe(true);
   });
+  it('reads live v10 securityConfiguration.type (WPA2_PERSONAL → WPA2-only)', () => {
+    const fs = findWifi(site({ wlans: [{ name: 'Net', enabled: true, securityConfiguration: { type: 'WPA2_PERSONAL' } }] }), 'home_office');
+    expect(fs.some(f => f.id.endsWith('-WPA'))).toBe(true);
+  });
+  it('does not flag WPA3 or mixed mode as WPA2-only', () => {
+    for (const type of ['WPA3_PERSONAL', 'WPA2_WPA3_PERSONAL']) {
+      const fs = findWifi(site({ wlans: [{ name: 'Net', enabled: true, securityConfiguration: { type } }] }), 'home_office');
+      expect(fs.some(f => f.id.endsWith('-WPA')), type).toBe(false);
+    }
+  });
+  it('flags an open SSID as high/gap (both live OPEN and backup "open")', () => {
+    for (const w of [{ name: 'Guest', enabled: true, securityConfiguration: { type: 'OPEN' } }, { name: 'Guest', enabled: true, security: 'open' }]) {
+      const fs = findWifi(site({ wlans: [w] }), 'home_office');
+      const open = fs.find(f => f.id.endsWith('-OPEN'));
+      expect(open).toMatchObject({ severity: 'high', status: 'gap' });
+      expect(fs.some(f => f.id.endsWith('-WPA'))).toBe(false); // open, not WPA2-only
+    }
+  });
 });
 
 describe('findFirewall', () => {
