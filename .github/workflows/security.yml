@@ -16,14 +16,14 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: garymike/security-workflows/.github/workflows/security-scan.yml@0ca59a6b417f14938311189936fea527ebf6385b # v0.4.2
+    uses: garymike/security-workflows/.github/workflows/security-scan.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
     secrets: inherit
 
   gha-security:
     permissions:
       contents: read
       packages: read
-    uses: garymike/security-workflows/.github/workflows/gha-security.yml@0ca59a6b417f14938311189936fea527ebf6385b # v0.4.2
+    uses: garymike/security-workflows/.github/workflows/gha-security.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
     secrets: inherit
 
   sast:
@@ -31,7 +31,7 @@ jobs:
       contents: read
       packages: read
       security-events: write
-    uses: garymike/security-workflows/.github/workflows/sast.yml@0ca59a6b417f14938311189936fea527ebf6385b # v0.4.2
+    uses: garymike/security-workflows/.github/workflows/sast.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
     secrets: inherit
 
   iac-security:
@@ -39,7 +39,7 @@ jobs:
       contents: read
       packages: read
       security-events: write
-    uses: garymike/security-workflows/.github/workflows/iac-security.yml@0ca59a6b417f14938311189936fea527ebf6385b # v0.4.2
+    uses: garymike/security-workflows/.github/workflows/iac-security.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
     secrets: inherit
 
   codeql:
@@ -49,7 +49,7 @@ jobs:
       contents: read
       security-events: write
       actions: read
-    uses: garymike/security-workflows/.github/workflows/codeql.yml@0ca59a6b417f14938311189936fea527ebf6385b # v0.4.2
+    uses: garymike/security-workflows/.github/workflows/codeql.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
     with:
       languages: javascript-typescript,python
 
@@ -57,5 +57,5 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
-    uses: garymike/security-workflows/.github/workflows/security-audit.yml@0ca59a6b417f14938311189936fea527ebf6385b # v0.4.2
+    uses: garymike/security-workflows/.github/workflows/security-audit.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
     secrets: inherit
