@@ -15,7 +15,8 @@
     "fetch-advisories": "tsx tools/fetch-advisories.ts",
     "check-advisory-drift": "tsx tools/check-advisory-drift.ts",
     "check-api-drift": "tsx tools/check-api-drift.ts",
-    "anonymize-backup": "tsx tools/anonymize-backup.ts"
+    "anonymize-backup": "tsx tools/anonymize-backup.ts",
+    "dump-backup-settings": "tsx tools/dump-backup-settings.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
