@@ -26,8 +26,14 @@ try {
 }
 
 const lines = md.split(/\r?\n/);
-// Match the heading for this version, e.g. "## [0.4.1] - 2026-07-06".
-const start = lines.findIndex((l) => new RegExp(`^##\\s*\\[${version.replace(/\./g, '\\.')}\\]`).test(l));
+// Match the heading for this version, e.g. "## [0.4.1] - 2026-07-06". Parse the
+// bracketed version with a static regex and compare as a string, so the
+// user-supplied version is never interpolated into a RegExp (no injection).
+const HEADING = /^##\s*\[([^\]]+)\]/;
+const start = lines.findIndex((l) => {
+  const m = HEADING.exec(l);
+  return m !== null && m[1] === version;
+});
 if (start === -1) {
   console.log(fallback);
   process.exit(0);

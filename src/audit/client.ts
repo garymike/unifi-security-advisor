@@ -56,12 +56,13 @@ export class UniFiClient {
     const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
     try {
       if (IS_TAURI) {
-        // Tauri context — custom Rust command with danger_accept_invalid_certs(true)
-        // so local UniFi controllers with self-signed certs work correctly.
+        // Tauri context — custom Rust command. Cert validation stays on except
+        // for local controllers (self-signed certs), driven by verifySSL.
         const { invoke } = await import('@tauri-apps/api/core');
         const result = await invoke<{ status: number; data: unknown }>('unifi_fetch', {
           url,
           apiKey: this.config.key,
+          verifySsl: this.config.verifySSL,
         });
         return { status: result.status, data: result.data };
       } else {

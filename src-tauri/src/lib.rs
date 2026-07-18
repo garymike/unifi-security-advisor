@@ -19,12 +19,18 @@ const CONSOLE_KEY: &[u8; 32] = &[
     0x36, 0x76, 0xbf, 0xd5, 0xd5, 0xb9, 0x00, 0x05, 0xd9, 0x84, 0x5f, 0xfd, 0x5d, 0xce, 0x98, 0x5f,
 ];
 
-/// HTTP fetch with TLS cert validation disabled — required for local UniFi controllers
-/// which use self-signed certificates.
+/// HTTP fetch for the UniFi API. TLS cert validation is kept ON by default and
+/// only disabled when `verify_ssl` is false — the local-controller case, where
+/// consoles present self-signed certificates. Cloud (Site Manager, api.ui.com)
+/// has a valid chain and is verified normally.
 #[command]
-async fn unifi_fetch(url: String, api_key: String) -> Result<serde_json::Value, String> {
+async fn unifi_fetch(
+    url: String,
+    api_key: String,
+    verify_ssl: bool,
+) -> Result<serde_json::Value, String> {
     let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(true)
+        .danger_accept_invalid_certs(!verify_ssl)
         .timeout(std::time::Duration::from_secs(30))
         .build()
         .map_err(|e| e.to_string())?;
