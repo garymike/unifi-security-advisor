@@ -5,6 +5,6 @@
 # visibility: public | private
 # purpose: free-text description of what this repo is for
 
-visibility: private
+visibility: public
 purpose: >
   Security advisory / monitoring tool for UniFi network equipment.
