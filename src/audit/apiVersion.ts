@@ -8,7 +8,7 @@ import { compareVersions } from './compareVersions.js';
  * TESTED_MAX honest by flagging when Ubiquiti publishes a newer spec.
  */
 export const TESTED_MIN = '9.0.0';
-export const TESTED_MAX = '10.3.58';
+export const TESTED_MAX = '10.4.57';
 
 export type VersionStatus = 'ok' | 'newer-than-tested' | 'older-than-min' | 'unknown';
 
