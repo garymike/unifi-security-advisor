@@ -32,7 +32,7 @@ describe('assessVersion', () => {
   });
 
   it('flags a version newer than TESTED_MAX', () => {
-    expect(assessVersion('10.4.0').status).toBe('newer-than-tested');
+    expect(assessVersion('10.5.0').status).toBe('newer-than-tested');
     expect(assessVersion('11.0.0').status).toBe('newer-than-tested');
   });
 

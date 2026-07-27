@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### API currency & drift resilience
+- Verified the endpoint set against the newly published UniFi Network **10.4.57** OpenAPI spec and bumped `TESTED_MAX` from 10.3.58 to 10.4.57. Every endpoint concept still resolves (`firewall/policies`, `firewall/zones`, `wifi/broadcasts`, `vpn/servers`, `networks`, `traffic-matching-lists`) and the Wi-Fi `securityConfiguration` enum is unchanged — no drift. Clears the automated API-drift tracking issue.
+
 ## [0.5.2] - 2026-07-07
 
 ### Findings
