@@ -16,24 +16,24 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: garymike/security-workflows/.github/workflows/security-scan.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
+    uses: garymike/security-workflows/.github/workflows/security-scan.yml@4f31e6425ad60afbfdc51c04651f4977a87e788c # main @ 2026-09-09
   gha-security:
     permissions:
       contents: read
       packages: read
-    uses: garymike/security-workflows/.github/workflows/gha-security.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
+    uses: garymike/security-workflows/.github/workflows/gha-security.yml@4f31e6425ad60afbfdc51c04651f4977a87e788c # main @ 2026-09-09
   sast:
     permissions:
       contents: read
       packages: read
       security-events: write
-    uses: garymike/security-workflows/.github/workflows/sast.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
+    uses: garymike/security-workflows/.github/workflows/sast.yml@4f31e6425ad60afbfdc51c04651f4977a87e788c # main @ 2026-09-09
   iac-security:
     permissions:
       contents: read
       packages: read
       security-events: write
-    uses: garymike/security-workflows/.github/workflows/iac-security.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
+    uses: garymike/security-workflows/.github/workflows/iac-security.yml@4f31e6425ad60afbfdc51c04651f4977a87e788c # main @ 2026-09-09
   codeql:
     # deep engine — run on PRs, main pushes, and the schedule (skip feature-branch pushes)
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
@@ -41,7 +41,7 @@ jobs:
       contents: read
       security-events: write
       actions: read
-    uses: garymike/security-workflows/.github/workflows/codeql.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
+    uses: garymike/security-workflows/.github/workflows/codeql.yml@4f31e6425ad60afbfdc51c04651f4977a87e788c # main @ 2026-09-09
     with:
       languages: javascript-typescript,python
 
@@ -49,4 +49,4 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
-    uses: garymike/security-workflows/.github/workflows/security-audit.yml@173cbfb4bbcc9e4c2a95a8bec9de0c4f42719eb0 # v0.4.3
+    uses: garymike/security-workflows/.github/workflows/security-audit.yml@4f31e6425ad60afbfdc51c04651f4977a87e788c # main @ 2026-09-09
