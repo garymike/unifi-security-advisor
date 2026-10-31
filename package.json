@@ -26,9 +26,9 @@
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-sql": "^2.4.0",
     "@tauri-apps/plugin-updater": "^2.10.1",
-    "adm-zip": "^0.6.0",
+    "adm-zip": "^0.6.1",
     "bson": "^7.2.0",
-    "undici": "^8.1.0"
+    "undici": "^8.12.3"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
@@ -42,8 +42,8 @@
     "tailwindcss": "^4.2.4",
     "tsx": "^4.22.5",
     "typescript": "^5.4.0",
-    "vite": "^8.0.10",
-    "vitest": "^4.1.5"
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12"
   },
   "overrides": {
     "cookie": "^0.7.0"
