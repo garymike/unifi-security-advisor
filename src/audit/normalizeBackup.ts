@@ -10,6 +10,28 @@ export function findSetting(
   return settings.find(s => s['key'] === key) as Record<string, unknown> | undefined;
 }
 
+/**
+ * Auto-firmware-upgrade state. UniFi stores it as `auto_upgrade` on the `mgmt`
+ * setting (there is no dedicated `auto_update` setting doc), so expose it as
+ * `{ enabled }` — the shape findFirmware (FW-AUTO-001) reads.
+ */
+export function deriveAutoUpdate(collections: Collections): Record<string, unknown> | undefined {
+  const m = findSetting(collections, 'mgmt');
+  if (!m || !('auto_upgrade' in m)) return undefined;
+  return { enabled: m['auto_upgrade'] === true, hour: m['auto_upgrade_hour'] };
+}
+
+/**
+ * Auto-backup state. UniFi stores it as `autobackup_enabled` on the `super_mgmt`
+ * setting, exposed as `{ enabled }` for findBackup (BAK-001). The console does
+ * not surface an off-device destination here, so that stays unknown.
+ */
+export function deriveAutoBackup(collections: Collections): Record<string, unknown> | undefined {
+  const s = findSetting(collections, 'super_mgmt');
+  if (!s || !('autobackup_enabled' in s)) return undefined;
+  return { enabled: s['autobackup_enabled'] === true };
+}
+
 export function normalizeBackup(collections: Collections, profile: string): NormalizedSite[] {
   const identity = findSetting(collections, 'super_identity');
   const siteId = String(identity?.['name'] ?? 'default');
@@ -41,9 +63,8 @@ export function normalizeBackup(collections: Collections, profile: string): Norm
       rogueap:           findSetting(collections, 'rogueap'),
       dns_filtering:     findSetting(collections, 'dns_filtering')
                            ?? findSetting(collections, 'connectivity'),
-      auto_update:       findSetting(collections, 'auto_update'),
-      auto_backup:       findSetting(collections, 'auto_backup')
-                           ?? findSetting(collections, 'backup'),
+      auto_update:       deriveAutoUpdate(collections),
+      auto_backup:       deriveAutoBackup(collections),
       mgmt:              findSetting(collections, 'mgmt'),
       dpi:               findSetting(collections, 'dpi'),
       threat_management: findSetting(collections, 'threat_management'),

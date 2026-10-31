@@ -4,10 +4,10 @@ import { normalizeBackup } from '../normalizeBackup.js';
 const COLLECTIONS = {
   setting: [
     { key: 'super_identity', name: 'HomeNet', desc: 'Home Network' },
-    { key: 'auto_update', enabled: true },
-    { key: 'mgmt', syslog_host: null, advanced_feature_enabled: false },
+    // Real UniFi field locations: auto-upgrade is on `mgmt`, auto-backup on `super_mgmt`.
+    { key: 'mgmt', syslog_host: null, advanced_feature_enabled: false, auto_upgrade: true, auto_upgrade_hour: 3 },
+    { key: 'super_mgmt', autobackup_enabled: true, autobackup_days: 7 },
     { key: 'rogueap', report_rogue: false },
-    { key: 'auto_backup', enabled: true, destination: 'cloud' },
     { key: 'dpi', level: 'disabled' },
   ],
   device: [{ mac: 'aa:bb:cc', model: 'U7Pro', version: '8.5.21' }],
@@ -61,7 +61,7 @@ describe('normalizeBackup', () => {
     expect(site!.clients[0]).toMatchObject({ hostname: 'my-laptop' });
   });
 
-  it('populates settings.auto_update from setting collection (unlocks FW-AUTO-001)', () => {
+  it('derives settings.auto_update from mgmt.auto_upgrade (unlocks FW-AUTO-001)', () => {
     const [site] = normalizeBackup(COLLECTIONS, 'home_office');
     expect(site!.settings['auto_update']).toBeDefined();
     expect((site!.settings['auto_update'] as Record<string, unknown>)['enabled']).toBe(true);
@@ -73,10 +73,16 @@ describe('normalizeBackup', () => {
     expect((site!.settings['rogueap'] as Record<string, unknown>)['report_rogue']).toBe(false);
   });
 
-  it('populates settings.auto_backup (unlocks BAK-001)', () => {
+  it('derives settings.auto_backup from super_mgmt.autobackup_enabled (unlocks BAK-001)', () => {
     const [site] = normalizeBackup(COLLECTIONS, 'home_office');
     expect(site!.settings['auto_backup']).toBeDefined();
-    expect((site!.settings['auto_backup'] as Record<string, unknown>)['destination']).toBe('cloud');
+    expect((site!.settings['auto_backup'] as Record<string, unknown>)['enabled']).toBe(true);
+  });
+
+  it('leaves auto_update / auto_backup undefined when the source fields are absent', () => {
+    const [site] = normalizeBackup({ setting: [{ key: 'super_identity', name: 'X' }] }, 'home_office');
+    expect(site!.settings['auto_update']).toBeUndefined();
+    expect(site!.settings['auto_backup']).toBeUndefined();
   });
 
   it('apiGaps is empty (backup has full coverage)', () => {
