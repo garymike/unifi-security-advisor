@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import { computeScore } from '../../audit/score.js';
   import type { Finding, Status } from '../../audit/types.js';
@@ -53,7 +53,7 @@
     return 'high';
   }
 
-  const runId = $derived($page.url.searchParams.get('runId') ?? '');
+  const runId = $derived(page.url.searchParams.get('runId') ?? '');
 
   let findings: Finding[] = $state([]);
   let filter = $state('issues');
@@ -74,7 +74,7 @@
       id = runs[0]!.id;
       resolvedFromLatest = true;
       const { goto } = await import('$app/navigation');
-      goto(`/report?runId=${id}`, { replaceState: true, keepFocus: true, noScroll: true });
+      goto(`/report?runId=${id}`, { replace: true, reset: false });
     }
 
     findings = await getAnsweredFindings(db, id);

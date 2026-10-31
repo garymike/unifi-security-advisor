@@ -10,6 +10,9 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Build / dependencies
+- Upgraded the frontend toolchain to **SvelteKit 3** (from 2.x), **TypeScript 6** (from 5.x), `@sveltejs/adapter-static` 4, and Svelte 5.57. Our static-export Tauri app needed only a small migration: `svelte.config.js` folded into the `sveltekit()` plugin in `vite.config.ts`, `$app/stores` → `$app/state` (`page`), one `goto` option rename, and `tsconfig` now extends `$app/tsconfig`. Also dropped the stale `cookie@^0.7.0` override (SvelteKit 3 ships the patched `cookie` v2). CI runners moved to Node 22 (required by SvelteKit 3). Verified: typecheck, prerender build across every route, 265 tests, and a click-through of all screens in a production preview.
+
 ### API currency & drift resilience
 - Verified the endpoint set against the newly published UniFi Network **10.4.57** OpenAPI spec and bumped `TESTED_MAX` from 10.3.58 to 10.4.57. Every endpoint concept still resolves (`firewall/policies`, `firewall/zones`, `wifi/broadcasts`, `vpn/servers`, `networks`, `traffic-matching-lists`) and the Wi-Fi `securityConfiguration` enum is unchanged — no drift. Clears the automated API-drift tracking issue.
 
