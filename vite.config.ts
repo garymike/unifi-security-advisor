@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
+import adapter from '@sveltejs/adapter-static';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit()],
+  // SvelteKit 3 no longer reads svelte.config.js; former kit.* options are
+  // passed to the sveltekit() plugin. We prerender to a SPA fallback for Tauri.
+  plugins: [tailwindcss(), sveltekit({ adapter: adapter({ fallback: 'index.html' }) })],
   clearScreen: false,
   server: { port: 5173, strictPort: true },
   envPrefix: ['VITE_', 'TAURI_'],

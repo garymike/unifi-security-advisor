@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import QuestionCard from '../../lib/components/QuestionCard.svelte';
@@ -9,12 +9,12 @@
   import type { AnswerValue, Tier } from '../../db/schema.js';
   import { computeScore } from '../../audit/score.js';
 
-  const runId = $derived($page.url.searchParams.get('runId') ?? '');
+  const runId = $derived(page.url.searchParams.get('runId') ?? '');
 
   type Step = 'profile' | 'skills' | 'questions' | 'done';
   let step: Step = $state('profile');
   // Read profile directly from URL — avoids $derived-in-$state initializer warning
-  let confirmedProfile = $state($page.url.searchParams.get('profile') ?? 'home_office');
+  let confirmedProfile = $state(page.url.searchParams.get('profile') ?? 'home_office');
   let tier: Tier = $state('standard');
   let findings: Finding[] = $state([]);
   let queue: Finding[] = $state([]);
