@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import type { Snippet } from 'svelte';
   import UpdateBanner from '../lib/components/UpdateBanner.svelte';
   import { checkForUpdates } from '../lib/stores/updater.js';
@@ -10,7 +10,7 @@
   let { children }: { children: Snippet } = $props();
 
   // Hide tabs during the wizard — it's a linear flow that must not be interrupted
-  const showTabs = $derived(!$page.url.pathname.startsWith('/wizard'));
+  const showTabs = $derived(!page.url.pathname.startsWith('/wizard'));
 
   // App version for the footer; only resolvable inside the Tauri runtime.
   let appVersion = $state('');
@@ -32,7 +32,7 @@
   ] as const;
 
   function isActive(href: string): boolean {
-    const p = $page.url.pathname;
+    const p = page.url.pathname;
     if (href === '/') return p === '/';
     return p === href || p.startsWith(href + '/');
   }
