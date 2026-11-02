@@ -32,8 +32,8 @@ describe('assessVersion', () => {
   });
 
   it('flags a version newer than TESTED_MAX', () => {
-    expect(assessVersion('10.5.0').status).toBe('newer-than-tested');
-    expect(assessVersion('11.0.0').status).toBe('newer-than-tested');
+    expect(assessVersion('11.1.0').status).toBe('newer-than-tested');
+    expect(assessVersion('12.0.0').status).toBe('newer-than-tested');
   });
 
   it('flags a version older than TESTED_MIN', () => {
@@ -62,7 +62,7 @@ describe('findApiVersion', () => {
   });
 
   it('raises a low/recommendation finding for a newer-than-tested version', () => {
-    const [f] = findApiVersion({ info: { applicationVersion: '11.0.0' } });
+    const [f] = findApiVersion({ info: { applicationVersion: '12.0.0' } });
     expect(f!.severity).toBe('low');
     expect(f!.status).toBe('recommendation');
     expect(f!.recommendation).toBeTruthy();
