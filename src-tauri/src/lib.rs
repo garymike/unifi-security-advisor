@@ -130,8 +130,10 @@ fn collections_from_zip(zip_data: Vec<u8>) -> Result<HashMap<String, Vec<serde_j
     let mut zip = ZipArchive::new(Cursor::new(&zip_data))
         .map_err(|e| format!("ZIP error: {}", e))?;
 
+    // zip 9's `ZipFile::name()` returns `Result<Cow<str>, ZipError>` (it can
+    // fail on an invalid-UTF-8 entry name); skip any entry whose name won't decode.
     let names: Vec<String> = (0..zip.len())
-        .filter_map(|i| zip.by_index(i).ok().map(|f| f.name().to_string()))
+        .filter_map(|i| zip.by_index(i).ok().and_then(|f| f.name().ok().map(|n| n.to_string())))
         .collect();
 
     let mut collections: HashMap<String, Vec<serde_json::Value>> = HashMap::new();
@@ -158,7 +160,10 @@ fn collections_from_zip(zip_data: Vec<u8>) -> Result<HashMap<String, Vec<serde_j
         // Newer mongodump format: dump/<db>/<collection>.bson
         for i in 0..zip.len() {
             let mut file = zip.by_index(i).map_err(|e| e.to_string())?;
-            let name = file.name().to_string();
+            let name = match file.name() {
+                Ok(n) => n.to_string(),
+                Err(_) => continue,
+            };
             if !name.ends_with(".bson") {
                 continue;
             }
