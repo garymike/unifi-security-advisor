@@ -10,11 +10,21 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
-### Build / dependencies
-- Upgraded the frontend toolchain to **SvelteKit 3** (from 2.x), **TypeScript 6** (from 5.x), `@sveltejs/adapter-static` 4, and Svelte 5.57. Our static-export Tauri app needed only a small migration: `svelte.config.js` folded into the `sveltekit()` plugin in `vite.config.ts`, `$app/stores` → `$app/state` (`page`), one `goto` option rename, and `tsconfig` now extends `$app/tsconfig`. Also dropped the stale `cookie@^0.7.0` override (SvelteKit 3 ships the patched `cookie` v2). CI runners moved to Node 22 (required by SvelteKit 3). Verified: typecheck, prerender build across every route, 265 tests, and a click-through of all screens in a production preview.
+## [0.5.3] - 2026-11-02
+
+### Findings
+- Backup-file audits now read **auto-update** and **auto-backup** state from their real setting fields (`mgmt.auto_upgrade` and `super_mgmt.autobackup_enabled`), so `FW-AUTO-001` and `BAK-001` resolve from a backup instead of reporting "unknown". Rogue-AP detection still reports "unknown" only when the console genuinely doesn't record it.
+
+### Security
+- **zip** bumped from 2.x to **9.2.2** for the backup parser, which reads untrusted user-supplied `.unf`/`.unifi` files — closing the zip-cloaking (RCE), symlink-exhaustion, and AES-HMAC advisories on the one path that parses attacker-controllable input. The transitive copy of `zip` was removed entirely by moving **Tauri to 2.12.5** and **tauri-plugin-updater to 2.14.1** (both stable releases), so no vulnerable `zip` remains in the dependency tree.
+- **rustls** updated to **0.23.46** (TLS-secret Debug-formatting leak plus three lower-severity advisories).
+- Earlier hardening carried into this release: live-API SSL verification is now a real toggle (no longer always-accept-invalid), the changelog-notes helper no longer interpolates input into a `RegExp`, and the CI security workflows dropped `secrets: inherit`.
 
 ### API currency & drift resilience
-- Verified the endpoint set against the newly published UniFi Network **10.4.57** OpenAPI spec and bumped `TESTED_MAX` from 10.3.58 to 10.4.57. Every endpoint concept still resolves (`firewall/policies`, `firewall/zones`, `wifi/broadcasts`, `vpn/servers`, `networks`, `traffic-matching-lists`) and the Wi-Fi `securityConfiguration` enum is unchanged — no drift. Clears the automated API-drift tracking issue.
+- Verified the endpoint set against the latest published UniFi Network OpenAPI spec and bumped `TESTED_MAX` from 10.3.58 to **11.0.97**. Every endpoint concept still resolves and the path set is unchanged across the 10→11 jump (44 paths, none added or removed) — no real drift. Clears the automated API-drift tracking issue (#71).
+
+### Build / dependencies
+- Upgraded the frontend toolchain to **SvelteKit 3** (from 2.x), **TypeScript 6** (from 5.x), `@sveltejs/adapter-static` 4, and Svelte 5.57. Our static-export Tauri app needed only a small migration: `svelte.config.js` folded into the `sveltekit()` plugin in `vite.config.ts`, `$app/stores` → `$app/state` (`page`), one `goto` option rename, and `tsconfig` now extends `$app/tsconfig`. Also dropped the stale `cookie@^0.7.0` override (SvelteKit 3 ships the patched `cookie` v2). CI runners moved to Node 22 (required by SvelteKit 3). The desktop shell also moved to the latest stable Tauri 2.12.
 
 ## [0.5.2] - 2026-07-07
 
