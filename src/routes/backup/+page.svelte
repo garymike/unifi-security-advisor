@@ -11,7 +11,8 @@
     regulated_hipaa: 'Regulated (HIPAA)', regulated_pci: 'Regulated (PCI)',
   };
 
-  let filePath: string | null = $state(null);
+  // The backend owns the open dialog and keeps the chosen path; the page only
+  // gets the file name to show.
   let fileName: string | null = $state(null);
   let profile = $state('home_office');
   let running = $state(false);
@@ -19,25 +20,24 @@
   let error = $state('');
 
   async function browse() {
-    const { open } = await import('@tauri-apps/plugin-dialog');
-    const selected = await open({
-      filters: [{ name: 'UniFi Backup', extensions: ['unf', 'unifi'] }],
-      multiple: false,
-    });
-    if (typeof selected === 'string') {
-      filePath = selected;
-      fileName = selected.split(/[/\\]/).pop() ?? selected;
+    error = '';
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const name = await invoke<string | null>('backup_choose');
+      if (name) fileName = name;
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err);
     }
   }
 
   async function runAnalysis() {
-    if (!filePath) return;
+    if (!fileName) return;
     running = true; error = ''; progressLog = [];
     try {
       progressLog = [...progressLog, 'Decrypting and parsing backup...'];
       const { invoke } = await import('@tauri-apps/api/core');
       const collections = await invoke<Record<string, Record<string, unknown>[]>>(
-        'parse_backup', { path: filePath },
+        'backup_parse',
       );
       const collectionCount = Object.keys(collections).length;
       progressLog = [...progressLog, `Parsed ${collectionCount} collections`];
@@ -91,7 +91,7 @@
           <span class="text-sm text-fg-muted flex-1 truncate">{fileName}</span>
           <button
             class="text-fg-subtle hover:text-fg-muted text-sm shrink-0"
-            onclick={() => { filePath = null; fileName = null; }}
+            onclick={() => { fileName = null; }}
           >×</button>
         {:else}
           <span class="text-sm text-fg-subtle">No file selected</span>
@@ -124,7 +124,7 @@
   <button
     class="bg-accent text-on-accent px-6 py-3 rounded-lg font-semibold hover:bg-accent-hover disabled:opacity-50"
     onclick={runAnalysis}
-    disabled={running || !filePath}
+    disabled={running || !fileName}
   >
     {running ? 'Analyzing…' : 'Analyze Backup →'}
   </button>

@@ -4,7 +4,7 @@
   import KeyInstructions from '../../lib/onboarding/KeyInstructions.svelte';
   import ValidateStep from '../../lib/onboarding/ValidateStep.svelte';
   import SavedKeys from '../../lib/onboarding/SavedKeys.svelte';
-  import { loadIndex, keychain, forgetKey } from '../../lib/onboarding/keychain.js';
+  import { loadIndex, keychain, connection, forgetKey } from '../../lib/onboarding/keychain.js';
   import { validateConnection } from '../../lib/onboarding/validateConnection.js';
   import { UniFiClient } from '../../audit/client.js';
   import type { KeyIdentity } from '../../lib/onboarding/keyIndex.js';
@@ -19,6 +19,7 @@
   let host = $state('');
 
   let saved = $state<KeyIdentity[]>([]);
+  let hints = $state<Record<string, string>>({});
   let orphans = $state<string[]>([]);
   let checkError = $state('');
 
@@ -35,6 +36,13 @@
 
   async function refreshSaved() {
     try { saved = await loadIndex(); } catch { saved = []; }
+    // Last four characters only, so the user can match a saved key against
+    // their Ubiquiti account. The backend never returns more than that.
+    const next: Record<string, string> = {};
+    for (const s of saved) {
+      try { const h = await keychain.hint(s.identity); if (h) next[s.identity] = h; } catch { /* locked keychain */ }
+    }
+    hints = next;
   }
 
   async function onscan() {
@@ -52,22 +60,26 @@
 
   async function onuse(entry: KeyIdentity) {
     checkError = '';
+    let info;
     try {
-      const secret = await keychain.load(entry.identity);
-      if (!secret) { checkError = 'That saved key could not be read; it may have been removed.'; return; }
-      const client = new UniFiClient({
-        key: secret, host: entry.host ?? '', useCloud: entry.mode === 'cloud',
-        verifySSL: entry.mode === 'cloud', profile: 'home_office',
-      });
-      const res = await validateConnection(client);
-      if (!res.ok) { checkError = res.error?.message ?? 'The saved key no longer validates.'; return; }
-      // Re-validated: hand straight to the run path.
-      mode = entry.mode; host = entry.host ?? '';
-      await onrun({ apiKey: secret });
-    } catch {
-      checkError = 'Could not read the saved key from your keychain. It may be locked, or you can Forget it and re-enter.';
+      // The backend reads the key and binds it to the controller it was saved for.
+      info = await connection.openSaved(entry.identity);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      checkError = msg.includes('could not be read') || msg.includes('address')
+        ? msg
+        : 'Could not read the saved key from your keychain. It may be locked, or you can Forget it and re-enter.';
       return;
     }
+    const client = new UniFiClient({
+      host: info.host ?? '', useCloud: info.mode === 'cloud',
+      verifySSL: info.mode === 'cloud', profile: 'home_office',
+    });
+    const res = await validateConnection(client);
+    if (!res.ok) { checkError = res.error?.message ?? 'The saved key no longer validates.'; return; }
+    // Re-validated: hand straight to the run path.
+    mode = info.mode; host = info.host ?? '';
+    await onrun();
   }
 
   function toGetKey() {
@@ -75,11 +87,12 @@
     step = 'getkey';
   }
 
-  async function onrun({ apiKey }: { apiKey: string }) {
+  async function onrun() {
     running = true; runError = '';
     try {
       const { openDb, insertRun, insertFindings, insertSites } = await import('../../db/queries.js');
-      const result = await runAudit(apiKey, host, mode === 'cloud', () => {});
+      const result = await runAudit(host, mode === 'cloud', () => {});
+      await connection.close().catch(() => {});
       const db = await openDb();
       const runId = await insertRun(db, host || 'cloud', result.inferredProfile, result.sites.length, get(connectTier));
       await insertFindings(db, runId, result.findings);
@@ -97,7 +110,7 @@
   <h1 class="text-2xl font-bold mb-6 text-fg">Connect to your UniFi console</h1>
 
   {#if step === 'check'}
-    <SavedKeys {saved} {orphans} {onuse} {onforget} {onscan} onskip={() => (step = 'mode')} />
+    <SavedKeys {saved} {hints} {orphans} {onuse} {onforget} {onscan} onskip={() => (step = 'mode')} />
     {#if checkError}<p class="text-sev-high text-sm mt-3">{checkError}</p>{/if}
   {:else if step === 'mode'}
     <ModeStep bind:mode bind:host />

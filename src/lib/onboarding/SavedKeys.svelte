@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { KeyIdentity } from './keyIndex.js';
-  let { saved, orphans, onuse, onforget, onscan, onskip }: {
-    saved: KeyIdentity[]; orphans: string[];
+  let { saved, hints = {}, orphans, onuse, onforget, onscan, onskip }: {
+    saved: KeyIdentity[]; hints?: Record<string, string>; orphans: string[];
     onuse: (e: KeyIdentity) => void; onforget: (identity: string) => void;
     onscan: () => void; onskip: () => void;
   } = $props();
@@ -13,7 +13,10 @@
     <ul class="space-y-2">
       {#each saved as e}
         <li class="flex items-center justify-between bg-surface-1 border border-line rounded-lg px-3 py-2">
-          <span class="text-sm text-fg">{e.label}</span>
+          <span class="text-sm text-fg">
+            {e.label}
+            {#if hints[e.identity]}<span class="font-mono text-fg-subtle"> · key ending {hints[e.identity]}</span>{/if}
+          </span>
           <span class="flex gap-2">
             <button class="text-accent text-sm" onclick={() => onuse(e)}>Use</button>
             <button class="text-sev-high text-sm" onclick={() => onforget(e.identity)}>Forget</button>

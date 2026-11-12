@@ -1,28 +1,57 @@
+//! OS keychain access. Secrets are read and written only from Rust: the page
+//! can delete a saved key, list account names, and see the last four
+//! characters of a key, and nothing else. Commands that need a key look it up
+//! themselves (see `connection.rs`).
+
 use keyring::Entry;
 use tauri::command;
 
 pub const SERVICE: &str = "unifi-security-advisor";
+const MAX_ACCOUNT_LEN: usize = 512;
+/// Below this length, showing four characters reveals too much of the key.
+const MIN_LEN_FOR_HINT: usize = 12;
 
-#[command]
-pub fn keychain_set(account: String, secret: String) -> Result<(), String> {
-    let entry = Entry::new(SERVICE, &account).map_err(|e| e.to_string())?;
-    entry.set_password(&secret).map_err(|e| e.to_string())
+fn entry(account: &str) -> Result<Entry, String> {
+    if account.is_empty() || account.len() > MAX_ACCOUNT_LEN {
+        return Err("invalid account name".into());
+    }
+    Entry::new(SERVICE, account).map_err(|e| e.to_string())
 }
 
-#[command]
-pub fn keychain_get(account: String) -> Result<Option<String>, String> {
-    let entry = Entry::new(SERVICE, &account).map_err(|e| e.to_string())?;
-    match entry.get_password() {
+/// Store a secret. Rust-only; not a command.
+pub fn set_secret(account: &str, secret: &str) -> Result<(), String> {
+    entry(account)?.set_password(secret).map_err(|e| e.to_string())
+}
+
+/// Read a secret. Rust-only; not a command.
+pub fn get_secret(account: &str) -> Result<Option<String>, String> {
+    match entry(account)?.get_password() {
         Ok(secret) => Ok(Some(secret)),
         Err(keyring::Error::NoEntry) => Ok(None),
         Err(e) => Err(e.to_string()),
     }
 }
 
-#[command]
+/// The last four characters of a stored key, so the user can tell which key
+/// is saved and match it against their Ubiquiti account
+/// (docs/05-credential-handling.md, Revocation support). `None` when no key is
+/// stored or the key is too short to show any of it safely.
+fn hint_for(secret: &str) -> Option<String> {
+    let chars: Vec<char> = secret.chars().collect();
+    if chars.len() < MIN_LEN_FOR_HINT {
+        return None;
+    }
+    Some(chars[chars.len() - 4..].iter().collect())
+}
+
+#[command(async)]
+pub fn keychain_hint(account: String) -> Result<Option<String>, String> {
+    Ok(get_secret(&account)?.as_deref().and_then(hint_for))
+}
+
+#[command(async)]
 pub fn keychain_delete(account: String) -> Result<(), String> {
-    let entry = Entry::new(SERVICE, &account).map_err(|e| e.to_string())?;
-    match entry.delete_credential() {
+    match entry(&account)?.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()),
         Err(e) => Err(e.to_string()),
@@ -32,7 +61,7 @@ pub fn keychain_delete(account: String) -> Result<(), String> {
 /// Enumerate account identifiers stored under our service. Identifiers only —
 /// never secret values. Returns an empty list on platforms without an
 /// enumeration path rather than erroring.
-#[command]
+#[command(async)]
 pub fn keychain_scan() -> Result<Vec<String>, String> {
     scan_impl()
 }
@@ -140,7 +169,7 @@ fn scan_impl() -> Result<Vec<String>, String> {
 // `CredentialPersistence::EntryOnly` — `MockCredentialBuilder::build` returns
 // a brand-new, unlinked `MockCredential` on every `Entry::new(..)` call (see
 // keyring's mock.rs), so it cannot round-trip state across the separate
-// `Entry::new` calls each of our `keychain_*` commands makes internally. That
+// `Entry::new` calls each of our keychain functions makes internally. That
 // makes the mock unusable for testing cross-call persistence of our public
 // command functions. Instead these tests exercise the real platform backend
 // (same approach as `scan_lists_a_real_stored_account` below), using unique
@@ -156,16 +185,18 @@ mod tests {
         // Some environments (e.g. headless CI) have no usable OS keychain.
         // Skip the assertions there rather than failing spuriously — the
         // scan test's guard follows the same convention.
-        if keychain_set(acct.into(), "secret-123".into()).is_err() {
+        if set_secret(acct, "secret-123-abcd").is_err() {
             eprintln!("SKIP set_get_delete_round_trip: no usable OS keychain backend in this environment");
             return;
         }
         // Capture results and delete unconditionally before asserting, so a
         // failed assertion below can't leave a stale credential behind.
-        let got = keychain_get(acct.into()).unwrap();
+        let got = get_secret(acct).unwrap();
+        let hint = keychain_hint(acct.into()).unwrap();
         keychain_delete(acct.into()).unwrap();
-        let after = keychain_get(acct.into()).unwrap();
-        assert_eq!(got, Some("secret-123".to_string()));
+        let after = get_secret(acct).unwrap();
+        assert_eq!(got, Some("secret-123-abcd".to_string()));
+        assert_eq!(hint, Some("abcd".to_string()));
         // after delete -> Ok(None)
         assert_eq!(after, None);
     }
@@ -176,7 +207,7 @@ mod tests {
         // backend-less environment (e.g. a headless CI runner with no Secret
         // Service / D-Bus) the backend connection itself errors — that's not a
         // NoEntry, so skip rather than panic, matching the other tests' guard.
-        match keychain_get("local:__absent__".into()) {
+        match get_secret("local:__absent__") {
             Ok(v) => assert_eq!(v, None),
             Err(_) => eprintln!(
                 "SKIP get_missing_returns_none: no usable OS keychain backend in this environment"
@@ -199,5 +230,18 @@ mod tests {
         let _ = entry.delete_credential();
         #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
         assert!(listed.contains(&acct.to_string()), "scan did not surface {acct}: {listed:?}");
+    }
+
+    #[test]
+    fn hint_shows_only_the_last_four_of_a_long_key() {
+        assert_eq!(hint_for("abcdefghijklmnop"), Some("mnop".into()));
+        assert_eq!(hint_for("short-key"), None);
+        assert_eq!(hint_for(""), None);
+    }
+
+    #[test]
+    fn rejects_empty_or_huge_account_names() {
+        assert!(get_secret("").is_err());
+        assert!(keychain_delete("x".repeat(MAX_ACCOUNT_LEN + 1)).is_err());
     }
 }

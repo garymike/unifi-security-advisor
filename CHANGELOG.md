@@ -10,6 +10,20 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ## [Unreleased]
 
+### Security
+- **Saved API keys no longer reach the page.** The desktop page could read any stored key back out of the keychain. Keys are now read and used only by the Rust backend; the page can forget a key, list saved accounts, and see the last four characters of a key (now shown next to each saved key).
+- **A key is only ever sent to the controller it belongs to.** Each saved key is bound to the controller (or Site Manager) its account name describes, and the backend takes the key from the keychain itself. Requests to any other host are refused, plain-http controller addresses are rejected, and redirects are no longer followed (a redirect could previously carry the `X-API-KEY` header to another host).
+- **The page can no longer read or write arbitrary files.** Report export and backup import now open the native save/open dialog from the backend and act only on the file you pick.
+- **The page can no longer run arbitrary SQL.** The SQL plugin let the page open a database at any path and run any statement (including `ATTACH`, which writes a file anywhere). History now lives in a backend-owned database with a fixed set of statements. Existing history carries over (same file).
+- **Strict content security policy.** The webview previously ran with none. Scripts now load only from the app itself (its two inline bootstrap scripts are hashed at build time), styles only from the app, and the page cannot connect to any network host directly.
+- **Trimmed page permissions** to the core set, the updater, and restart. Dialogs, the database, and opening the key-minting page in your browser are backend commands now.
+
+### Releases
+- A tag push now creates a **draft** release that a maintainer reviews and publishes, matching RELEASING.md. Previously a tag published straight to "latest", which installed apps auto-update to.
+
+### Build / dependencies
+- Removed `tauri-plugin-sql` (and its sqlx stack: 58 fewer crates in `Cargo.lock`) in favour of `rusqlite` with bundled SQLite. Removed the npm `@tauri-apps/plugin-sql`, `plugin-dialog`, and `plugin-opener` packages; the page now depends on `@tauri-apps/api` directly instead of through them. The crate's `rust-version` now states 1.90, which Tauri 2.12 already requires.
+
 ## [0.5.3] - 2026-11-02
 
 ### Findings

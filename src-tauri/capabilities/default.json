@@ -1,20 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "enables the default permissions",
+  "description": "What the page may call directly. Keys, files, the database, and the browser are reached only through the app's own commands, which own their I/O.",
   "windows": [
     "main"
   ],
   "permissions": [
     "core:default",
-    "sql:allow-load",
-    "sql:allow-execute",
-    "sql:allow-select",
-    "sql:allow-close",
-    "dialog:allow-open",
-    "dialog:allow-save",
     "updater:default",
-    "process:allow-restart",
-    "opener:default"
+    "process:allow-restart"
   ]
 }

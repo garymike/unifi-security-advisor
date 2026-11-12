@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { openUrl } from '@tauri-apps/plugin-opener';
+  import { invoke } from '@tauri-apps/api/core';
   import { getInstructions, type ConnectMode } from './keyInstructions.js';
   import { keyPortalUrl } from './keyPortalUrl.js';
   import { connectTier } from '../stores/connectTier.js';
@@ -10,8 +10,10 @@
   let block = $derived(getInstructions(mode, $connectTier));
   let portal = $derived(keyPortalUrl(mode, host));
 
+  // The backend builds the URL from the mode and host and opens it, so the
+  // page cannot open arbitrary URLs. `portal` here only enables the button.
   async function open() {
-    if (portal) await openUrl(portal);
+    if (portal) await invoke('open_key_portal', { mode, host });
   }
 </script>
 

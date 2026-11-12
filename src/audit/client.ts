@@ -2,7 +2,13 @@
 const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export interface ClientConfig {
-  key: string;
+  /**
+   * The API key, for the Node CLI only. In the desktop app the key never
+   * passes through the page: the Rust backend holds it in an open connection
+   * (see src/lib/onboarding/keychain.ts) and sends it only to that
+   * connection's controller, so leave this unset there.
+   */
+  key?: string;
   host: string;
   useCloud: boolean;
   verifySSL: boolean;
@@ -53,24 +59,22 @@ export class UniFiClient {
   }
 
   async get(path: string): Promise<FetchResult> {
-    const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
+    const key = this.config.key ?? '';
     try {
       if (IS_TAURI) {
-        // Tauri context — custom Rust command. Cert validation stays on except
-        // for local controllers (self-signed certs), driven by verifySSL.
+        // Tauri context: the backend resolves the path against the open
+        // connection's controller, refuses any other origin, and adds the key
+        // itself. TLS verification is decided there too (on for cloud).
         const { invoke } = await import('@tauri-apps/api/core');
-        const result = await invoke<{ status: number; data: unknown }>('unifi_fetch', {
-          url,
-          apiKey: this.config.key,
-          verifySsl: this.config.verifySSL,
-        });
+        const result = await invoke<{ status: number; data: unknown }>('unifi_fetch', { path });
         return { status: result.status, data: result.data };
       } else {
+        const url = path.startsWith('http') ? path : `${this.baseUrl()}${path}`;
         // Node.js CLI context — dynamically import undici (Node.js-only, not for browsers)
         const { Agent, fetch: undiciFetch } = await import('undici');
         const dispatcher = new Agent({ connect: { rejectUnauthorized: this.config.verifySSL } });
         const resp = await undiciFetch(url, {
-          headers: { 'X-API-KEY': this.config.key, 'Accept': 'application/json' },
+          headers: { 'X-API-KEY': key, 'Accept': 'application/json' },
           dispatcher,
         });
         let data: unknown;
@@ -78,7 +82,8 @@ export class UniFiClient {
         return { status: resp.status, data };
       }
     } catch (err) {
-      return { status: 0, data: { error: String(err).replace(this.config.key, '<REDACTED>') } };
+      const msg = String(err);
+      return { status: 0, data: { error: key ? msg.replaceAll(key, '<REDACTED>') : msg } };
     }
   }
 }

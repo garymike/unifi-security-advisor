@@ -49,7 +49,11 @@ trust. Never commit it.
    installer(s), signs the updater artifacts (if the secrets are set), and
    creates a **draft** GitHub Release with the bundles + `latest.json`.
 6. Review the draft Release, then **publish** it. Installed apps only see the
-   update once the release is published (a draft is never "latest").
+   update once the release is published (a draft is never "latest"). This
+   manual step is deliberate: the app auto-updates, so publishing is the
+   point at which a build reaches every user, and a person makes that call
+   rather than a tag push. The workflow sets `releaseDraft: true`; keep the
+   two in agreement.
 
 ## Verifying (first time)
 
