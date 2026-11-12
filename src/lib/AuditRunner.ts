@@ -12,14 +12,17 @@ export interface AuditRunResult {
   inferredProfile: string;
 }
 
+/**
+ * Run a live audit over the backend's open connection (connection.open or
+ * connection.openSaved must have succeeded first). The page never has the key.
+ */
 export async function runAudit(
-  apiKey: string,
   host: string,
   useCloud: boolean,
   onProgress: (msg: string) => void,
 ): Promise<AuditRunResult> {
   const client = new UniFiClient({
-    key: apiKey, host, useCloud,
+    host, useCloud,
     verifySSL: useCloud,
     profile: 'home_office',
   });

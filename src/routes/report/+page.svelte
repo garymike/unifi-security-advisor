@@ -116,14 +116,13 @@
     const md = buildMarkdown();
     const filename = `unifi-report-${runId.slice(0, 8)}.md`;
     if (IS_TAURI) {
-      // A browser <a download> is ignored inside the Tauri webview, so save
-      // through the native dialog + a Rust write command instead.
+      // A browser <a download> is ignored inside the Tauri webview. The
+      // backend opens the save dialog and writes to the path the user picks;
+      // the page never names a path.
       try {
-        const { save } = await import('@tauri-apps/plugin-dialog');
         const { invoke } = await import('@tauri-apps/api/core');
-        const path = await save({ defaultPath: filename, filters: [{ name: 'Markdown', extensions: ['md'] }] });
-        if (!path) return; // cancelled
-        await invoke('write_text_file', { path, contents: md });
+        const saved = await invoke<boolean>('export_report', { contents: md, defaultName: filename });
+        if (!saved) return; // cancelled
         exportMsg = 'Report saved.';
       } catch (e) {
         exportMsg = `Export failed: ${e instanceof Error ? e.message : String(e)}`;

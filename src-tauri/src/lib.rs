@@ -1,7 +1,12 @@
 use std::collections::HashMap;
 use std::io::Read;
-use tauri::command;
+use std::path::Path;
 
+use tauri::Manager;
+
+mod connection;
+mod db;
+mod files;
 mod keychain;
 
 // Public AES-128-CBC keys (from UniFi source, used by all open-source tools in this space)
@@ -19,56 +24,17 @@ const CONSOLE_KEY: &[u8; 32] = &[
     0x36, 0x76, 0xbf, 0xd5, 0xd5, 0xb9, 0x00, 0x05, 0xd9, 0x84, 0x5f, 0xfd, 0x5d, 0xce, 0x98, 0x5f,
 ];
 
-/// HTTP fetch for the UniFi API. TLS cert validation is kept ON by default and
-/// only disabled when `verify_ssl` is false — the local-controller case, where
-/// consoles present self-signed certificates. Cloud (Site Manager, api.ui.com)
-/// has a valid chain and is verified normally.
-#[command]
-async fn unifi_fetch(
-    url: String,
-    api_key: String,
-    verify_ssl: bool,
-) -> Result<serde_json::Value, String> {
-    let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(!verify_ssl)
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    let response = client
-        .get(&url)
-        .header("X-API-KEY", &api_key)
-        .header("Accept", "application/json")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let status = response.status().as_u16();
-    let data: serde_json::Value = match response.json().await {
-        Ok(v) => v,
-        Err(_) => serde_json::json!({ "nonJsonResponse": true }),
-    };
-
-    Ok(serde_json::json!({ "status": status, "data": data }))
-}
-
-/// Write UTF-8 text to a path the user picked via the save dialog. A browser
-/// `<a download>` is silently ignored inside the Tauri webview, so the report
-/// export saves through this command instead.
-#[command]
-fn write_text_file(path: String, contents: String) -> Result<(), String> {
-    std::fs::write(&path, contents).map_err(|e| format!("Cannot write '{}': {}", path, e))
-}
-
 /// Parse a UniFi backup file. Returns raw MongoDB collections as JSON.
 /// Handles two formats: the classic `.unf` scheme (AES-128-CBC → ZIP → BSON)
 /// and the newer UniFi OS console `.unifi` scheme (AES-256-CBC with an embedded
 /// IV → gzip'd TAR → marker-based BSON). All crypto and binary parsing runs in
 /// Rust — the decrypted data never touches the webview's JavaScript heap.
-#[command]
-fn parse_backup(path: String) -> Result<serde_json::Value, String> {
-    let raw = std::fs::read(&path)
-        .map_err(|e| format!("Cannot read '{}': {}", path, e))?;
+///
+/// Not a command: the page cannot name a path. `files::backup_parse` calls this
+/// with the path the user picked in the native open dialog.
+pub(crate) fn parse_backup_file(path: &Path) -> Result<serde_json::Value, String> {
+    let raw = std::fs::read(path)
+        .map_err(|e| format!("Cannot read the backup file: {}", e))?;
 
     // 1. Classic .unf: locate a ZIP archive (plain, prefixed, or AES-128-decrypted).
     if let Some(zip_data) = detect_classic_zip(&raw) {
@@ -469,19 +435,35 @@ mod tests {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_sql::Builder::default().build())
+        // Dialog and opener are used from Rust only (files.rs, connection.rs);
+        // the page's capability grants neither.
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
+        .manage(connection::ConnectionState::default())
+        .manage(files::PendingBackup::default())
+        .setup(|app| {
+            let dir = app.path().app_config_dir()?;
+            std::fs::create_dir_all(&dir)?;
+            app.manage(db::Db::open(&dir.join(db::DB_FILE))?);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            unifi_fetch,
-            parse_backup,
-            write_text_file,
-            keychain::keychain_set,
-            keychain::keychain_get,
+            connection::connection_open,
+            connection::connection_open_saved,
+            connection::connection_remember,
+            connection::connection_close,
+            connection::unifi_fetch,
+            connection::open_key_portal,
+            keychain::keychain_hint,
             keychain::keychain_delete,
-            keychain::keychain_scan
+            keychain::keychain_scan,
+            files::export_report,
+            files::backup_choose,
+            files::backup_parse,
+            db::db_write,
+            db::db_read,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

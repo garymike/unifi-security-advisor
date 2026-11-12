@@ -12,6 +12,28 @@ Format per entry:
 
 ---
 
+## D-010: The webview is untrusted; Rust owns keys, files, and the database
+
+**Date:** Nov 12, 2026
+
+**Context:** The desktop page could read any saved key (`keychain_get`), send a key to any URL (`unifi_fetch(url, api_key)`), read or write any path (`parse_backup(path)`, `write_text_file(path)`), run any SQL against any database path (tauri-plugin-sql), and ran without a content security policy. One script injection in the page would have exposed every stored credential, contradicting docs/05-credential-handling.md ("may transmit the credential only to the UniFi controller").
+
+**Decision:** Treat the page as untrusted and give it intents, not capabilities.
+- A key enters once (pasted) or is named by its saved account. The backend holds it in an in-memory session bound to the target the account name describes (`cloud` is `api.ui.com`; `local:<host>` is that https origin). `unifi_fetch` takes a path, refuses any other origin, and never follows redirects.
+- The page learns whether a key exists and its last four characters, never the key.
+- File dialogs open from Rust and Rust acts on the chosen path; the page never supplies one.
+- The database is a backend-owned SQLite file with a named statement catalog (`src-tauri/src/db.rs`).
+- A strict CSP: `script-src 'self'` plus build-time hashes of the two inline bootstrap scripts, `style-src 'self'`, inline `style` attributes only (`style-src-attr`), `connect-src` limited to Tauri IPC.
+
+**Consequences:**
+- Adding a query means adding a named statement in Rust, not writing SQL in TypeScript.
+- `bson`'s `Long` probes for WebAssembly and logs a CSP `wasm-eval` violation on the backup page, then falls back to plain JS. Harmless; not worth `'wasm-unsafe-eval'`.
+- Local controllers still use unverified TLS (self-signed certificates), so a key could be intercepted on a hostile LAN. Certificate pinning on first use is the follow-up.
+
+**Status:** Active.
+
+---
+
 ## D-009: Project structure flattened with numbered docs
 
 **Date:** Apr 25, 2026

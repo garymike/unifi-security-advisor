@@ -6,11 +6,35 @@ import {
 
 const INDEX_KEY = 'saved_key_index';
 
+/**
+ * Keychain access from the page. There is no way to read or write a secret
+ * here: the backend holds keys and uses them itself. The page can only forget
+ * a key, list account names, and see a key's last four characters.
+ */
 export const keychain = {
-  save: (account: string, secret: string) => invoke<void>('keychain_set', { account, secret }),
-  load: (account: string) => invoke<string | null>('keychain_get', { account }),
   delete: (account: string) => invoke<void>('keychain_delete', { account }),
   scan: () => invoke<string[]>('keychain_scan'),
+  hint: (account: string) => invoke<string | null>('keychain_hint', { account }),
+};
+
+/** What the backend reports about an open connection (never the key). */
+export interface ConnectionInfo {
+  account: string;
+  mode: 'local' | 'cloud';
+  host: string | null;
+}
+
+/**
+ * The backend's connection session. A key goes in once (freshly pasted) or is
+ * named by its saved account; after that, requests go to the controller the
+ * account is bound to and nowhere else.
+ */
+export const connection = {
+  open: (mode: 'local' | 'cloud', host: string, apiKey: string) =>
+    invoke<ConnectionInfo>('connection_open', { mode, host, apiKey }),
+  openSaved: (account: string) => invoke<ConnectionInfo>('connection_open_saved', { account }),
+  remember: () => invoke<ConnectionInfo>('connection_remember'),
+  close: () => invoke<void>('connection_close'),
 };
 
 export async function loadIndex(): Promise<KeyIdentity[]> {
@@ -21,9 +45,19 @@ export async function saveIndex(list: KeyIdentity[]): Promise<void> {
   await setKv(INDEX_KEY, serializeIndex(list));
 }
 
-/** Store a key (opt-in) and record its non-secret identity in the index. */
-export async function rememberKey(entry: KeyIdentity, secret: string): Promise<void> {
-  await keychain.save(entry.identity, secret);
+/**
+ * Store the open connection's key (opt-in) and record its non-secret identity
+ * in the index. The backend saves the key under the connection's own account,
+ * so the identity recorded here is the one the backend reports.
+ */
+export async function rememberKey(label: string): Promise<void> {
+  const info = await connection.remember();
+  const entry: KeyIdentity = {
+    identity: info.account,
+    mode: info.mode,
+    host: info.mode === 'local' ? (info.host ?? undefined) : undefined,
+    label,
+  };
   await saveIndex(addIdentity(await loadIndex(), entry));
 }
 

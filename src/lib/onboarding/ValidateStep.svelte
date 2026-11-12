@@ -1,12 +1,12 @@
 <script lang="ts">
   import { UniFiClient } from '../../audit/client.js';
   import { validateConnection, type ValidationResult } from './validateConnection.js';
-  import { identityFor, labelFor } from './keyIndex.js';
-  import { rememberKey } from './keychain.js';
+  import { labelFor } from './keyIndex.js';
+  import { connection, rememberKey } from './keychain.js';
 
   let { mode, host = '', onrun }: {
     mode: 'local' | 'cloud'; host?: string;
-    onrun: (args: { apiKey: string }) => void;
+    onrun: () => void;
   } = $props();
 
   let apiKey = $state('');
@@ -17,23 +17,27 @@
   async function validate() {
     if (!apiKey.trim()) { result = { ok: false, error: { kind: 'auth', message: 'Paste your API key first.' } }; return; }
     busy = true;
+    try {
+      // Hand the key to the backend, bound to this controller. From here on
+      // the page only names paths; the backend adds the key.
+      await connection.open(mode, host, apiKey.trim());
+    } catch (e) {
+      result = { ok: false, error: { kind: 'unreachable', message: e instanceof Error ? e.message : String(e) } };
+      busy = false;
+      return;
+    }
     const client = new UniFiClient({
-      key: apiKey.trim(), host, useCloud: mode === 'cloud', verifySSL: mode === 'cloud', profile: 'home_office',
+      host, useCloud: mode === 'cloud', verifySSL: mode === 'cloud', profile: 'home_office',
     });
     result = await validateConnection(client);
+    if (result.ok) apiKey = '';
     busy = false;
   }
 
   async function run() {
     if (!result?.ok) return;
-    if (remember) {
-      const identity = identityFor(mode, host);
-      await rememberKey(
-        { identity, mode, host: mode === 'local' ? host.trim() : undefined, label: labelFor(mode, host, result.consoleName) },
-        apiKey.trim(),
-      );
-    }
-    onrun({ apiKey: apiKey.trim() });
+    if (remember) await rememberKey(labelFor(mode, host, result.consoleName));
+    onrun();
   }
 </script>
 

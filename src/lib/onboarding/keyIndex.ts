@@ -1,12 +1,10 @@
 export interface KeyIdentity {
-  identity: string;            // 'cloud' | `local:${host}`
+  // 'cloud' | `local:${host}`. The backend derives this from the connection
+  // (src-tauri/src/connection.rs) and binds the key to that controller.
+  identity: string;
   mode: 'local' | 'cloud';
   host?: string;
   label: string;               // human-readable, non-secret
-}
-
-export function identityFor(mode: 'local' | 'cloud', host?: string): string {
-  return mode === 'cloud' ? 'cloud' : `local:${(host ?? '').trim()}`;
 }
 
 export function labelFor(mode: 'local' | 'cloud', host?: string, consoleName?: string): string {
