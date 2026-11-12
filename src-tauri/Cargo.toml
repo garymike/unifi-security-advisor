@@ -24,7 +24,14 @@ tauri = { version = "2.12", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-updater = "2.14"
 tauri-plugin-process = "2"
-reqwest = { version = "0.12", features = ["json"] }
+# rustls with the ring provider, the same TLS stack tauri-plugin-updater
+# already pulls in, so this drops native-tls/OpenSSL instead of adding a second
+# stack. connection.rs needs rustls directly for its pinning verifier.
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "rustls-no-provider", "charset", "http2", "system-proxy"] }
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+# SHA-256 of a controller's certificate for pinning (pinning.rs). Already in
+# the tree as rustls's provider; no new crate.
+ring = "0.17.14"
 aes = "0.8"
 cbc = { version = "0.1", features = ["alloc"] }
 flate2 = "1.0"

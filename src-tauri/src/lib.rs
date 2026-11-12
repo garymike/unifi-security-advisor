@@ -8,6 +8,7 @@ mod connection;
 mod db;
 mod files;
 mod keychain;
+mod pinning;
 
 // Public AES-128-CBC keys (from UniFi source, used by all open-source tools in this space)
 const UNF_KEY: &[u8; 16] = b"bcyangkmluohmars";
@@ -434,6 +435,9 @@ mod tests {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // reqwest is built without a bundled rustls provider; install ring (the
+    // one tauri-plugin-updater uses) before any client is built.
+    pinning::ensure_crypto_provider();
     tauri::Builder::default()
         // Dialog and opener are used from Rust only (files.rs, connection.rs);
         // the page's capability grants neither.
@@ -455,6 +459,8 @@ pub fn run() {
             connection::connection_remember,
             connection::connection_close,
             connection::unifi_fetch,
+            connection::connection_certificate,
+            connection::connection_repin,
             connection::open_key_portal,
             keychain::keychain_hint,
             keychain::keychain_delete,

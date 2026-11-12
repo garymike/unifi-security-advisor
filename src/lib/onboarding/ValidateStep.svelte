@@ -3,6 +3,7 @@
   import { validateConnection, type ValidationResult } from './validateConnection.js';
   import { labelFor } from './keyIndex.js';
   import { connection, rememberKey } from './keychain.js';
+  import CertChanged from './CertChanged.svelte';
 
   let { mode, host = '', onrun }: {
     mode: 'local' | 'cloud'; host?: string;
@@ -13,6 +14,7 @@
   let remember = $state(false);
   let busy = $state(false);
   let result = $state<ValidationResult | null>(null);
+  let pinned = $state<string | null>(null);
 
   async function validate() {
     if (!apiKey.trim()) { result = { ok: false, error: { kind: 'auth', message: 'Paste your API key first.' } }; return; }
@@ -26,11 +28,24 @@
       busy = false;
       return;
     }
+    await check();
+  }
+
+  // Validate over the open connection. Also used after a re-pin, when the
+  // backend still holds the key and the page no longer needs it.
+  async function check() {
+    busy = true;
     const client = new UniFiClient({
       host, useCloud: mode === 'cloud', verifySSL: mode === 'cloud', profile: 'home_office',
     });
     result = await validateConnection(client);
-    if (result.ok) apiKey = '';
+    pinned = null;
+    if (result.ok) {
+      apiKey = '';
+      if (mode === 'local') {
+        try { pinned = (await connection.certificate()).pinned; } catch { pinned = null; }
+      }
+    }
     busy = false;
   }
 
@@ -58,11 +73,19 @@
       ✓ Connected{result.consoleName ? ` · ${result.consoleName}` : ''}{result.networkVersion ? ` · Network ${result.networkVersion}` : ''}
       {#if result.sites?.length} · {result.sites.length} site{result.sites.length === 1 ? '' : 's'}{/if}
     </div>
+    {#if pinned}
+      <p class="text-xs text-fg-subtle">
+        Console certificate saved (SHA-256): <span class="font-mono break-all">{pinned}</span>.
+        Your key is only sent to a console presenting this certificate.
+      </p>
+    {/if}
     <label class="flex items-center gap-2 text-sm text-fg">
       <input type="checkbox" bind:checked={remember} />
       Remember this key in my keychain
     </label>
     <button onclick={run} class="bg-accent text-on-accent hover:bg-accent-hover px-6 py-3 rounded-lg font-semibold">Run Audit</button>
+  {:else if result?.error?.kind === 'cert-changed'}
+    <CertChanged {host} onrepinned={check} />
   {:else if result?.error}
     <div class="rounded-lg bg-sev-high-tint border border-line p-3 text-sm text-sev-high">{result.error.message}</div>
   {/if}

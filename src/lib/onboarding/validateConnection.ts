@@ -2,7 +2,7 @@ import { parseApplicationVersion } from '../../audit/apiVersion.js';
 import { extractSites } from '../../audit/collect.js';
 import { GLOBAL_ENDPOINTS, CLOUD_HOSTS_URL } from '../../audit/endpoints.js';
 
-export type ValidationErrorKind = 'auth' | 'unreachable' | 'mode-mismatch' | 'unknown';
+export type ValidationErrorKind = 'auth' | 'unreachable' | 'mode-mismatch' | 'cert-changed' | 'unknown';
 export interface ValidationError { kind: ValidationErrorKind; message: string }
 export interface ValidationResult {
   ok: boolean;
@@ -17,12 +17,22 @@ export interface Fetcher {
   get(path: string): Promise<{ status: number; data: unknown }>;
 }
 
+/** Prefix of the backend's refusal when a local certificate no longer matches its pin. */
+export const CERT_CHANGED_MARKER = 'certificate-changed:';
+const CERT_CHANGED_MSG = 'This console presented a different certificate from the one saved for it, so your key was not sent.';
 const AUTH_MSG = 'Key rejected — check you pasted the whole key. It may be expired or the wrong type for this mode.';
 const UNKNOWN_MSG = (status: number) => `Unexpected response from the console (${status}). Try again, or check the console is a supported UniFi Network version.`;
 const unreachableMsg = (host: string) => `Couldn't reach ${host || 'the controller'} — is the console on this network and the IP correct?`;
 
 function err(kind: ValidationErrorKind, message: string): ValidationResult {
   return { ok: false, error: { kind, message } };
+}
+
+/** True when a fetch failed because the backend refused a changed certificate. */
+export function isCertChanged(res: { status: number; data: unknown }): boolean {
+  if (res.status !== 0 || typeof res.data !== 'object' || res.data === null) return false;
+  const e = (res.data as Record<string, unknown>)['error'];
+  return typeof e === 'string' && e.includes(CERT_CHANGED_MARKER);
 }
 
 function sitesFrom(data: unknown): { id: string; name: string }[] {
@@ -57,6 +67,7 @@ export async function validateConnection(client: Fetcher): Promise<ValidationRes
 
     const info = await client.get(pathFor('info'));
     if (info.status === 401 || info.status === 403) return err('auth', AUTH_MSG);
+    if (isCertChanged(info)) return err('cert-changed', CERT_CHANGED_MSG);
     if (info.status === 0) return err('unreachable', unreachableMsg(host));
     if (info.status !== 200) return err('unknown', UNKNOWN_MSG(info.status));
 
@@ -68,6 +79,7 @@ export async function validateConnection(client: Fetcher): Promise<ValidationRes
       : typeof infoObj['hardwareRevision'] === 'string' ? (infoObj['hardwareRevision'] as string) : undefined;
 
     const sitesRes = await client.get(pathFor('sites'));
+    if (isCertChanged(sitesRes)) return err('cert-changed', CERT_CHANGED_MSG);
     const sites = sitesRes.status === 200 ? sitesFrom(sitesRes.data) : [];
 
     return { ok: true, consoleName, model, networkVersion, sites };

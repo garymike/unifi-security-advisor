@@ -11,6 +11,14 @@
 //! The binding is structural: an account is `cloud` (the Site Manager API at
 //! `api.ui.com`) or `local:<host>`, and the target is derived from that name
 //! alone, so a key saved for one controller cannot be pointed at another.
+//!
+//! TLS: cloud uses normal platform chain verification. A local console's
+//! self-signed certificate is pinned on first use (`pinning.rs`): once a key
+//! validates, the certificate's SHA-256 is stored against the account, and a
+//! later handshake that presents any other certificate is aborted before the
+//! request, and so the key, is written. The page sees that as a certificate
+//! change it can ask the user to review; only a native confirmation dialog,
+//! raised here, moves the pin, and only to the certificate Rust itself saw.
 
 use std::sync::Mutex;
 
@@ -19,7 +27,9 @@ use reqwest::Url;
 use serde::Serialize;
 use tauri::{command, AppHandle, State};
 
+use crate::db::Db;
 use crate::keychain;
+use crate::pinning::{self, Fingerprint};
 
 pub const CLOUD_ACCOUNT: &str = "cloud";
 const CLOUD_API_ORIGIN: &str = "https://api.ui.com";
@@ -29,16 +39,17 @@ const LOCAL_PREFIX: &str = "local:";
 const MAX_HOST_LEN: usize = 300;
 /// UniFi keys are short; anything this long is not a key.
 const MAX_KEY_LEN: usize = 512;
+/// The page matches on this prefix to offer the re-pin flow.
+pub const CERT_CHANGED: &str =
+    "certificate-changed: This controller presented a different certificate from the one pinned for it, so the key was not sent.";
 
-/// Where a key may be sent: one https origin, plus whether its certificate is
-/// verified. Built only from an account name, never from a page-supplied URL.
+/// Where a key may be sent: one https origin. Built only from an account
+/// name, never from a page-supplied URL. Cloud has a valid public chain and is
+/// verified normally; a local console's certificate is pinned (module docs).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Target {
     account: String,
     base: Url,
-    /// Cloud has a valid public chain. Local consoles present self-signed
-    /// certificates, so verification is off for them (unchanged behaviour).
-    verify_tls: bool,
 }
 
 impl Target {
@@ -46,7 +57,6 @@ impl Target {
         Target {
             account: CLOUD_ACCOUNT.to_string(),
             base: Url::parse(CLOUD_API_ORIGIN).expect("static URL"),
-            verify_tls: true,
         }
     }
 
@@ -85,7 +95,7 @@ impl Target {
         }
         let base = Url::parse(&url.origin().ascii_serialization())
             .map_err(|_| "That controller address is not valid.".to_string())?;
-        Ok(Target { account: format!("{LOCAL_PREFIX}{host}"), base, verify_tls: false })
+        Ok(Target { account: format!("{LOCAL_PREFIX}{host}"), base })
     }
 
     pub fn for_mode(mode: &str, host: Option<&str>) -> Result<Self, String> {
@@ -162,17 +172,30 @@ impl Drop for Session {
     }
 }
 
+/// A local controller presented `presented` where `pinned` was expected.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct CertChange {
+    pinned: Fingerprint,
+    presented: Fingerprint,
+}
+
 #[derive(Default)]
-pub struct ConnectionState(Mutex<Option<Session>>);
+pub struct ConnectionState {
+    session: Mutex<Option<Session>>,
+    /// The last certificate change seen, and the account it was seen for,
+    /// waiting for the user to review it. Cleared whenever the session changes.
+    change: Mutex<Option<(String, CertChange)>>,
+}
 
 impl ConnectionState {
     fn set(&self, session: Session) -> Result<(), String> {
-        *self.0.lock().map_err(|_| "connection state poisoned".to_string())? = Some(session);
+        *self.session.lock().map_err(|_| "connection state poisoned".to_string())? = Some(session);
+        self.clear_change();
         Ok(())
     }
 
     fn current(&self) -> Result<Session, String> {
-        self.0
+        self.session
             .lock()
             .map_err(|_| "connection state poisoned".to_string())?
             .clone()
@@ -180,8 +203,27 @@ impl ConnectionState {
     }
 
     fn clear(&self) {
-        if let Ok(mut s) = self.0.lock() {
+        if let Ok(mut s) = self.session.lock() {
             *s = None;
+        }
+        self.clear_change();
+    }
+
+    fn note_change(&self, target: &Target, change: CertChange) {
+        if let Ok(mut c) = self.change.lock() {
+            *c = Some((target.account.clone(), change));
+        }
+    }
+
+    /// The pending change for `target`, if one was seen on this connection.
+    fn change_for(&self, target: &Target) -> Option<CertChange> {
+        let c = self.change.lock().ok()?;
+        c.as_ref().filter(|(account, _)| *account == target.account).map(|(_, ch)| *ch)
+    }
+
+    fn clear_change(&self) {
+        if let Ok(mut c) = self.change.lock() {
+            *c = None;
         }
     }
 }
@@ -217,7 +259,7 @@ fn check_key(key: &str) -> Result<String, String> {
 }
 
 /// Open a connection with a key the user just entered.
-#[command]
+#[command(async)]
 pub fn connection_open(
     state: State<'_, ConnectionState>,
     mode: String,
@@ -260,39 +302,178 @@ pub fn connection_close(state: State<'_, ConnectionState>) {
     state.clear();
 }
 
-/// GET a path on the open connection's controller with its key.
-#[command]
-pub async fn unifi_fetch(
-    state: State<'_, ConnectionState>,
-    path: String,
-) -> Result<serde_json::Value, String> {
-    let session = state.current()?;
-    let url = session.target.resolve(&path)?;
+/// What one request produced.
+#[derive(Debug)]
+enum Outcome {
+    /// The server answered. `presented` is the local controller's leaf
+    /// certificate (None for cloud, or a resumed session).
+    Response { status: u16, data: serde_json::Value, presented: Option<Fingerprint> },
+    /// A local controller presented a certificate other than the pin. The
+    /// handshake was aborted, so no request bytes, and no key, were sent.
+    CertChanged(CertChange),
+}
 
-    let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(!session.target.verify_tls)
+/// Send one GET with the key. For a local target the TLS handshake accepts
+/// only `pin` (or, with no pin yet, any certificate, which the caller pins).
+async fn send(target: &Target, key: &str, url: Url, pin: Option<Fingerprint>) -> Result<Outcome, String> {
+    pinning::ensure_crypto_provider();
+    let builder = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| e.to_string())?;
+        .timeout(std::time::Duration::from_secs(30));
+    let (builder, verifier) = if target.is_cloud() {
+        (builder, None)
+    } else {
+        let (config, verifier) = pinning::local_client_config(pin)?;
+        (builder.tls_backend_preconfigured(config), Some(verifier))
+    };
+    let client = builder.build().map_err(|e| e.to_string())?;
 
-    let mut key_header = HeaderValue::from_str(&session.key).map_err(|_| "invalid key".to_string())?;
+    let mut key_header = HeaderValue::from_str(key).map_err(|_| "invalid key".to_string())?;
     key_header.set_sensitive(true);
 
-    let response = client
+    let response = match client
         .get(url)
         .header("X-API-KEY", key_header)
         .header(ACCEPT, "application/json")
         .send()
         .await
-        .map_err(|e| e.without_url().to_string())?;
+    {
+        Ok(r) => r,
+        Err(e) => {
+            let presented = verifier.as_ref().and_then(|v| v.presented());
+            if let (Some(pinned), Some(presented)) = (pin, presented) {
+                if pinned != presented {
+                    return Ok(Outcome::CertChanged(CertChange { pinned, presented }));
+                }
+            }
+            return Err(e.without_url().to_string());
+        }
+    };
 
     let status = response.status().as_u16();
     let data: serde_json::Value = match response.json().await {
         Ok(v) => v,
         Err(_) => serde_json::json!({ "nonJsonResponse": true }),
     };
-    Ok(serde_json::json!({ "status": status, "data": data }))
+    let presented = verifier.as_ref().and_then(|v| v.presented());
+    Ok(Outcome::Response { status, data, presented })
+}
+
+/// The certificate to pin after a response: only for a local target with no
+/// pin yet, and only once the key has validated (a 2xx answer).
+fn first_use_pin(target: &Target, pin: Option<Fingerprint>, status: u16, presented: Option<Fingerprint>) -> Option<Fingerprint> {
+    if target.is_cloud() || pin.is_some() || !(200..300).contains(&status) {
+        return None;
+    }
+    presented
+}
+
+/// GET a path on the open connection's controller with its key.
+#[command]
+pub async fn unifi_fetch(
+    state: State<'_, ConnectionState>,
+    db: State<'_, Db>,
+    path: String,
+) -> Result<serde_json::Value, String> {
+    let session = state.current()?;
+    let url = session.target.resolve(&path)?;
+    let pin = if session.target.is_cloud() { None } else { db.pin(session.target.account())? };
+
+    match send(&session.target, &session.key, url, pin).await? {
+        Outcome::CertChanged(change) => {
+            state.note_change(&session.target, change);
+            Err(CERT_CHANGED.to_string())
+        }
+        Outcome::Response { status, data, presented } => {
+            if let Some(fp) = first_use_pin(&session.target, pin, status, presented) {
+                let stored = db.pin_first_use(session.target.account(), fp)?;
+                // Two first requests raced and saw different certificates:
+                // keep the first pin and surface the second as a change.
+                if stored != fp {
+                    state.note_change(&session.target, CertChange { pinned: stored, presented: fp });
+                    return Err(CERT_CHANGED.to_string());
+                }
+            }
+            Ok(serde_json::json!({ "status": status, "data": data }))
+        }
+    }
+}
+
+/// The open local connection's certificate pin and, after a refused
+/// connection, the certificate the controller presented instead. Both are
+/// SHA-256 fingerprints; neither is secret.
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct CertificateInfo {
+    pinned: Option<String>,
+    presented: Option<String>,
+}
+
+#[command(async)]
+pub fn connection_certificate(
+    state: State<'_, ConnectionState>,
+    db: State<'_, Db>,
+) -> Result<CertificateInfo, String> {
+    let session = state.current()?;
+    if session.target.is_cloud() {
+        return Ok(CertificateInfo { pinned: None, presented: None });
+    }
+    let change = state.change_for(&session.target);
+    let pinned = match change {
+        Some(c) => Some(c.pinned),
+        None => db.pin(session.target.account())?,
+    };
+    Ok(CertificateInfo {
+        pinned: pinned.map(|f| f.to_string()),
+        presented: change.map(|c| c.presented.to_string()),
+    })
+}
+
+fn repin_prompt(host: &str, change: &CertChange) -> String {
+    format!(
+        "{host} presented a different certificate from the one this app pinned for it.\n\n\
+         Pinned:\n{}\n\nPresented now:\n{}\n\n\
+         This is expected after a console reset, restore, or certificate change. \
+         If none of those happened, someone on your network may be intercepting the connection: \
+         keep the old pin and check the console's certificate first.",
+        change.pinned, change.presented
+    )
+}
+
+/// Trust the certificate the controller presented, after the user confirms in
+/// a native dialog. The page names no fingerprint: the new pin is the one Rust
+/// observed in the refused handshake, and the dialog shows both values.
+/// Returns false if the user kept the old pin.
+#[command(async)]
+pub fn connection_repin(
+    app: AppHandle,
+    state: State<'_, ConnectionState>,
+    db: State<'_, Db>,
+) -> Result<bool, String> {
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+    let session = state.current()?;
+    let change = state
+        .change_for(&session.target)
+        .ok_or_else(|| "There is no certificate change to review for this controller.".to_string())?;
+    let host = session.target.account().strip_prefix(LOCAL_PREFIX).unwrap_or_default();
+    let confirmed = app
+        .dialog()
+        .message(repin_prompt(host, &change))
+        .title("Controller certificate changed")
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Trust the new certificate".into(),
+            "Keep the old pin".into(),
+        ))
+        .blocking_show();
+    if !confirmed {
+        return Ok(false);
+    }
+    if !db.replace_pin(session.target.account(), change.pinned, change.presented)? {
+        return Err("The pinned certificate changed while you were deciding. Validate again.".into());
+    }
+    state.clear_change();
+    Ok(true)
 }
 
 /// Open the key-minting page in the system browser. Rust builds the URL from
@@ -320,7 +501,7 @@ mod tests {
         ] {
             let t = Target::local(input).unwrap_or_else(|e| panic!("{input}: {e}"));
             assert_eq!(t.base.origin().ascii_serialization(), origin, "{input}");
-            assert!(!t.verify_tls);
+            assert!(!t.is_cloud());
         }
     }
 
@@ -378,7 +559,7 @@ mod tests {
     #[test]
     fn cloud_key_only_reaches_api_ui_com() {
         let t = Target::cloud();
-        assert!(t.verify_tls);
+        assert!(t.is_cloud());
         assert!(t.resolve("https://api.ui.com/v1/hosts").is_ok());
         assert!(t.resolve("/v1/hosts").is_ok());
         assert!(t.resolve("https://unifi.ui.com/v1/hosts").is_err());
@@ -416,5 +597,144 @@ mod tests {
         assert_eq!(state.current().unwrap().target, Target::cloud());
         state.clear();
         assert!(state.current().is_err());
+    }
+
+    #[test]
+    fn a_certificate_change_belongs_to_one_session() {
+        let state = ConnectionState::default();
+        let local = Target::local("192.168.1.1").unwrap();
+        let change = CertChange { pinned: Fingerprint::of(b"a"), presented: Fingerprint::of(b"b") };
+        state.set(Session { target: local.clone(), key: "k".into() }).unwrap();
+        state.note_change(&local, change);
+        assert_eq!(state.change_for(&local), Some(change));
+        assert_eq!(state.change_for(&Target::local("10.0.0.1").unwrap()), None);
+        // Opening any connection, even to the same controller, drops it.
+        state.set(Session { target: local.clone(), key: "k".into() }).unwrap();
+        assert_eq!(state.change_for(&local), None);
+        state.note_change(&local, change);
+        state.clear();
+        assert_eq!(state.change_for(&local), None);
+    }
+
+    #[test]
+    fn pins_only_after_a_local_key_validates() {
+        let local = Target::local("192.168.1.1").unwrap();
+        let fp = Some(Fingerprint::of(b"a"));
+        assert_eq!(first_use_pin(&local, None, 200, fp), fp);
+        assert_eq!(first_use_pin(&local, None, 204, fp), fp);
+        assert_eq!(first_use_pin(&local, None, 401, fp), None, "a rejected key pins nothing");
+        assert_eq!(first_use_pin(&local, None, 302, fp), None);
+        assert_eq!(first_use_pin(&local, fp, 200, fp), None, "already pinned");
+        assert_eq!(first_use_pin(&Target::cloud(), None, 200, fp), None, "cloud is never pinned");
+    }
+
+    #[test]
+    fn the_repin_prompt_shows_both_fingerprints() {
+        let change = CertChange { pinned: Fingerprint::of(b"a"), presented: Fingerprint::of(b"b") };
+        let text = repin_prompt("192.168.1.1", &change);
+        assert!(text.contains("192.168.1.1"));
+        assert!(text.contains(&change.pinned.to_string()));
+        assert!(text.contains(&change.presented.to_string()));
+    }
+
+    /// A one-shot HTTPS server on 127.0.0.1 presenting the given test
+    /// certificate. Returns its port and a handle yielding every byte of
+    /// application data it received (empty if the client aborted the
+    /// handshake).
+    fn tls_server(cert: &'static [u8], key: &'static [u8]) -> (u16, std::thread::JoinHandle<Vec<u8>>) {
+        use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
+        use std::io::{Read, Write};
+        use std::sync::Arc;
+
+        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let config = rustls::ServerConfig::builder_with_provider(provider)
+            .with_safe_default_protocol_versions()
+            .unwrap()
+            .with_no_client_auth()
+            .with_single_cert(
+                vec![CertificateDer::from(cert.to_vec())],
+                PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key.to_vec())),
+            )
+            .unwrap();
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let handle = std::thread::spawn(move || {
+            let (tcp, _) = listener.accept().unwrap();
+            tcp.set_read_timeout(Some(std::time::Duration::from_secs(10))).unwrap();
+            let conn = rustls::ServerConnection::new(Arc::new(config)).unwrap();
+            let mut tls = rustls::StreamOwned::new(conn, tcp);
+            let mut received = Vec::new();
+            let mut buf = [0u8; 4096];
+            while !received.windows(4).any(|w| w == b"\r\n\r\n") {
+                match tls.read(&mut buf) {
+                    Ok(0) | Err(_) => return received,
+                    Ok(n) => received.extend_from_slice(&buf[..n]),
+                }
+            }
+            let body = br#"{"ok":true}"#;
+            let head = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                body.len()
+            );
+            let _ = tls.write_all(head.as_bytes());
+            let _ = tls.write_all(body);
+            let _ = tls.flush();
+            tls.conn.send_close_notify();
+            let _ = tls.flush();
+            received
+        });
+        (port, handle)
+    }
+
+    const CERT_A: &[u8] = include_bytes!("testdata/console-a.cert.der");
+    const KEY_A: &[u8] = include_bytes!("testdata/console-a.key.der");
+    const CERT_B: &[u8] = include_bytes!("testdata/console-b.cert.der");
+    const KEY_B: &[u8] = include_bytes!("testdata/console-b.key.der");
+    const TEST_KEY: &str = "test-api-key-0123456789";
+
+    fn fetch(port: u16, pin: Option<Fingerprint>) -> Result<Outcome, String> {
+        let target = Target::local(&format!("127.0.0.1:{port}")).unwrap();
+        let url = target.resolve("/proxy/network/integration/v1/info").unwrap();
+        tauri::async_runtime::block_on(send(&target, TEST_KEY, url, pin))
+    }
+
+    #[test]
+    fn first_use_sends_the_key_and_reports_the_certificate_to_pin() {
+        let (port, server) = tls_server(CERT_A, KEY_A);
+        let outcome = fetch(port, None).unwrap();
+        let received = String::from_utf8(server.join().unwrap()).unwrap();
+        match outcome {
+            Outcome::Response { status, presented, .. } => {
+                assert_eq!(status, 200);
+                assert_eq!(presented, Some(Fingerprint::of(CERT_A)));
+            }
+            other => panic!("expected a response, got {other:?}"),
+        }
+        assert!(received.to_ascii_lowercase().contains(&format!("x-api-key: {TEST_KEY}")));
+    }
+
+    #[test]
+    fn a_matching_pin_sends_the_key() {
+        let (port, server) = tls_server(CERT_A, KEY_A);
+        let outcome = fetch(port, Some(Fingerprint::of(CERT_A))).unwrap();
+        let received = String::from_utf8(server.join().unwrap()).unwrap();
+        assert!(matches!(outcome, Outcome::Response { status: 200, .. }), "{outcome:?}");
+        assert!(received.contains(TEST_KEY));
+    }
+
+    #[test]
+    fn a_mismatched_certificate_is_refused_before_the_key_is_sent() {
+        let (port, server) = tls_server(CERT_B, KEY_B);
+        let pinned = Fingerprint::of(CERT_A);
+        let outcome = fetch(port, Some(pinned)).unwrap();
+        let received = server.join().unwrap();
+        match outcome {
+            Outcome::CertChanged(change) => {
+                assert_eq!(change.pinned, pinned);
+                assert_eq!(change.presented, Fingerprint::of(CERT_B));
+            }
+            other => panic!("expected a certificate change, got {other:?}"),
+        }
+        assert!(received.is_empty(), "server received {} bytes of request data", received.len());
     }
 }
