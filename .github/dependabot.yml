@@ -22,3 +22,25 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+
+  # Application dependencies. Security updates would arrive without these entries;
+  # routine version updates do not, and without them every bump is an emergency.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      cargo-minor-patch:
+        update-types: ["minor", "patch"]
