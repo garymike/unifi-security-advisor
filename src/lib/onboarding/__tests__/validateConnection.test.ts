@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateConnection, type Fetcher } from '../validateConnection.js';
+import { validateConnection, isCertChanged, CERT_CHANGED_MARKER, type Fetcher } from '../validateConnection.js';
 
 function fakeClient(useCloud: boolean, host: string, responder: (path: string) => { status: number; data: unknown } | Promise<never>): Fetcher {
   return { config: { useCloud, host }, get: async (path) => responder(path) };
@@ -48,6 +48,33 @@ describe('validateConnection (local)', () => {
     const r = await validateConnection(client);
     expect(r.ok).toBe(false);
     expect(r.error?.kind).toBe('unreachable');
+  });
+
+  it('maps a refused certificate change to cert-changed, not unreachable', async () => {
+    // The shape client.get produces when unifi_fetch rejects with the
+    // backend's CERT_CHANGED error.
+    const refused = { status: 0, data: { error: 'certificate-changed: This controller presented a different certificate from the one pinned for it, so the key was not sent.' } };
+    const r = await validateConnection(fakeClient(false, '192.168.1.1', () => refused));
+    expect(r.ok).toBe(false);
+    expect(r.error?.kind).toBe('cert-changed');
+    expect(r.error?.message).toMatch(/was not sent/);
+  });
+
+  it('catches a certificate change on the second request too', async () => {
+    const client = fakeClient(false, '192.168.1.1', (path) =>
+      path.endsWith('/info')
+        ? { status: 200, data: { applicationVersion: '10.3.58' } }
+        : { status: 0, data: { error: 'certificate-changed: refused' } });
+    expect((await validateConnection(client)).error?.kind).toBe('cert-changed');
+  });
+});
+
+describe('isCertChanged', () => {
+  it('matches only a status:0 refusal carrying the marker', () => {
+    expect(isCertChanged({ status: 0, data: { error: `${CERT_CHANGED_MARKER} x` } })).toBe(true);
+    expect(isCertChanged({ status: 0, data: { error: 'ECONNREFUSED' } })).toBe(false);
+    expect(isCertChanged({ status: 0, data: null })).toBe(false);
+    expect(isCertChanged({ status: 200, data: { error: CERT_CHANGED_MARKER } })).toBe(false);
   });
 });
 

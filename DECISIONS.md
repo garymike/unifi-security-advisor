@@ -12,6 +12,29 @@ Format per entry:
 
 ---
 
+## D-011: Pin local controller certificates on first use
+
+**Date:** Nov 12, 2026
+
+**Context:** D-010 left local controllers on unverified TLS because consoles present self-signed certificates. docs/05-credential-handling.md requires certificate validation for any credential-bearing connection, so a key sent to a local console could be collected by anyone able to answer for the console's address on the LAN.
+
+**Decision:** Trust on first use, enforced inside the TLS handshake.
+- The first time a key validates (a 2xx answer) against a `local:<host>` target, the backend stores the SHA-256 of the leaf certificate the console presented, keyed by that same account name, in a `cert_pins` table of the backend-owned database. No page statement can read or write that table.
+- Every later local request uses a rustls verifier that accepts only the pinned certificate. A mismatch aborts the handshake, so no request bytes, and no key, are written. The handshake signature is still verified; hostname and expiry are not, since the pin is the identity.
+- On a mismatch the page shows the saved and presented fingerprints. Trusting the new certificate is a backend command that raises a native confirmation dialog with both values and pins only the certificate the backend itself observed. The page never supplies a fingerprint.
+- Cloud (`api.ui.com`) keeps platform chain verification.
+- The fingerprint is of the whole leaf certificate, as asked for and as `openssl x509 -fingerprint -sha256` and browsers display it, so a user can compare it by hand.
+
+**Consequences:**
+- The very first connection to a console is still unauthenticated. The fingerprint is shown after validation so a careful user can compare it against the console.
+- Pins live in the database rather than the keychain so they work where no OS keychain is available (the pasted-key flow), and so they are testable. Forgetting a saved key keeps the pin, so pasting a new key for the same console does not silently re-pin.
+- A console that regenerates its certificate needs one confirmed re-pin. Pinning the public key instead would survive same-key renewals; revisit if real consoles turn out to renew often.
+- reqwest moved to 0.13 on rustls/ring, the stack the updater already used, which removed native-tls and OpenSSL from the build.
+
+**Status:** Active. Supersedes the follow-up noted in D-010.
+
+---
+
 ## D-010: The webview is untrusted; Rust owns keys, files, and the database
 
 **Date:** Nov 12, 2026
@@ -28,7 +51,7 @@ Format per entry:
 **Consequences:**
 - Adding a query means adding a named statement in Rust, not writing SQL in TypeScript.
 - `bson`'s `Long` probes for WebAssembly and logs a CSP `wasm-eval` violation on the backup page, then falls back to plain JS. Harmless; not worth `'wasm-unsafe-eval'`.
-- Local controllers still use unverified TLS (self-signed certificates), so a key could be intercepted on a hostile LAN. Certificate pinning on first use is the follow-up.
+- Local controllers still use unverified TLS (self-signed certificates), so a key could be intercepted on a hostile LAN. Certificate pinning on first use is the follow-up (done in D-011).
 
 **Status:** Active.
 
