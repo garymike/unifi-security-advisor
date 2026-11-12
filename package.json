@@ -19,30 +19,30 @@
     "dump-backup-settings": "tsx tools/dump-backup-settings.ts"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "^5.2.8",
-    "@noble/hashes": "^2.2.0",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
-    "@tauri-apps/plugin-opener": "^2.5.4",
-    "@tauri-apps/plugin-process": "^2.3.1",
-    "@tauri-apps/plugin-sql": "^2.4.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@noble/hashes": "^2.4.0",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "@tauri-apps/plugin-opener": "^2.7.2",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-sql": "^2.6.0",
     "@tauri-apps/plugin-updater": "^2.14.1",
     "adm-zip": "^0.6.1",
-    "bson": "^7.2.0",
-    "undici": "^8.12.2"
+    "bson": "^7.3.3",
+    "undici": "^8.12.3"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^4.0.1",
     "@sveltejs/kit": "^3.1.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
-    "@tailwindcss/vite": "^4.2.4",
-    "@tauri-apps/cli": "^2.10.1",
-    "@types/adm-zip": "^0.5.8",
+    "@tailwindcss/vite": "^4.3.4",
+    "@tauri-apps/cli": "^2.12.4",
+    "@types/adm-zip": "^0.6.0",
     "@types/node": "^20.0.0",
     "svelte": "^5.57.3",
     "tailwindcss": "^4.2.4",
-    "tsx": "^4.22.5",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10",
+    "vite": "^8.3.6",
     "vitest": "^4.1.11"
   }
 }
