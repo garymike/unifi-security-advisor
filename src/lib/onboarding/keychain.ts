@@ -25,6 +25,16 @@ export interface ConnectionInfo {
 }
 
 /**
+ * A local controller's certificate pin (SHA-256, colon-separated hex). After
+ * the backend refused a connection, `presented` is what the controller showed
+ * instead. Neither value is secret. Cloud connections have neither.
+ */
+export interface CertificateInfo {
+  pinned: string | null;
+  presented: string | null;
+}
+
+/**
  * The backend's connection session. A key goes in once (freshly pasted) or is
  * named by its saved account; after that, requests go to the controller the
  * account is bound to and nowhere else.
@@ -35,6 +45,14 @@ export const connection = {
   openSaved: (account: string) => invoke<ConnectionInfo>('connection_open_saved', { account }),
   remember: () => invoke<ConnectionInfo>('connection_remember'),
   close: () => invoke<void>('connection_close'),
+  certificate: () => invoke<CertificateInfo>('connection_certificate'),
+  /**
+   * Ask the backend to trust the certificate the controller just presented.
+   * The backend shows a native confirmation dialog with both fingerprints and
+   * pins the value it observed itself; the page cannot name one. Resolves
+   * false if the user kept the old pin.
+   */
+  repin: () => invoke<boolean>('connection_repin'),
 };
 
 export async function loadIndex(): Promise<KeyIdentity[]> {

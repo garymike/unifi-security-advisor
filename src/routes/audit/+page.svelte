@@ -4,6 +4,7 @@
   import KeyInstructions from '../../lib/onboarding/KeyInstructions.svelte';
   import ValidateStep from '../../lib/onboarding/ValidateStep.svelte';
   import SavedKeys from '../../lib/onboarding/SavedKeys.svelte';
+  import CertChanged from '../../lib/onboarding/CertChanged.svelte';
   import { loadIndex, keychain, connection, forgetKey } from '../../lib/onboarding/keychain.js';
   import { validateConnection } from '../../lib/onboarding/validateConnection.js';
   import { UniFiClient } from '../../audit/client.js';
@@ -22,6 +23,8 @@
   let hints = $state<Record<string, string>>({});
   let orphans = $state<string[]>([]);
   let checkError = $state('');
+  // A saved local key whose console presented a changed certificate.
+  let certChangedFor = $state<KeyIdentity | null>(null);
 
   let running = $state(false);
   let runError = $state('');
@@ -60,6 +63,7 @@
 
   async function onuse(entry: KeyIdentity) {
     checkError = '';
+    certChangedFor = null;
     let info;
     try {
       // The backend reads the key and binds it to the controller it was saved for.
@@ -76,6 +80,7 @@
       verifySSL: info.mode === 'cloud', profile: 'home_office',
     });
     const res = await validateConnection(client);
+    if (res.error?.kind === 'cert-changed') { certChangedFor = entry; return; }
     if (!res.ok) { checkError = res.error?.message ?? 'The saved key no longer validates.'; return; }
     // Re-validated: hand straight to the run path.
     mode = info.mode; host = info.host ?? '';
@@ -112,6 +117,10 @@
   {#if step === 'check'}
     <SavedKeys {saved} {hints} {orphans} {onuse} {onforget} {onscan} onskip={() => (step = 'mode')} />
     {#if checkError}<p class="text-sev-high text-sm mt-3">{checkError}</p>{/if}
+    {#if certChangedFor}
+      {@const entry = certChangedFor}
+      <div class="mt-3"><CertChanged host={entry.host ?? ''} onrepinned={() => onuse(entry)} /></div>
+    {/if}
   {:else if step === 'mode'}
     <ModeStep bind:mode bind:host />
     <button class="mt-6 bg-accent text-on-accent hover:bg-accent-hover px-6 py-3 rounded-lg font-semibold disabled:opacity-50"

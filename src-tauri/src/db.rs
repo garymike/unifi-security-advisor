@@ -17,6 +17,8 @@ use rusqlite::{params_from_iter, Connection};
 use serde_json::{Map, Value as JsonValue};
 use tauri::{command, State};
 
+use crate::pinning::Fingerprint;
+
 /// Same file name the SQL plugin used, in the same directory (app config dir),
 /// so existing history carries over.
 pub const DB_FILE: &str = "unifi-advisor.db";
@@ -65,6 +67,15 @@ const SCHEMA: &[&str] = &[
         key   TEXT PRIMARY KEY,
         value TEXT
     )",
+    // Certificate pins for local controllers, keyed by the same account name
+    // as the controller's key (`local:<host>`). Not secret, but trusted: no
+    // catalog statement below touches this table, so only Rust reads or
+    // writes it (see `pin`, `pin_first_use`, `replace_pin`).
+    "CREATE TABLE IF NOT EXISTS cert_pins (
+        account    TEXT PRIMARY KEY,
+        sha256     TEXT NOT NULL,
+        pinned_at  INTEGER NOT NULL
+    )",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -111,7 +122,7 @@ impl Db {
     }
 
     #[cfg(test)]
-    fn in_memory() -> Self {
+    pub(crate) fn in_memory() -> Self {
         Self::init(Connection::open_in_memory().unwrap()).unwrap()
     }
 
@@ -158,6 +169,62 @@ impl Db {
         }
         Ok(out)
     }
+
+    /// The certificate pinned for a local controller's account, if any.
+    pub fn pin(&self, account: &str) -> Result<Option<Fingerprint>, String> {
+        let conn = self.lock()?;
+        let stored: Option<String> = match conn.query_row(
+            "SELECT sha256 FROM cert_pins WHERE account = ?",
+            [account],
+            |r| r.get(0),
+        ) {
+            Ok(v) => Some(v),
+            Err(rusqlite::Error::QueryReturnedNoRows) => None,
+            Err(e) => return Err(e.to_string()),
+        };
+        match stored {
+            None => Ok(None),
+            // A row that does not parse is treated as a pin nothing matches,
+            // so a damaged row refuses connections instead of re-pinning.
+            Some(s) => Fingerprint::parse(&s)
+                .map(Some)
+                .ok_or_else(|| "The saved certificate pin for this controller is damaged.".to_string()),
+        }
+    }
+
+    /// Pin on first use. Keeps an existing pin if one was written in the
+    /// meantime, and returns whichever pin is now stored.
+    pub fn pin_first_use(&self, account: &str, fp: Fingerprint) -> Result<Fingerprint, String> {
+        self.lock()?
+            .execute(
+                "INSERT INTO cert_pins (account, sha256, pinned_at) VALUES (?, ?, ?)
+                 ON CONFLICT(account) DO NOTHING",
+                rusqlite::params![account, fp.to_string(), now_secs()],
+            )
+            .map_err(|e| e.to_string())?;
+        self.pin(account)?.ok_or_else(|| "certificate pin was not stored".to_string())
+    }
+
+    /// Replace `old` with `new` after the user confirmed the change. Does
+    /// nothing (returns false) if the stored pin is no longer `old`, so a
+    /// confirmation for one change cannot overwrite a different one.
+    pub fn replace_pin(&self, account: &str, old: Fingerprint, new: Fingerprint) -> Result<bool, String> {
+        let changed = self
+            .lock()?
+            .execute(
+                "UPDATE cert_pins SET sha256 = ?, pinned_at = ? WHERE account = ? AND sha256 = ?",
+                rusqlite::params![new.to_string(), now_secs(), account, old.to_string()],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(changed == 1)
+    }
+}
+
+fn now_secs() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
 }
 
 fn lookup(name: &str, kind: Kind) -> Result<&'static str, String> {
@@ -221,18 +288,54 @@ mod tests {
     }
 
     #[test]
-    fn schema_creates_the_five_tables() {
+    fn schema_creates_the_six_tables() {
         let db = Db::in_memory();
         let conn = db.lock().unwrap();
         let n: i64 = conn
             .query_row(
                 "SELECT count(*) FROM sqlite_master WHERE type = 'table'
-                 AND name IN ('runs','findings','answers','sites','app_kv')",
+                 AND name IN ('runs','findings','answers','sites','app_kv','cert_pins')",
                 [],
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(n, 5);
+        assert_eq!(n, 6);
+    }
+
+    #[test]
+    fn the_page_has_no_statement_for_certificate_pins() {
+        for (name, _, sql) in STATEMENTS {
+            assert!(!sql.contains("cert_pins"), "{name} reaches cert_pins");
+        }
+    }
+
+    #[test]
+    fn pins_are_set_once_and_replaced_only_from_the_confirmed_value() {
+        let db = Db::in_memory();
+        let acct = "local:192.168.1.1";
+        let a = Fingerprint::of(b"cert a");
+        let b = Fingerprint::of(b"cert b");
+        let c = Fingerprint::of(b"cert c");
+        assert_eq!(db.pin(acct).unwrap(), None);
+        assert_eq!(db.pin_first_use(acct, a).unwrap(), a);
+        // A later first-use write does not move an existing pin.
+        assert_eq!(db.pin_first_use(acct, b).unwrap(), a);
+        // A replacement confirmed against a stale pin is ignored.
+        assert!(!db.replace_pin(acct, c, b).unwrap());
+        assert_eq!(db.pin(acct).unwrap(), Some(a));
+        assert!(db.replace_pin(acct, a, b).unwrap());
+        assert_eq!(db.pin(acct).unwrap(), Some(b));
+        assert_eq!(db.pin("local:other").unwrap(), None);
+    }
+
+    #[test]
+    fn a_damaged_pin_refuses_rather_than_re_pinning() {
+        let db = Db::in_memory();
+        db.lock()
+            .unwrap()
+            .execute("INSERT INTO cert_pins VALUES ('local:x', 'garbage', 0)", [])
+            .unwrap();
+        assert!(db.pin("local:x").is_err());
     }
 
     #[test]

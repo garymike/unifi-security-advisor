@@ -16,6 +16,7 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 - **The page can no longer read or write arbitrary files.** Report export and backup import now open the native save/open dialog from the backend and act only on the file you pick.
 - **The page can no longer run arbitrary SQL.** The SQL plugin let the page open a database at any path and run any statement (including `ATTACH`, which writes a file anywhere). History now lives in a backend-owned database with a fixed set of statements. Existing history carries over (same file).
 - **Strict content security policy.** The webview previously ran with none. Scripts now load only from the app itself (its two inline bootstrap scripts are hashed at build time), styles only from the app, and the page cannot connect to any network host directly.
+- **Local controllers: the key is only sent to the certificate it was first validated against.** Consoles use self-signed certificates, so the app used to accept any certificate from a local controller, and anyone on a hostile LAN could pose as the console and collect the key. Now, the first time a key validates against a local controller, the app saves the SHA-256 fingerprint of the console's certificate, and on every later connection the TLS handshake fails before the key is sent unless the console presents that same certificate. The fingerprint is shown after validation so you can compare it with the console. If the certificate changes (for example after a console reset), the connect page shows the saved and new fingerprints, and the new one is trusted only after you confirm in a system dialog that shows both. Site Manager (`api.ui.com`) keeps normal certificate verification.
 - **Trimmed page permissions** to the core set, the updater, and restart. Dialogs, the database, and opening the key-minting page in your browser are backend commands now.
 
 ### Releases
@@ -23,6 +24,7 @@ Pre-1.0, version numbers reflect feature milestones, not stability guarantees.
 
 ### Build / dependencies
 - Removed `tauri-plugin-sql` (and its sqlx stack: 58 fewer crates in `Cargo.lock`) in favour of `rusqlite` with bundled SQLite. Removed the npm `@tauri-apps/plugin-sql`, `plugin-dialog`, and `plugin-opener` packages; the page now depends on `@tauri-apps/api` directly instead of through them. The crate's `rust-version` now states 1.90, which Tauri 2.12 already requires.
+- The app's own HTTP client moved from `reqwest` 0.12 with native-tls (OpenSSL on Linux) to `reqwest` 0.13.5 with rustls and the `ring` provider, the same stack `tauri-plugin-updater` already used. One reqwest and one TLS stack instead of two; `rustls` and `ring` are now direct dependencies (both were already in the tree) for certificate pinning.
 
 ## [0.5.3] - 2026-11-02
 

@@ -37,6 +37,7 @@ Prohibited:
 - The tool may transmit the credential only to the UniFi controller (via the official API endpoint)
 - The tool must not transmit credentials to any other endpoint, including the tool's own telemetry or update servers
 - TLS certificate validation must be enforced; no "ignore SSL errors" mode for credential-bearing connections
+- Local consoles present self-signed certificates, so the desktop app validates them by pinning (DECISIONS.md D-011): the first time a key validates, the console certificate's SHA-256 is saved, and afterwards the handshake fails before the key is sent unless the console presents that certificate. A changed certificate is trusted only after the user confirms it in a native dialog showing both fingerprints. Site Manager (`api.ui.com`) uses normal chain validation
 
 ### Output
 
