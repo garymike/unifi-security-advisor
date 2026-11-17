@@ -81,7 +81,7 @@ jobs:
       # ubuntu-latest ships a stable Rust toolchain, so no toolchain action
       # is needed. Swatinem/rust-cache caches the registry + build artifacts
       # keyed on Cargo.lock so tauri doesn't recompile from scratch each run.
-      - uses: Swatinem/rust-cache@c8037a86dde8214a8310e9f54a8fc61ab362aa31 # v2
+      - uses: Swatinem/rust-cache@eedcf2fb1c22f010a0eb66b92f378c110977f266 # v2
         with:
           workspaces: src-tauri
       - name: Run cargo test
