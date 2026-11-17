@@ -51,4 +51,4 @@ windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Security_Cr
 security-framework = "2"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-secret-service = { version = "4", features = ["rt-tokio-crypto-rust"] }
+secret-service = { version = "5", features = ["rt-tokio-crypto-rust"] }
