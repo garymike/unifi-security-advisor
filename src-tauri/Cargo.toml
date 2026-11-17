@@ -36,7 +36,7 @@ aes = "0.8"
 cbc = { version = "0.1", features = ["alloc"] }
 flate2 = "1.0"
 zip = { version = "9", default-features = false, features = ["deflate"] }
-bson = "2"
+bson = "3"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 tauri-plugin-opener = "2"
 # Replaces tauri-plugin-sql (which let the page run any SQL against any path):
