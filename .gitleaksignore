@@ -1,0 +1,33 @@
+# betterleaks fingerprint ignores, one per line, as path:rule:line.
+#
+# Every entry below is the same value: the fixed AES key UniFi uses to encrypt
+# console-level (.unifi) and classic (.unf) backups. It is a published constant, not a
+# credential of this project or of any user. Every backup any UniFi console produces is
+# encrypted under it, which is the entire reason this repo can read one; deleting it
+# would stop src/audit/parseUnifiOsConsoleBackup.ts doing its job.
+#
+# betterleaks rates these generic-api-key at low confidence, and it is right to flag a
+# long hex literal. It cannot know that this particular one is public. These fingerprints
+# record that each was read and identified, not a decision to stop looking at hex.
+#
+# Caveat worth knowing before editing these files: a fingerprint pins a LINE NUMBER, so
+# inserting a line above one of these silently stops the ignore matching, and the scan
+# goes red again reporting the same constant at a new line. When that happens, re-read
+# the finding, confirm it is still this key, and move the number here. Do not widen this
+# into a rule-level or path-level exclusion, which would hide a real key added later to
+# the same file.
+#
+# These became visible when the toolbox pin moved: the previously pinned betterleaks did
+# not report them, the newer one does. Nothing in the repo changed.
+
+# the key in the implementation
+src/audit/parseUnifiOsConsoleBackup.ts:generic-api-key:6
+
+# the same key in the two decoder tests
+src/audit/__tests__/parseBackupNodejs.test.ts:generic-api-key:9
+src/audit/__tests__/parseUnifiOsConsoleBackup.test.ts:generic-api-key:7
+
+# the same key, quoted three times in the note that worked the format out
+docs/superpowers/plans/2026-07-03-cgf-console-backup-decryption-plan.md:generic-api-key:43
+docs/superpowers/plans/2026-07-03-cgf-console-backup-decryption-plan.md:generic-api-key:87
+docs/superpowers/plans/2026-07-03-cgf-console-backup-decryption-plan.md:generic-api-key:399
