@@ -25,6 +25,26 @@ updates:
 
   # Application dependencies. Security updates would arrive without these entries;
   # routine version updates do not, and without them every bump is an emergency.
+  # Tauri's crate half and npm half move together or not at all.
+  #
+  # tools/check-tauri-version-sync.mjs requires tauri <-> @tauri-apps/api, and each
+  # tauri-plugin-<x> <-> @tauri-apps/plugin-<x>, to resolve to the same major/minor,
+  # because `tauri build` enforces that and our CI does not run it. Dependabot groups
+  # live inside a single package-ecosystem, so no group can span cargo and npm: the
+  # crate bump and the npm bump always arrive as two pull requests, and each one on its
+  # own fails that check. Grouping cannot fix this and does not try to.
+  #
+  # What it fixes is blast radius. tauri-plugin-process 2.3.1 to 2.4.0 landed in the two
+  # catch-all groups below and took 7 unrelated cargo updates and 11 unrelated npm
+  # updates down with it: both group PRs sat red over that one pair. With tauri in its
+  # own group the deadlock is confined to two small PRs that are plainly a pair, and
+  # everything else still flows.
+  #
+  # When the pair appears: land one commit moving both sides, as #106 did, then rebase
+  # the two tauri PRs. They drop the entry and go green.
+  #
+  # The tauri group is listed first on purpose. Dependabot puts a dependency in the
+  # first group it matches, so the catch-alls below must not see these first.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -32,6 +52,8 @@ updates:
     cooldown:
       default-days: 7
     groups:
+      tauri:
+        patterns: ["@tauri-apps/*"]
       npm-minor-patch:
         update-types: ["minor", "patch"]
 
@@ -42,5 +64,7 @@ updates:
     cooldown:
       default-days: 7
     groups:
+      tauri:
+        patterns: ["tauri", "tauri-*"]
       cargo-minor-patch:
         update-types: ["minor", "patch"]
