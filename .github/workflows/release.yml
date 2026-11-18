@@ -34,6 +34,12 @@ jobs:
         with:
           workspaces: src-tauri
       - run: npm ci
+      # The dependencies that ship, at high or critical, as in test.yml. This
+      # workflow triggers on a tag push, and test.yml triggers on branch
+      # pushes and pull requests, so without this step a release would be the
+      # one path to users with no dependency audit on it at all.
+      - name: Audit the dependencies that ship
+        run: npm audit --omit=dev --audit-level=high
       # Pull this version's CHANGELOG section into the release body so the
       # in-app updater's "What's changed" shows real notes (not a generic line).
       - name: Extract release notes from CHANGELOG

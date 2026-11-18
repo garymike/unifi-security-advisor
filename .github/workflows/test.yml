@@ -53,6 +53,23 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # A high or critical advisory in the dependencies that ship fails the
+      # PR. dependency-audit.yml is the companion check: it fails a PR that
+      # ADDS an advisory at any scope, build-time ones included.
+      #
+      # Why --omit=dev. Without it this step also fails on advisories that no
+      # version can clear. GHSA-fc5q-39xc-vjpf (picomatch ReDoS, high) was
+      # updated on 2026-11-17 to cover <= 4.0.7, which is picomatch's latest
+      # release, so nothing satisfies it. It arrives as a devDependency under
+      # vite's glob matcher, and npm reports that one advisory against 8
+      # packages. The shipped tree reports nothing at any level, not merely
+      # nothing at high, so this step is a real gate rather than a formality.
+      #
+      # Neither the `audit` job in security.yml, which is the weekly
+      # repository-settings audit, nor src/audit/, which is this app's own
+      # feature, has anything to do with this step.
+      - name: Audit the dependencies that ship
+        run: npm audit --omit=dev --audit-level=high
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
