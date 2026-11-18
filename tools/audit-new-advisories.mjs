@@ -102,6 +102,26 @@ function auditDir(root, side, baseCheckout, lockfileFrom) {
   return dir
 }
 
+// How to run npm, without ever asking a shell to do it. In CI this runs on
+// Linux, where `npm` is directly executable. On Windows npm is a .cmd, which
+// node refuses to spawn at all (EINVAL) unless `shell: true` is set, and that
+// option concatenates arguments instead of escaping them: node 26 deprecates
+// it (DEP0190) and this repository's own SAST flags it. So there is no shell
+// here. A developer on such a platform points AUDIT_NPM_CLI at npm's own CLI
+// entry point instead, and this node runs that file.
+//
+// Called from audit(), not at module load, so a bad value is reported as "the
+// audit did not run" (exit 3) rather than as an uncaught throw, which exits 1
+// and would read as "this PR adds an advisory".
+function npmCommand() {
+  const cli = process.env.AUDIT_NPM_CLI
+  if (!cli) return { command: 'npm', prefix: [] }
+  if (!/\.[cm]?js$/.test(cli) || !existsSync(cli)) {
+    throw new Error(`AUDIT_NPM_CLI must be the path of an existing npm CLI .js file, not ${JSON.stringify(cli)}`)
+  }
+  return { command: process.execPath, prefix: [cli] }
+}
+
 function asReport(text) {
   let parsed
   try {
@@ -127,13 +147,15 @@ function asReport(text) {
 function audit(dir, side) {
   const attempts = []
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const run = spawnSync('npm', [
+    const npm = npmCommand()
+    const run = spawnSync(npm.command, [
+      ...npm.prefix,
       'audit', '--json',
       // Audit the lockfile as written, with no install and no node_modules.
       '--package-lock-only',
       // Every scope, one flag each: see the header on the comma-joined form.
       // Reclassifying a package as a devDependency must not mute its advisory,
-      // and the absolute high-or-critical gate in ci.yml is the one that
+      // and the absolute high-or-critical gate in test.yml is the one that
       // scopes itself to what ships.
       '--include=dev', '--include=optional', '--include=peer',
       // Count everything, so "exit 1" and "the report lists something" mean
@@ -144,8 +166,6 @@ function audit(dir, side) {
       cwd: dir,
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,
-      // npm is npm.cmd on Windows, which only a shell can start.
-      shell: process.platform === 'win32',
     })
     const report = asReport(run.stdout ?? '')
     const counted = report ? report.metadata.vulnerabilities.total : -1
@@ -201,7 +221,11 @@ function describe(row) {
 function summarise(added, kept, gone) {
   const file = process.env.GITHUB_STEP_SUMMARY
   if (!file) return
-  const cell = s => s.replace(/\|/g, '\\|')
+  // Backslashes first, then pipes. The other order lets an input's own
+  // trailing backslash escape the one this adds, so a `\|` in registry text
+  // could close the cell and add a column. clean() already doubles
+  // backslashes, but this does not rely on its caller having run it.
+  const cell = s => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')
   const line = (change, r) =>
     `| ${change} | ${cell(clean(r.id))} | ${cell(clean(r.severity))} | ${cell(label(r))} | ${cell(clean(r.title))} |`
   const table = [
