@@ -88,7 +88,7 @@ version = "0.5.3"
 dependencies = [
  "aes 0.8.4",
  "bson",
- "cbc 0.1.2",
+ "cbc 0.2.1",
  "flate2",
  "keyring",
  "reqwest",
