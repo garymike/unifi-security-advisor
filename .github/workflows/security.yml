@@ -16,24 +16,24 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: garymike/security-workflows/.github/workflows/security-scan.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428 # main @ 2026-10-01
+    uses: garymike/security-workflows/.github/workflows/security-scan.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428
   gha-security:
     permissions:
       contents: read
       packages: read
-    uses: garymike/security-workflows/.github/workflows/gha-security.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428 # main @ 2026-10-01
+    uses: garymike/security-workflows/.github/workflows/gha-security.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428
   sast:
     permissions:
       contents: read
       packages: read
       security-events: write
-    uses: garymike/security-workflows/.github/workflows/sast.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428 # main @ 2026-10-01
+    uses: garymike/security-workflows/.github/workflows/sast.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428
   iac-security:
     permissions:
       contents: read
       packages: read
       security-events: write
-    uses: garymike/security-workflows/.github/workflows/iac-security.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428 # main @ 2026-10-01
+    uses: garymike/security-workflows/.github/workflows/iac-security.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428
   codeql:
     # deep engine — run on PRs, main pushes, and the schedule (skip feature-branch pushes)
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
@@ -41,7 +41,7 @@ jobs:
       contents: read
       security-events: write
       actions: read
-    uses: garymike/security-workflows/.github/workflows/codeql.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428 # main @ 2026-10-01
+    uses: garymike/security-workflows/.github/workflows/codeql.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428
     with:
       languages: javascript-typescript,python
 
@@ -49,4 +49,4 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
-    uses: garymike/security-workflows/.github/workflows/security-audit.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428 # main @ 2026-10-01
+    uses: garymike/security-workflows/.github/workflows/security-audit.yml@3ba7e15c5d2cc9f908b3893fd91c2c631bc40428
