@@ -1,0 +1,96 @@
+name: Dependency audit
+
+# Fails a pull request that ADDS a known-vulnerable package version. It runs
+# `npm audit` on the PR's base and on its merge result, and compares the two.
+#
+# Why it exists. The "Audit the dependencies that ship" step in test.yml and release.yml fails on
+# a high or critical advisory in the dependencies that ship. That is the right
+# absolute bar and it is blind to two things: an advisory in a build-time
+# dependency, and the difference between one a PR introduced and one that was
+# already on main.
+#
+# Why it compares instead of failing on every advisory. Some advisories cannot
+# be cleared at all. GHSA-fc5q-39xc-vjpf (picomatch ReDoS, high) was published
+# on 2026-10-19 and updated on 2026-11-17 to cover <= 4.0.7, which is
+# picomatch's latest release on npm, so no version satisfies it. picomatch
+# arrives here as a devDependency under vite's glob matcher, and npm reports
+# the single advisory against 8 (picomatch itself and 7 packages downstream of it) packages. A check that is usually red for
+# a reason no PR can act on stops being read, so only an advisory this PR adds
+# fails the run. Ones already on the base branch are listed as warnings, and
+# ones the PR's tree no longer reports as notices.
+#
+# Why a workflow of its own, with a paths filter. It runs only when a PR
+# touches a manifest or the lockfile, so other PRs cost nothing. It installs
+# nothing: `npm audit --package-lock-only` reads the lockfile, and the audit
+# endpoint is the only network call, so the whole job is about a minute.
+#
+# No `branches:` filter. The comparison is against the PR's own base, whatever
+# that is, so a PR stacked on another branch is checked against that branch.
+#
+# Why node 22, matching the rest of this repository rather than the latest.
+# The report schema and the exit-code invariant the script relies on were
+# confirmed against this lockfile on npm 10.9.11, 11.21.3 and 12.2.2, which
+# covers the npm this node ships, so there is no reason to introduce a second
+# node version here.
+#
+# What it can and cannot stop. The PR contributes one input: its
+# package-lock.json. Both audits run in a throwaway directory holding the
+# BASE's package.json and .npmrc, and the script pins the registry and every
+# dependency scope on the command line as well. The script header records what
+# an .npmrc in the PR would otherwise do to a report.
+#
+# A pull_request workflow runs the PR's own copy of this file and of the
+# script, so an author can edit either, the node version included. This guards
+# against accidents, which is how GHSA-fc5q-39xc-vjpf arrived without any PR
+# touching a dependency; the diff of those two files is where the rest gets
+# reviewed.
+#
+# This check is not in main's required status checks; `JS (typecheck +
+# vitest)` is. Adding it there is a branch-protection change, made in the
+# repository settings rather than here.
+on:
+  pull_request:
+    paths:
+      - 'package-lock.json'
+      - '**/package.json'
+      - '.github/workflows/dependency-audit.yml'
+      - 'tools/audit-new-advisories.mjs'
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Not named `audit`: that job id is the weekly repository-settings audit in
+  # security.yml, which is a different thing entirely.
+  advisories:
+    name: Advisories this PR adds
+    runs-on: ubuntu-latest
+    # Two audits of a few seconds each, plus setup.
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # A PR checks out its merge commit, whose first parent is the base it
+          # merges into. Depth 2 brings that parent with it, so the base needs
+          # no second fetch and no credential.
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Check out the base beside the merge result
+        run: git worktree add --detach .audit-base HEAD^1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          # No npm cache: this job installs nothing, so there is nothing to
+          # restore and no cache entry from another run to trust.
+
+      # Exit 1 means this PR adds an advisory; exit 3 means an audit did not
+      # run, which fails rather than passing. The script says why.
+      - name: Fail on advisories this PR adds
+        run: node tools/audit-new-advisories.mjs .audit-base .
