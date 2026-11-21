@@ -48,7 +48,7 @@ rusqlite = { version = "0.42", features = ["bundled"] }
 windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Security_Credentials"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-security-framework = "2"
+security-framework = "3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 secret-service = { version = "5", features = ["rt-tokio-crypto-rust"] }
